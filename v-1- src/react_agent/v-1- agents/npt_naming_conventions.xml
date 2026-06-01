@@ -1,0 +1,79 @@
+<npt_naming_conventions>
+    <metadata>
+        <system_version>2026.2</system_version>
+        <architecture_paradigm>Stevedoring & Cargo Ingestion</architecture_paradigm>
+        <enforcement_level>Strict (Zero-Tolerance Compilation Block)</enforcement_level>
+    </metadata>
+    <core_philosophy>
+        <rationale> To prevent semantic drift, structural confusion, and the dilution of data lineage. Names are deterministic, clear indicators of structural location, mechanical execution bounds, or specific script behavior. Corporate abstractions, conversational euphemisms, or loose roleplay definitions are banned from the namespace. </rationale>
+    </core_philosophy>
+    <directory_namespace>
+        <rule path="src/react_agent/">
+            <standard>Houses the active codebase execution layers and connecting wires.</standard>
+        </rule>
+        <rule path="src/react_agent/agents/">
+            <standard>Reserved exclusively for Crew Manifest Templates (XML instructions). No executable Python code sits here.</standard>
+        </rule>
+        <rule path="src/react_agent/tools/">
+            <standard>Reserved for stateless, global, mechanical tool functions. Modules here use operational and maritime verbs related to logistics and infrastructure.</standard>
+        </rule>
+    </directory_namespace>
+    <component_naming_rules>
+        <layer type="Crew Manifest Template (XML)">
+            <casing>snake_case</casing>
+            <suffix>.xml</suffix>
+            <example>pegleg.xml, spyglass.xml, grog.xml, plank.xml</example>
+            <anti_pattern>Sovereign_Pegleg.xml, ThesisAgent.xml</anti_pattern>
+        </layer>
+        <layer type="Stateless Public Tool (Python Module)">
+            <casing>snake_case</casing>
+            <suffix>_tools.py</suffix>
+            <example>zotero_tools.py</example>
+            <anti_pattern>zoteroUtils.py, HandleZotero.py</anti_pattern>
+        </layer>
+        <layer type="Specialized Cargo Handler (Python Module)">
+            <casing>snake_case</casing>
+            <prefix>spyglass_</prefix>
+            <suffix>_stevedoring.py</suffix>
+            <example>spyglass_stevedoring.py</example>
+            <anti_pattern>seizure_tool.py, web_scraper.py, ThesisScraper.py</anti_pattern>
+        </layer>
+        <layer type="Main Orchestrator Entrypoint">
+            <casing>snake_case</casing>
+            <suffix>_entrypoint.py</suffix>
+            <example>pegleg_entrypoint.py</example>
+            <anti_pattern>_engine.py, main.py, run.py, GraphRunner.py</anti_pattern>
+        </layer>
+    </component_naming_rules>
+    <tool_functional_naming_rules>
+        <rule name="Agent-Specific Tool Isolation Prefix">
+            <requirement>Any python tool module or functional tool block that is strictly coupled to a single agent's core manifest loop must explicitly include that agent's name as a prefix.</requirement>
+            <example>spyglass_stevedoring.py, spyglass_local_sweep()</example>
+            <anti_pattern>stevedoring.py, local_sweep()</anti_pattern>
+        </rule>
+        <rule name="Banishment of Command Verb Duplication">
+            <requirement>The use of the verb 'execute' is strictly prohibited inside any tool function name or script namespace across the entire codebase, unless the function is explicitly performing an operational task related to capital punishment.</requirement>
+            <rationale>Calling a function already triggers its execution. Adding 'execute_' introduces redundant code smells and clunky syntax patterns.</rationale>
+            <example>load_cargo(), fetch_unresolved_items()</example>
+            <anti_pattern>execute_spyglass_stevedoring(), execute_zotero_query()</anti_pattern>
+        </rule>
+    </tool_functional_naming_rules>
+    <data_payload_naming_rules>
+        <artifact type="Cloud Storage Object">
+            <format>web_artifact_{Clean_Pristine_Title_Slug}_{8_character_url_hash}.txt</format>
+            <example>web_artifact_The_Great_Digital_Enclosure_How_Google_is_Stealing_the_Future_Of_Independent_Journalism_23977e6a.txt</example>
+            <anti_pattern>scraped_text_1.md, article.txt</anti_pattern>
+        </artifact>
+        <artifact type="Vector Database Segment / Fragment">
+            <provenance_tag>[PROVENANCE REFERENCE: ZOTERO_KEY={8_char_key} | CATEGORY={A_B_C} | SOURCE={domain_name}]</provenance_tag>
+            <requirement>Must be pre-pended to the raw text string of every vectorized chunk to eliminate contamination and guarantee un-degradable data lineage.</requirement>
+        </artifact>
+    </data_payload_naming_rules>
+    <banned_vocabulary>
+        <term replaced_by="Crew Manifest Templates">Sovereign Agent Definitions</term>
+        <term replaced_by="load_cargo">execute_spyglass_seizure</term>
+        <term replaced_by="load_cargo">execute_spyglass_stevedoring</term>
+        <term replaced_by="load_cargo">web_scraper / content_loader</term>
+        <term replaced_by="Specific Crew Member names (e.g. Pegleg, Spyglass)">Thesis Agent / AI Coordinator</term>
+    </banned_vocabulary>
+</npt_naming_conventions>

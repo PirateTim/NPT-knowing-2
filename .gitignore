@@ -1,0 +1,29 @@
+# 1. Virtual Environments (Block local package binaries)
+.venv/
+venv/
+ENV/
+env/
+
+# 2. Python Operational & Compilation Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# 3. Environment & Local Infrastructure Secrets
+.env
+.env.local
+backlog_store.json
+
+# 4. OS/Editor Local State Garbage
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+
+v-1-src/
+mcp_config.json
