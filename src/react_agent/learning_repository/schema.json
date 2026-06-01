@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NPT_System_Learning_Entry",
+  "type": "object",
+  "properties": {
+    "entry_metadata": {
+      "type": "object",
+      "properties": {
+        "learning_id": { "type": "string" },
+        "timestamp_utc": { "type": "string", "format": "date-time" },
+        "associated_github_issue_id": { "type": "string" },
+        "lifecycle_event": { "type": "string", "enum": ["ON_ISSUE_ASSIGNMENT", "ON_ISSUE_CLOSURE"] }
+      },
+      "required": ["learning_id", "timestamp_utc", "associated_github_issue_id", "lifecycle_event"]
+    },
+    "architectural_context": {
+      "type": "object",
+      "properties": {
+        "target_agent_profile": { "type": "string" },
+        "observed_code_footprint": { "type": "string" },
+        "tried_and_implemented_strategies": { "type": "array", "items": { "type": "string" } },
+        "tried_and_failed_strategies": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["target_agent_profile", "tried_and_implemented_strategies", "tried_and_failed_strategies"]
+    }
+  },
+  "required": ["entry_metadata", "architectural_context"]
+}
