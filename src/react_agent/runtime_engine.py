@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Project Hook: Sovereign Progenitor Runtime Engine
-Architecture: Type-Safe Mixed Tool Registration (Python Callables + Clean MCP Function Declarations)
+Architecture: Pure Type-Safe Tool Schemas for Flawless Automatic Function Calling (AFC)
+Routing: Enterprise Vertex AI Core Interface (Credit-Bearing Endpoint Pipeline)
 """
 
 import os
@@ -173,7 +174,7 @@ class MCPClientManager:
         if "__" not in namespaced_name:
             # Fallback guard: Intercept un-namespaced calls and protect the unpack engine
             return f"[ERROR] Tool name '{namespaced_name}' is missing a valid 'server_name__' namespace prefix. Please correct the tool argument and retry."
-        """Routes a model function intent through the JSON-RPC wire to the true subprocess."""
+            
         server_name, tool_name = namespaced_name.split("__", 1)
         process = self.processes.get(server_name)
         
