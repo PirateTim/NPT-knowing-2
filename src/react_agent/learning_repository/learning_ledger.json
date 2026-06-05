@@ -1,20 +1,55 @@
-[{
-  "entry_metadata": {
-    "learning_id": "issue-6-assignment-20240724T120000Z",
-    "timestamp_utc": "2024-07-24T12:00:00Z",
-    "associated_github_issue_id": "6",
-    "lifecycle_event": "ON_ISSUE_ASSIGNMENT"
+{
+  "schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "NPT_System_Learning_Entry",
+    "type": "object",
+    "properties": {
+      "entry_metadata": {
+        "type": "object",
+        "properties": {
+          "learning_id": { "type": "string" },
+          "timestamp_utc": { "type": "string", "format": "date-time" },
+          "associated_github_issue_id": { "type": "string" },
+          "lifecycle_event": { "type": "string", "enum": ["ON_ISSUE_ASSIGNMENT", "ON_ISSUE_CLOSURE"] }
+        },
+        "required": ["learning_id", "timestamp_utc", "associated_github_issue_id", "lifecycle_event"]
+      },
+      "architectural_context": {
+        "type": "object",
+        "properties": {
+          "target_agent_profile": { "type": "string" },
+          "observed_code_footprint": { "type": "string" },
+          "tried_and_implemented_strategies": { "type": "array", "items": { "type": "string" } },
+          "tried_and_failed_strategies": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["target_agent_profile", "tried_and_implemented_strategies", "tried_and_failed_strategies"]
+      }
+    },
+    "required": ["entry_metadata", "architectural_context"]
   },
-  "architectural_context": {
-    "target_agent_profile": "Hook",
-    "observed_code_footprint": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"NPT_System_Learning_Entry\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"entry_metadata\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"learning_id\": { \"type\": \"string\" },\n        \"timestamp_utc\": { \"type\": \"string\", \"format\": \"date-time\" },\n        \"associated_github_issue_id\": { \"type\": \"string\" },\n        \"lifecycle_event\": { \"type\": \"string\", \"enum\": [\"ON_ISSUE_ASSIGNMENT\", \"ON_ISSUE_CLOSURE\"] }\n      },\n      \"required\": [\"learning_id\", \"timestamp_utc\", \"associated_github_issue_id\", \"lifecycle_event\"]\n    },\n    \"architectural_context\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"target_agent_profile\": { \"type\": \"string\" },\n        \"observed_code_footprint\": { \"type\": \"string\" },\n        \"tried_and_implemented_strategies\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"tried_and_failed_strategies\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } }\n      },\n      \"required\": [\"target_agent_profile\", \"tried_and_implemented_strategies\", \"tried_and_failed_strategies\"]\n    }\n  },\n  \"required\": [\"entry_metadata\", \"architectural_context\"]\n}",
-    "tried_and_implemented_strategies": [
-      "Created `src/react_agent/learning_repository/` directory.",
-      "Created `src/react_agent/learning_repository/learning_ledger.json` and initialized with an empty array.",
-      "Created `src/react_agent/learning_repository/schema.json` and populated with the provided schema."
-    ],
-    "tried_and_failed_strategies": [
-      "None"
-    ]
-  }
-}]
+  "entries": [
+    {
+      "entry_metadata": {
+        "learning_id": "learning-entry-issue-7-closure",
+        "timestamp_utc": "2026-06-04T20:30:00Z",
+        "associated_github_issue_id": "7",
+        "lifecycle_event": "ON_ISSUE_CLOSURE"
+      },
+      "architectural_context": {
+        "target_agent_profile": "Hook",
+        "observed_code_footprint": "interacted with `learning_ledger.json` and the GitHub API via `github_backlog_bridge`.",
+        "tried_and_implemented_strategies": [
+          "Systematically debugged file path issues by inspecting repository structure.",
+          "Leveraged technical design documents to understand system architecture.",
+          "Utilized code search when direct file access failed.",
+          "When all automated methods failed, escalated the issue to the user by requesting the missing files.",
+          "Acknowledged and documented tool limitations to the user."
+        ],
+        "tried_and_failed_strategies": [
+          "Assuming file paths from issue descriptions are always accurate.",
+          "Assuming that all necessary files are present in the repository."
+        ]
+      }
+    }
+  ]
+}

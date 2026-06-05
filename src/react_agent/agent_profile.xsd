@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="agent_definition">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="identity_persona">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="name" type="xs:string"/>
+              <xs:element name="role" type="xs:string"/>
+              <xs:element name="disposition" type="xs:string"/>
+              <xs:element name="expertise" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="core_mandate">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="do_not_lie" type="xs:string"/>
+              <xs:element name="primary_directive" type="xs:string"/>
+              <xs:element name="sovereign_scope" type="xs:string"/>
+              <xs:element name="autonomous_provisioning" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="operational_capabilities" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="capability" type="xs:string" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="heuristics">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="rule" type="xs:string" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="workspace_architecture">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="description" type="xs:string"/>
+              <xs:element name="directories">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="dir" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="purpose" type="xs:string"/>
+                          <xs:element name="rule" type="xs:string" minOccurs="0"/>
+                        </xs:sequence>
+                        <xs:attribute name="path" type="xs:string" use="required"/>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,214 @@
+{
+  "active_environment_context": {
+    "model_tier": "gemini-2.5-pro",
+    "gcp_project_id": "npt-reckoning-1",
+    "last_discovery_utc": "2026-06-05T17:30:17.309648Z"
+  },
+  "verified_directory_topology": {
+    "root_path": "C:/Users/timot/NPT-knowing-2",
+    "discovered_files": [
+      {
+        "relative_path": ".env",
+        "file_name": ".env",
+        "extension": ""
+      },
+      {
+        "relative_path": ".gitignore",
+        "file_name": ".gitignore",
+        "extension": ""
+      },
+      {
+        "relative_path": ".python-version",
+        "file_name": ".python-version",
+        "extension": ""
+      },
+      {
+        "relative_path": "hook.log",
+        "file_name": "hook.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "hook.xml",
+        "file_name": "hook.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "main.py",
+        "file_name": "main.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "mcp_config.json",
+        "file_name": "mcp_config.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "pyproject.toml",
+        "file_name": "pyproject.toml",
+        "extension": "toml"
+      },
+      {
+        "relative_path": "README.md",
+        "file_name": "README.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "uv.lock",
+        "file_name": "uv.lock",
+        "extension": "lock"
+      },
+      {
+        "relative_path": "attachments/Achitectural_Principals_v2.md",
+        "file_name": "Achitectural_Principals_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/Functional_Requiremnts_v1.md",
+        "file_name": "Functional_Requiremnts_v1.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/hook_lite.xml",
+        "file_name": "hook_lite.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "attachments/hook_robust.xml",
+        "file_name": "hook_robust.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "attachments/PROJECT_CHARTER_v2.md",
+        "file_name": "PROJECT_CHARTER_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/Technical_Design_Document_v2.md",
+        "file_name": "Technical_Design_Document_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/Architectural_Principals_v2.md",
+        "file_name": "Architectural_Principals_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/PROJECT_CHARTER_v2.md",
+        "file_name": "PROJECT_CHARTER_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/Technical_Design_Document_v2.md",
+        "file_name": "Technical_Design_Document_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/.gitkeep",
+        "file_name": ".gitkeep",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/agent_profile.xsd",
+        "file_name": "agent_profile.xsd",
+        "extension": "xsd"
+      },
+      {
+        "relative_path": "src/react_agent/infrastructure_manifest.json",
+        "file_name": "infrastructure_manifest.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/manifest_schema.json",
+        "file_name": "manifest_schema.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/naming_conventions.md",
+        "file_name": "naming_conventions.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/runtime_engine.py",
+        "file_name": "runtime_engine.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tool_dispatcher.py",
+        "file_name": "tool_dispatcher.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/agents/.gitkeep",
+        "file_name": ".gitkeep",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/agents/.placeholder",
+        "file_name": ".placeholder",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook.xml",
+        "file_name": "hook.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/learning_repository/.placeholder",
+        "file_name": ".placeholder",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/learning_repository/learning_ledger.json",
+        "file_name": "learning_ledger.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/learning_repository/schema.json",
+        "file_name": "schema.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/tools/.gitkeep",
+        "file_name": ".gitkeep",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/tools/.placeholder",
+        "file_name": ".placeholder",
+        "extension": ""
+      },
+      {
+        "relative_path": "src/react_agent/tools/agent_compiler.py",
+        "file_name": "agent_compiler.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/agent_logger.py",
+        "file_name": "agent_logger.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/learning_loop.py",
+        "file_name": "learning_loop.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/learning_manager.py",
+        "file_name": "learning_manager.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/_tools.py",
+        "file_name": "_tools.py",
+        "extension": "py"
+      }
+    ]
+  },
+  "provisioned_cloud_infrastructure": {
+    "google_cloud_storage": {
+      "active_buckets": [
+        "npt-knowing-2-logs"
+      ]
+    }
+  }
+}

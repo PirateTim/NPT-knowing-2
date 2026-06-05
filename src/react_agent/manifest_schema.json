@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NPT_Infrastructure_Manifest_Schema",
+  "type": "object",
+  "properties": {
+    "active_environment_context": {
+      "type": "object",
+      "properties": {
+        "model_tier": { "type": "string" },
+        "gcp_project_id": { "type": "string" },
+        "last_discovery_utc": { "type": "string" }
+      },
+      "required": ["model_tier", "gcp_project_id", "last_discovery_utc"]
+    },
+    "verified_directory_topology": {
+      "type": "object",
+      "properties": {
+        "root_path": { "type": "string" },
+        "discovered_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "relative_path": { "type": "string" },
+              "file_name": { "type": "string" },
+              "extension": { "type": "string" }
+            },
+            "required": ["relative_path", "file_name", "extension"]
+          }
+        }
+      },
+      "required": ["root_path", "discovered_files"]
+    },
+    "provisioned_cloud_infrastructure": {
+      "type": "object",
+      "properties": {
+        "google_cloud_storage": {
+          "type": "object",
+          "properties": {
+            "active_buckets": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["active_buckets"]
+        }
+      },
+      "required": ["google_cloud_storage"]
+    }
+  },
+  "required": ["active_environment_context", "verified_directory_topology", "provisioned_cloud_infrastructure"]
+}
