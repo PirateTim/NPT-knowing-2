@@ -24,9 +24,16 @@ from tools.agent_logger import agent_logger
 load_dotenv()
 
 class RuntimeEngine:
-    def __init__(self, profile_paths: List[str]):
+    def __init__(self, profile_paths: List[str], thread_id: str = None):
         self.profile_paths = profile_paths
         self.system_instruction = ""
+        self.thread_id = thread_id
+        self.history_path = None
+        
+        # CORRECT CONTEXT ANCHORING: Map the thread histories flat inside the persona folder path
+        if self.thread_id:
+            root_dir = os.path.abspath(os.getcwd())
+            self.history_path = os.path.join(root_dir, "src", "react_agent", "agents", "hook", f"thread_{self.thread_id}.json")
         
         # 1. RUN DETERMINISTIC DISCOVERY: Self-inventory the workspace environment
         self.manifest_path = self.execute_infrastructure_discovery()
@@ -39,33 +46,27 @@ class RuntimeEngine:
         # Pull credit-bearing billing project parameter straight from the shell env context
         project_id = os.getenv("GCP_PROJECT_ID")
         if not project_id:
-            print("[CRITICAL] GCP_PROJECT_ID missing from environment context. Cannot tap credits.", file=sys.stderr)
+            print("[CRITICAL] GCP_PROJECT_ID missing from environment context.", file=sys.stderr)
             sys.exit(1)
             
-        # Initialize unified Client using enterprise Vertex AI mode with your custom billing project
         self.client = genai.Client(
             vertexai=True,
             project=project_id,
-            location="us-central1"
+            location="global"
         )
         
-        # Initialize decoupled execution router wire
         self.dispatcher = tool_dispatcher.ToolDispatcher()
         self._bootstrap_profiles()
 
     def execute_infrastructure_discovery(self) -> str:
         """
         Autonomous State-Store Discovery Engine.
-        Physically inventory files and folders from the active workspace context to prevent drift.
+        Physically inventory files and folders from the absolute workspace root.
         """
-        # Establish the parent repository path root anchor
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.abspath(os.path.join(script_dir, "..", ".."))
+        root_dir = os.path.abspath(os.getcwd())
         discovered_files = []
         
-        # Physical File Walk Sequence
         for root, dirs, files in os.walk(root_dir):
-            # Strip out environment overlays and cache blobs to optimize prompt token limits
             if any(part in root for part in ['.venv', '.git', '__pycache__', 'node_modules']):
                 continue
             for file in files:
@@ -78,10 +79,9 @@ class RuntimeEngine:
                     "extension": ext.lstrip('.')
                 })
                 
-        # Structural state document data assembly
         manifest_data = {
           "active_environment_context": {
-            "model_tier": "gemini-2.5-pro",
+            "model_tier": "gemini-3.1-pro-preview",
             "gcp_project_id": os.getenv("GCP_PROJECT_ID", "npt-reckoning-1"),
             "last_discovery_utc": datetime.datetime.utcnow().isoformat() + "Z"
           },
@@ -96,52 +96,70 @@ class RuntimeEngine:
           }
         }
         
-        target_output = os.path.join(script_dir, "infrastructure_manifest.json")
+        target_output = os.path.join(root_dir, "src", "react_agent", "infrastructure_manifest.json")
+        os.makedirs(os.path.dirname(target_output), exist_ok=True)
         with open(target_output, "w", encoding="utf-8") as f:
             json.dump(manifest_data, f, indent=2)
             
         return target_output
 
     def _bootstrap_profiles(self):
-        aggregated_instructions = []
+        """
+        Compiles injected XML profile contexts into unified system instructions.
+        """
+        compiled_instructions = []
+        root_dir = os.path.abspath(os.getcwd())
         
-        # Inject the live infrastructure manifest as an absolute system rule condition
+        for rel_path in self.profile_paths:
+            full_path = os.path.join(root_dir, rel_path)
+            if not os.path.exists(full_path):
+                print(f"[WARN] Target profile path invalid or unreachable: {rel_path}", file=sys.stderr)
+                continue
+            try:
+                tree = ET.parse(full_path)
+                root = tree.getroot()
+                raw_xml = ET.tostring(root, encoding="utf-8").decode("utf-8")
+                compiled_instructions.append(raw_xml)
+            except Exception as e:
+                print(f"[ERROR] Failed parsing XML context block {rel_path}: {e}", file=sys.stderr)
+                
         if os.path.exists(self.manifest_path):
             with open(self.manifest_path, "r", encoding="utf-8") as f:
                 raw_manifest = f.read()
-            aggregated_instructions.append(
-                f"IMMUTABLE_INFRASTRUCTURE_MANIFEST_GROUND_TRUTH:\n{raw_manifest}\n"
+            compiled_instructions.append(
+                f"\n\nIMMUTABLE_INFRASTRUCTURE_MANIFEST_GROUND_TRUTH:\n{raw_manifest}\n"
                 f"CRITICAL: You must execute your file tools exclusively matching the verified disk paths above."
             )
-
-        for path in self.profile_paths:
-            if not os.path.exists(path):
-                print(f"[CRITICAL] Profile XML not found: {path}", file=sys.stderr)
-                sys.exit(1)
-            try:
-                tree = ET.parse(path)
-                root = tree.getroot()
-                for child in root:
-                    if child.tag in ['identity_persona', 'core_mandate', 'operational_capabilities', 'heuristics']:
-                        for node in child:
-                            aggregated_instructions.append(f"{node.tag.upper()}: {node.text.strip()}")
-            except Exception as e:
-                print(f"[CRITICAL] Config corruption: {e}", file=sys.stderr)
-                sys.exit(1)
-                
-        default_repo = os.getenv("GITHUB_REPO", "PirateTim/NPT-knowing-2")
-        aggregated_instructions.append(f"GLOBAL_ENVIRONMENT_CONTEXT: Default GitHub Repository handle is strictly locked to '{default_repo}'. Use this value automatically for all parameter configurations.")
-        
-        self.system_instruction = "\n\n".join(aggregated_instructions)
+            
+        self.system_instruction = "\n".join(compiled_instructions)
 
     def start_chat_loop(self):
         print(f"\n[INIT] Engine Initialized via ecosystem tier: {self.model_tier}")
+        if self.thread_id:
+            print(f"[INIT] Active Persistent Thread Context Block: {self.thread_id}")
         print(f"[INIT] Dynamic self-discovery complete. State written to: {self.manifest_path}")
         print(f"[INIT] Type 'exit' or 'quit' to close the sovereign session block.\n")
         
-        # Initialize credit-bearing session chat stream
+        # Load historical conversation states from disk if the thread file exists
+        historical_messages = []
+        if self.history_path and os.path.exists(self.history_path):
+            try:
+                with open(self.history_path, "r", encoding="utf-8") as f:
+                    raw_history = json.load(f)
+                for turn in raw_history:
+                    historical_messages.append(
+                        types.Content(
+                            role=turn["role"],
+                            parts=[types.Part.from_text(text=part["text"]) for part in turn["parts"]]
+                        )
+                    )
+                print(f"[TH_LOAD] Successfully synchronized history state ({len(historical_messages)} turns). Resuming thread.")
+            except Exception as e:
+                print(f"[WARN] Failed to load thread history: {e}", file=sys.stderr)
+        
         chat = self.client.chats.create(
             model=self.model_tier,
+            history=historical_messages if historical_messages else None,
             config=types.GenerateContentConfig(
                 system_instruction=self.system_instruction,
                 tools=self.dispatcher.tools,
@@ -158,21 +176,45 @@ class RuntimeEngine:
                     self.dispatcher.shutdown()
                     break
                 
-                # Telemetry logging: Append prompt turn directly to our local audit trail
                 agent_logger.log_event("User", "Prompt", user_input)
-                
                 response = chat.send_message(user_input)
                 
-                # Automatic Function Calling loop execution layer
                 while response.function_calls:
                     for call in response.function_calls:
                         tool_result = self.dispatcher.dispatch(call)
                         response = chat.send_message(tool_result)
 
-                # Telemetry logging: Capture final platform completion block
                 agent_logger.log_event("Hook", "Response", response.text)
-                        
                 print(f"\nHOOK PLATFORM RESPONSE:\n{response.text}\n")
+                
+                # NATIVE SERIALIZATION FIX: Safely parse and persist conversation data to disk
+                if self.history_path:
+                    try:
+                        live_history = chat.get_history()
+                        serializable_history = []
+                        for msg in live_history:
+                            text_parts = []
+                            if msg.parts:
+                                for part in msg.parts:
+                                    # Handle standard text parts safely
+                                    if hasattr(part, 'text') and part.text:
+                                        text_parts.append({"text": part.text})
+                                    # Fallback for dynamic dictionary mappings
+                                    elif isinstance(part, dict) and "text" in part:
+                                        text_parts.append({"text": part["text"]})
+                            
+                            if text_parts:
+                                serializable_history.append({
+                                    "role": msg.role,
+                                    "parts": text_parts
+                                })
+                        
+                        # Ensure the target folder paths exist on disk before writing
+                        os.makedirs(os.path.dirname(self.history_path), exist_ok=True)
+                        with open(self.history_path, "w", encoding="utf-8") as f:
+                            json.dump(serializable_history, f, indent=2)
+                    except Exception as e:
+                        print(f"[WARN] Failed to persist thread checkpoint: {e}", file=sys.stderr)
                 
             except KeyboardInterrupt:
                 self.dispatcher.shutdown()
@@ -185,7 +227,8 @@ class RuntimeEngine:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NPT-Cloud-Agents Sovereign Bootstrapper")
     parser.add_argument("--profile", nargs="+", required=True, help="XML profile paths.")
+    parser.add_argument("--thread", type=str, default=None, help="Specific conversation Thread ID to open or resume.")
     args = parser.parse_args()
     
-    engine = RuntimeEngine(profile_paths=args.profile)
+    engine = RuntimeEngine(profile_paths=args.profile, thread_id=args.thread)
     engine.start_chat_loop()

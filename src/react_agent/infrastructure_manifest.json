@@ -1,8 +1,8 @@
 {
   "active_environment_context": {
-    "model_tier": "gemini-2.5-pro",
+    "model_tier": "gemini-3.1-pro-preview",
     "gcp_project_id": "npt-reckoning-1",
-    "last_discovery_utc": "2026-06-05T17:30:17.309648Z"
+    "last_discovery_utc": "2026-06-08T16:45:01.311705Z"
   },
   "verified_directory_topology": {
     "root_path": "C:/Users/timot/NPT-knowing-2",
@@ -21,6 +21,11 @@
         "relative_path": ".python-version",
         "file_name": ".python-version",
         "extension": ""
+      },
+      {
+        "relative_path": "check_models.py",
+        "file_name": "check_models.py",
+        "extension": "py"
       },
       {
         "relative_path": "hook.log",
@@ -63,19 +68,39 @@
         "extension": "md"
       },
       {
-        "relative_path": "attachments/Functional_Requiremnts_v1.md",
-        "file_name": "Functional_Requiremnts_v1.md",
+        "relative_path": "attachments/agent_questionaire.md",
+        "file_name": "agent_questionaire.md",
         "extension": "md"
       },
       {
-        "relative_path": "attachments/hook_lite.xml",
-        "file_name": "hook_lite.xml",
-        "extension": "xml"
+        "relative_path": "attachments/detailed_design_v1.md",
+        "file_name": "detailed_design_v1.md",
+        "extension": "md"
       },
       {
-        "relative_path": "attachments/hook_robust.xml",
-        "file_name": "hook_robust.xml",
-        "extension": "xml"
+        "relative_path": "attachments/detailed_design_v2.md",
+        "file_name": "detailed_design_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/detailed_design_v3.md",
+        "file_name": "detailed_design_v3.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/detailed_design_v4.md",
+        "file_name": "detailed_design_v4.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/Functional_Requiremnts_v1 copy.md",
+        "file_name": "Functional_Requiremnts_v1 copy.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/Functional_Requiremnts_v1.md",
+        "file_name": "Functional_Requiremnts_v1.md",
+        "extension": "md"
       },
       {
         "relative_path": "attachments/PROJECT_CHARTER_v2.md",
@@ -88,8 +113,33 @@
         "extension": "md"
       },
       {
-        "relative_path": "docs/Architectural_Principals_v2.md",
-        "file_name": "Architectural_Principals_v2.md",
+        "relative_path": "docs/Achitectural_Principals_v2.md",
+        "file_name": "Achitectural_Principals_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/agent_questionaire_hook.md",
+        "file_name": "agent_questionaire_hook.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/arb_approved_files.json",
+        "file_name": "arb_approved_files.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "docs/detailed_design_v5.md",
+        "file_name": "detailed_design_v5.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/Functional_Requiremnts_v1.md",
+        "file_name": "Functional_Requiremnts_v1.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/npt_fleet_design.md",
+        "file_name": "npt_fleet_design.md",
         "extension": "md"
       },
       {
@@ -153,6 +203,41 @@
         "extension": "xml"
       },
       {
+        "relative_path": "src/react_agent/agents/hook/thread_ticket-10.json",
+        "file_name": "thread_ticket-10.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_ticket-12.json",
+        "file_name": "thread_ticket-12.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_ticket-13.json",
+        "file_name": "thread_ticket-13.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/spyglass/cognitive_lens.json",
+        "file_name": "cognitive_lens.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/spyglass/few_shot_exemplars.json",
+        "file_name": "few_shot_exemplars.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/spyglass/learned_rules.json",
+        "file_name": "learned_rules.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/spyglass/spyglass.xml",
+        "file_name": "spyglass.xml",
+        "extension": "xml"
+      },
+      {
         "relative_path": "src/react_agent/learning_repository/.placeholder",
         "file_name": ".placeholder",
         "extension": ""
@@ -185,6 +270,11 @@
       {
         "relative_path": "src/react_agent/tools/agent_logger.py",
         "file_name": "agent_logger.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/get_github_issue.py",
+        "file_name": "get_github_issue.py",
         "extension": "py"
       },
       {

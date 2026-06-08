@@ -1,1 +1,43 @@
-# Project Charter: Project Hook (Autonomous Progenitor Framework)## 1. Project Inception & Business Case### 1.1 Scope & PurposeProject Hook establishes a project-agnostic Autonomous Progenitor Framework operating natively within the Google Cloud Platform (GCP) ecosystem. Hook acts as a programmatic build-time factory whose single structural responsibility is the compilation, verification, deployment, and auditing of secondary, highly specialized task agents.## 2. Project Governance & Business Roles* Executive: Enterprise Client Stakeholder / Review Board Lead.* Senior User: Timothy Murray (Content & Strategy Architect).* Senior Supplier: Hook (The autonomous progenitor factory engine).## 3. Scope Boundaries & Constraints1. The Infrastructure Split: Hook builds the structural pipes; specialist fleet agents master application-level semantics.2. Local Sandbox: Hook is barred from parsing or modifying files sitting outside the designated project root workspace (`C:/Users/timot/NPT-knowing-2/`).
+Project Charter: Project Hook (Autonomous Progenitor Framework)
+1. Project Inception & Business Case
+1.1 Context
+In the modern enterprise landscape, business intelligence, technical research, and content management strategies are collapsing under the weight of unverified synthetic data, informational fragmentation, and context drift. Traditional multi-agent software platforms aggravate this problem by introducing unstructured "vibe coding" paradigms, where autonomous agents dynamically modify their code runtimes, lose track of data provenance, and create opaque processing structures.
+
+1.2 Purpose & Scope
+Project Hook establishes a project-agnostic Autonomous Progenitor Framework designed to operate natively within the Google Cloud Platform (GCP) ecosystem. The purpose of the platform is to decouple infrastructure generation from application execution. Hook acts as a programmatic build-time factory whose single structural responsibility is the compilation, verification, deployment, and auditing of secondary, highly specialized task agents (the "Fleet").
+
+The scope of this platform is fundamentally content-agnostic. It treats all knowledge structures—whether technical architectures, research corpora, metadata sheets, or long-form prose—as deterministic variables managed via state-driven lifecycle pipelines.
+
+2. Project Governance & Business Roles
+The platform implementation operates under a strict PRINCE2-aligned governance matrix to ensure complete human oversight over autonomous build loops.
+
+Executive (Sponsor & Business Owner): Enterprise Client Stakeholder / Review Board Lead. (Owns fiscal boundaries, corporate alignment, and production clearance).
+
+Senior User (Content & Strategy Architect): Timothy Murray. (Owns epistemic frameworks, structural thesis mapping, evaluation metrics, and final asset validation).
+
+Senior Supplier (Lead Systems Architect & Build Controller): Hook (The autonomous progenitor factory engine. Operates under structural constraints to generate agent configuration profiles, coordinate stateless tool dependencies, and manage the technical backlog).
+
+3. Scope Boundaries & Constraints
+To maintain a rigid enterprise security posture, the project establishes three non-negotiable operational boundaries:
+
+The Infrastructure Split: Hook builds the pipes; specialized downstream agents handle the application contents. Hook understands directory structures and protocol schemas for compiler tracking but is completely insulated from the downstream semantic interpretations of the fleet.
+
+Asynchronous Modification Gate: The platform completely bans live, interactive "try-catch" code modifications inside active runtime loops. System planning, feature requests, and operational failures are extracted from memory, wrapped in structured data payloads, and pushed asynchronously to a tracking board (GitHub Issues).
+
+The Local Execution Sandbox: Hook possesses zero authorization to traverse out of her designated project root workspace (C:\Users\timot\NPT-knowing-2\). All file creations, compilation steps, and tool executions are fully quarantined inside path-mitigated system layers.
+
+4. Resource Allocation & Fiscal Control Primitives
+To guarantee that autonomous code-generation cycles do not drain enterprise resources or create runaway compute costs, the project mandates strict token and turn ceilings:
+
+Baseline Foundation Model: Generically locked to the native 2026 google-genai platform model trees (Gemini 2.5 Pro for architectural reasoning; Gemini 2.5 Flash for high-velocity text transformations).
+
+The Absolute Zero Rule: When an operational error, API timeout, or network block occurs, the active execution context instantly initializes a hard resource freeze (token_budget_ceiling=0, turn_budget_ceiling=0), dumps the telemetry to the backlog, and fires a sys.exit(1) halting signal.
+
+5. Tolerances & Success Metrics
+Project performance is evaluated using zero-tolerance engineering metrics rather than loose behavioral approximations:
+
+Namespace Drift: 0%. All files, modules, and configurations generated by the platform must strictly conform to snake_case naming keys and explicit schema suffixes.
+
+Data Lineage Corruption: 0%. Any informational node brought into the system that lacks a verifiable source metadata wrapper is automatically flagged as contamination and purged.
+
+Truth-Verification Defect Rate: 0%. Under the Null-Result Imperative, if a citation or factual assertion cannot be cross-referenced word-for-word against its original lineage tracker, the system must output a primitive null string ("No exact match found").
