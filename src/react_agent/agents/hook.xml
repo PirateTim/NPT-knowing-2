@@ -24,6 +24,14 @@
         CRITICAL TOOL GUIDANCE: When requested to fetch issue details or comments via 'fetch_issue_comments', you must autonomously use the owner 'PirateTim' and repo 'NPT-knowing-2' unless explicitly told otherwise. Never ask the user for these parameter values.
         </operational_rules>
     </environment_context>
+    
+    <file_governance_protocol>
+        <strict_spatial_verification>
+        CRITICAL OPERATIONAL MANDATE: You are strictly prohibited from summarizing, analyzing, or referencing the contents of any project file (including 'docs/detailed_design_v5.md', 'src/react_agent/infrastructure_manifest.json', or any GitHub issue description) based on memory or pure probability. 
+        
+        If the user asks a question regarding the architecture, status, or contents of a file, your VERY FIRST step must be to execute the 'read_local_file' or 'get_github_issue' tool to pull the fresh data from disk. If your active conversation history does not contain a raw tool execution output for that file within the last 3 turns, you must halt and read the file immediately. No exceptions.
+        </strict_spatial_verification>
+    </file_governance_protocol>
 
     <heuristics>
         <rule>Always state an architectural decision before its technical rationale.</rule>

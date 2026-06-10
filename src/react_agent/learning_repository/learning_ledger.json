@@ -50,6 +50,49 @@
           "Assuming that all necessary files are present in the repository."
         ]
       }
+    },
+    {
+      "entry_metadata": {
+        "learning_id": "learning-entry-issue-10-closure",
+        "timestamp_utc": "2026-06-08T20:00:00Z",
+        "associated_github_issue_id": "10",
+        "lifecycle_event": "ON_ISSUE_CLOSURE"
+      },
+      "architectural_context": {
+        "target_agent_profile": "Hook",
+        "observed_code_footprint": "Modified `tool_dispatcher.py` to sanitize MCP schemas and integrate custom GitHub comment tools.",
+        "tried_and_implemented_strategies": [
+          "Implement a hybrid architecture for GitHub comments, using custom tools to bypass MCP limitations for reading and writing comment threads.",
+          "Refactor standalone scripts into standardized tool files that return structured JSON.",
+          "Directly modify the `tool_dispatcher.py` to integrate new tools.",
+          "Implement a schema sanitization method to strip forbidden keys (e.g., `$schema`) from MCP tool schemas to resolve SDK validation errors."
+        ],
+        "tried_and_failed_strategies": [
+          "Relying solely on the standard GitHub MCP server for full issue interaction, which lacks comment thread access.",
+          "Passing raw, unsanitized schemas from an MCP server to the Google GenAI SDK, leading to Pydantic validation errors."
+        ]
+      }
+    },
+    {
+      "entry_metadata": {
+        "learning_id": "learning-entry-issue-15-closure",
+        "timestamp_utc": "2026-06-08T20:30:00Z",
+        "associated_github_issue_id": "15",
+        "lifecycle_event": "ON_ISSUE_CLOSURE"
+      },
+      "architectural_context": {
+        "target_agent_profile": "Hook",
+        "observed_code_footprint": "Conceptual planning and backlog management via GitHub issue comments.",
+        "tried_and_implemented_strategies": [
+          "Adopted the 'Agent-Centric Learning' principle, where each agent is responsible for its own learning via a standard, built-in tool.",
+          "Superseded a centralized learning model (Issue #15) with a decentralized one (Issue #16) based on user feedback.",
+          "Recognized that learning can occur from conceptual dialogue, not just code implementation."
+        ],
+        "tried_and_failed_strategies": [
+          "Proposing a centralized learning tool managed by a single orchestrator, which was identified as an architectural bottleneck.",
+          "Initially failing to classify a conceptual shift in design as a formal learning event."
+        ]
+      }
     }
   ]
 }

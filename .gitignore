@@ -27,3 +27,5 @@ Thumbs.db
 
 v-1-src/
 mcp_config.json
+src/react_agent/agents/hook
+debug_payloads/

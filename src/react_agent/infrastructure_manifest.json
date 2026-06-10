@@ -1,8 +1,8 @@
 {
   "active_environment_context": {
-    "model_tier": "gemini-3.1-pro-preview",
+    "model_tier": "gemini-2.5-pro",
     "gcp_project_id": "npt-reckoning-1",
-    "last_discovery_utc": "2026-06-08T16:45:01.311705Z"
+    "last_discovery_utc": "2026-06-10T21:39:53.375051Z"
   },
   "verified_directory_topology": {
     "root_path": "C:/Users/timot/NPT-knowing-2",
@@ -93,6 +93,11 @@
         "extension": "md"
       },
       {
+        "relative_path": "attachments/detailed_design_v5.md",
+        "file_name": "detailed_design_v5.md",
+        "extension": "md"
+      },
+      {
         "relative_path": "attachments/Functional_Requiremnts_v1 copy.md",
         "file_name": "Functional_Requiremnts_v1 copy.md",
         "extension": "md"
@@ -110,6 +115,26 @@
       {
         "relative_path": "attachments/Technical_Design_Document_v2.md",
         "file_name": "Technical_Design_Document_v2.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "attachments/tool_dispatcher.py",
+        "file_name": "tool_dispatcher.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/active_system_instruction.txt",
+        "file_name": "active_system_instruction.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/raw_request_body.json",
+        "file_name": "raw_request_body.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "docs/accomplishments.md",
+        "file_name": "accomplishments.md",
         "extension": "md"
       },
       {
@@ -158,6 +183,11 @@
         "extension": ""
       },
       {
+        "relative_path": "src/react_agent/agent_engine.py",
+        "file_name": "agent_engine.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/agent_profile.xsd",
         "file_name": "agent_profile.xsd",
         "extension": "xsd"
@@ -183,8 +213,18 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/test_spyglass.py",
+        "file_name": "test_spyglass.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tool_dispatcher.py",
         "file_name": "tool_dispatcher.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/__init__.py",
+        "file_name": "__init__.py",
         "extension": "py"
       },
       {
@@ -203,6 +243,21 @@
         "extension": "xml"
       },
       {
+        "relative_path": "src/react_agent/agents/hook/thread_issue-19.json",
+        "file_name": "thread_issue-19.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_issue-19b.json",
+        "file_name": "thread_issue-19b.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_project-review.json",
+        "file_name": "thread_project-review.json",
+        "extension": "json"
+      },
+      {
         "relative_path": "src/react_agent/agents/hook/thread_ticket-10.json",
         "file_name": "thread_ticket-10.json",
         "extension": "json"
@@ -216,6 +271,16 @@
         "relative_path": "src/react_agent/agents/hook/thread_ticket-13.json",
         "file_name": "thread_ticket-13.json",
         "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/rules/001_universal_github_tools.xml",
+        "file_name": "001_universal_github_tools.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/rules/002_correct_issue_closure_tool.xml",
+        "file_name": "002_correct_issue_closure_tool.xml",
+        "extension": "xml"
       },
       {
         "relative_path": "src/react_agent/agents/spyglass/cognitive_lens.json",
@@ -273,6 +338,21 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/tools/check_cargo_manifest.py",
+        "file_name": "check_cargo_manifest.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/commandeer_url.py",
+        "file_name": "commandeer_url.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/create_database_and_user.py",
+        "file_name": "create_database_and_user.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tools/get_github_issue.py",
         "file_name": "get_github_issue.py",
         "extension": "py"
@@ -288,8 +368,18 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/tools/provision_database.py",
+        "file_name": "provision_database.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tools/_tools.py",
         "file_name": "_tools.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/__init__.py",
+        "file_name": "__init__.py",
         "extension": "py"
       }
     ]
