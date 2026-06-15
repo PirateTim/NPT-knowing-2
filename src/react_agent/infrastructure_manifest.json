@@ -1,8 +1,8 @@
 {
   "active_environment_context": {
-    "model_tier": "gemini-2.5-pro",
+    "model_tier": "gemini-3.1-pro-preview",
     "gcp_project_id": "npt-reckoning-1",
-    "last_discovery_utc": "2026-06-10T21:39:53.375051Z"
+    "last_discovery_utc": "2026-06-11T14:50:45.246203Z"
   },
   "verified_directory_topology": {
     "root_path": "C:/Users/timot/NPT-knowing-2",
@@ -68,31 +68,6 @@
         "extension": "md"
       },
       {
-        "relative_path": "attachments/agent_questionaire.md",
-        "file_name": "agent_questionaire.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/detailed_design_v1.md",
-        "file_name": "detailed_design_v1.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/detailed_design_v2.md",
-        "file_name": "detailed_design_v2.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/detailed_design_v3.md",
-        "file_name": "detailed_design_v3.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/detailed_design_v4.md",
-        "file_name": "detailed_design_v4.md",
-        "extension": "md"
-      },
-      {
         "relative_path": "attachments/detailed_design_v5.md",
         "file_name": "detailed_design_v5.md",
         "extension": "md"
@@ -121,6 +96,21 @@
         "relative_path": "attachments/tool_dispatcher.py",
         "file_name": "tool_dispatcher.py",
         "extension": "py"
+      },
+      {
+        "relative_path": "attachments/spyglass_sources/agents.json",
+        "file_name": "agents.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "attachments/spyglass_sources/spyglass-a.xml",
+        "file_name": "spyglass-a.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "attachments/spyglass_sources/spyglass-b.xml",
+        "file_name": "spyglass-b.xml",
+        "extension": "xml"
       },
       {
         "relative_path": "debug_payloads/active_system_instruction.txt",
@@ -243,6 +233,16 @@
         "extension": "xml"
       },
       {
+        "relative_path": "src/react_agent/agents/spyglass.xml",
+        "file_name": "spyglass.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/tester.xml",
+        "file_name": "tester.xml",
+        "extension": "xml"
+      },
+      {
         "relative_path": "src/react_agent/agents/hook/thread_issue-19.json",
         "file_name": "thread_issue-19.json",
         "extension": "json"
@@ -250,6 +250,16 @@
       {
         "relative_path": "src/react_agent/agents/hook/thread_issue-19b.json",
         "file_name": "thread_issue-19b.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_issue-20.json",
+        "file_name": "thread_issue-20.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/thread_issue-21.json",
+        "file_name": "thread_issue-21.json",
         "extension": "json"
       },
       {
@@ -296,11 +306,6 @@
         "relative_path": "src/react_agent/agents/spyglass/learned_rules.json",
         "file_name": "learned_rules.json",
         "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/spyglass/spyglass.xml",
-        "file_name": "spyglass.xml",
-        "extension": "xml"
       },
       {
         "relative_path": "src/react_agent/learning_repository/.placeholder",
@@ -353,8 +358,23 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/tools/create_tester_agent.py",
+        "file_name": "create_tester_agent.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/create_tester_agent_with_compiler.py",
+        "file_name": "create_tester_agent_with_compiler.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tools/get_github_issue.py",
         "file_name": "get_github_issue.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/github_poster.py",
+        "file_name": "github_poster.py",
         "extension": "py"
       },
       {
@@ -370,6 +390,11 @@
       {
         "relative_path": "src/react_agent/tools/provision_database.py",
         "file_name": "provision_database.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/temp_compiler.py",
+        "file_name": "temp_compiler.py",
         "extension": "py"
       },
       {

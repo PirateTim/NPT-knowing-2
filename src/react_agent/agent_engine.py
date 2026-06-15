@@ -1,11 +1,98 @@
 import os
 import json
 import xml.etree.ElementTree as ET
-from typing import Dict, Any
+from typing import Dict, Any, List
 from google import genai
 from google.genai import types
+import sys
+import pg8000.dbapi
+from dotenv import load_dotenv
+import uuid
+from urllib.parse import urlparse
 
+load_dotenv()
 from tool_dispatcher import ToolDispatcher
+
+# =====================================================================
+# STATE SAVER: FIXED ARCHITECTURE (Pure JSON Text Persistence)
+# =====================================================================
+
+def get_db_connection():
+    """Establishes a reliable data connection to our Cloud SQL instance."""
+    try:
+        url = urlparse(os.getenv("DATABASE_URL"))
+        return pg8000.dbapi.connect(
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port,
+            database=url.path[1:]
+        )
+    except Exception as e:
+        print(f"[DB ERROR] Connectivity failure: {e}", file=sys.stderr)
+        return None
+
+def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
+    """Retrieves and deserializes the JSON state history into GenAI types."""
+    cursor = conn.cursor()
+    # Pull the binary/text array directly from your provisioned checkpoints schema
+    cursor.execute(
+        "SELECT checkpoint FROM checkpoints WHERE thread_id = %s ORDER BY checkpoint_id DESC LIMIT 1",
+        (thread_id,)
+    )
+    result = cursor.fetchone()
+    cursor.close()
+    
+    historical_messages = []
+    if result and result[0]:
+        try:
+            # Decode the JSON string array back into type-safe SDK Content blocks
+            raw_history = json.loads(result[0] if isinstance(result[0], str) else result[0].decode('utf-8'))
+            for turn in raw_history:
+                historical_messages.append(
+                    types.Content(
+                        role=turn["role"],
+                        parts=[types.Part.from_text(text=part["text"]) for part in turn["parts"]]
+                    )
+                )
+        except Exception as e:
+            print(f"[WARN] Failed deserializing JSON thread history: {e}", file=sys.stderr)
+    return historical_messages
+
+def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
+    """Commits active text-dialogue checkpoints as clean, human-readable JSON."""
+    cursor = conn.cursor()
+    new_checkpoint_id = str(uuid.uuid4())
+    
+    cursor.execute(
+        "SELECT checkpoint_id FROM checkpoints WHERE thread_id = %s ORDER BY checkpoint_id DESC LIMIT 1",
+        (thread_id,)
+    )
+    parent_row = cursor.fetchone()
+    parent_checkpoint_id = parent_row[0] if parent_row else None
+
+    serializable_history = []
+    for msg in history:
+        if msg.role in ["user", "model"]:
+            text_parts = []
+            if msg.parts:
+                for part in msg.parts:
+                    if hasattr(part, 'text') and part.text:
+                        text_parts.append({"text": part.text})
+            if text_parts:
+                serializable_history.append({"role": msg.role, "parts": text_parts})
+
+    if serializable_history:
+        # Keep it as a pure text string! pg8000 maps Python strings seamlessly to PostgreSQL JSONB
+        json_str = json.dumps(serializable_history)
+        
+        cursor.execute(
+            "INSERT INTO checkpoints (thread_id, checkpoint_id, parent_checkpoint_id, checkpoint) VALUES (%s, %s, %s, %s)",
+            (thread_id, new_checkpoint_id, parent_checkpoint_id, json_str)
+        )
+        conn.commit()
+    cursor.close()
+# [... Keeping AgentEngineFactory class code exactly as Hook authored it ...]
 
 class AgentEngineFactory:
     """
@@ -117,7 +204,7 @@ class AgentEngineFactory:
                 filtered_tools.append(types.Tool(function_declarations=matching_decls))
         return filtered_tools
 
-    def compile_agent_session(self, agent_name: str, thread_id: str):
+    def compile_agent_session(self, agent_name: str, thread_id: str, db_conn):
         """
         The Factory Compiler. Assembles the native Gemini chat session for the specific agent.
         """
@@ -139,14 +226,55 @@ class AgentEngineFactory:
         )
         
         # 5. Initialize the Native Chat Session
-        # Note: In a full implementation, we would load the history array for `thread_id` here.
+        history = get_latest_checkpoint(db_conn, thread_id)
+        
         chat_session = self.client.chats.create(
             model="gemini-2.5-pro",
-            config=config
+            config=config,
+            history=history if history else []
         )
         
         return chat_session
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python agent_engine.py <agent_name>")
+        sys.exit(1)
 
-# Example Usage:
-# factory = AgentEngineFactory()
-# spyglass_session = factory.compile_agent_session("Spyglass", thread_id="test_001")
+    agent_name = sys.argv[1]
+    thread_id = f"thread_{agent_name.lower()}_production_sprint"
+
+    db_conn = get_db_connection()
+    if not db_conn:
+        sys.exit(1)
+
+    factory = AgentEngineFactory()
+    chat_session = factory.compile_agent_session(agent_name, thread_id, db_conn)
+
+    print(f"\n[BOOT] {agent_name} runtime session synchronized with cloud persistence layer.")
+    print("Type 'exit' or 'quit' to end the session block.\n")
+
+    try:
+        while True:
+            user_input = input("({agent_name}) > ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ['exit', 'quit']:
+                break
+            
+            response = chat_session.send_message(user_input)
+            
+            # FIXED: Added missing automatic function execution routing block
+            while response.function_calls:
+                for call in response.function_calls:
+                    print(f"[{agent_name} TOOL CALL] Invoking workspace wire: {call.name}...")
+                    tool_result = factory.dispatcher.dispatch(call)
+                    response = chat_session.send_message(tool_result)
+            
+            print(f"\n{agent_name.upper()} RESPONSE:\n{response.text}\n")
+            
+            # FIXED: Updated to use the correct SDK history getter method
+            save_checkpoint(db_conn, thread_id, chat_session.get_history())
+
+    finally:
+        db_conn.close()
+        print("[SHUTDOWN] Connection handles successfully released.")

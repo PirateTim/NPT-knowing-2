@@ -81,7 +81,7 @@ class RuntimeEngine:
                 
         manifest_data = {
           "active_environment_context": {
-            "model_tier": "gemini-2.5-pro",
+            "model_tier": "gemini-3.1-pro-preview", # gemini-2.5-pro gemini-3.1-pro-preview
             "gcp_project_id": os.getenv("GCP_PROJECT_ID", "npt-reckoning-1"),
             "last_discovery_utc": datetime.datetime.utcnow().isoformat() + "Z"
           },
@@ -191,7 +191,7 @@ class RuntimeEngine:
         
         while True:
             try:
-                user_input = input("USER > ").strip()
+                user_input = input("HOOK > ").strip()
                 if not user_input:
                     continue
                 if user_input.lower() in ["exit", "quit"]:
