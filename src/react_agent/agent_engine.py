@@ -35,7 +35,6 @@ def get_db_connection():
 def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
     """Retrieves and deserializes the JSON state history into GenAI types."""
     cursor = conn.cursor()
-    # Pull the binary/text array directly from your provisioned checkpoints schema
     cursor.execute(
         "SELECT checkpoint FROM checkpoints WHERE thread_id = %s ORDER BY checkpoint_id DESC LIMIT 1",
         (thread_id,)
@@ -46,8 +45,14 @@ def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
     historical_messages = []
     if result and result[0]:
         try:
-            # Decode the JSON string array back into type-safe SDK Content blocks
-            raw_history = json.loads(result[0] if isinstance(result[0], str) else result[0].decode('utf-8'))
+            # FIXED: Handle native JSONB structures directly if pg8000 already parsed them as a list
+            if isinstance(result[0], list):
+                raw_history = result[0]
+            elif isinstance(result[0], str):
+                raw_history = json.loads(result[0])
+            else:
+                raw_history = json.loads(result[0].decode('utf-8'))
+                
             for turn in raw_history:
                 historical_messages.append(
                     types.Content(
@@ -207,6 +212,7 @@ class AgentEngineFactory:
     def compile_agent_session(self, agent_name: str, thread_id: str, db_conn):
         """
         The Factory Compiler. Assembles the native Gemini chat session for the specific agent.
+        Ensures strict runtime alignment of authorized tool parameters.
         """
         # 1. Load Long-Term Memory Vault & Requested Tools
         memory = self._load_agent_memory_vault(agent_name)
@@ -214,18 +220,67 @@ class AgentEngineFactory:
         # 2. Build the Anti-Drift System Prompt
         system_prompt = self._build_dynamic_system_prompt(agent_name, memory)
         
-        # 3. Filter Tools natively
+        # 3. FIXED: Intersect requested tools with actual dispatcher schemas
+        # This strips out unmapped XML strings that crash the configuration block.
+# 3. FIXED: Intersect requested tools with actual dispatcher schemas
+        # This strips out unmapped XML strings that crash the configuration block.
+
+# 3. FIXED: Map live executable function pointers directly to the SDK
+       # 3. FIXED: Map live executable function pointers directly to the SDK
+        # We use a relative import because the runtime executes from within the react_agent package space.
+# =====================================================================
+        # FIXED: Core Declarative Schema Mapping
+        # We pass the dispatcher's exact tool definitions so the client handles
+        # the routing turns manually via our while-loop.
+        # =====================================================================
         requested_tools = memory.get("requested_tools", [])
-        bound_tools = self._filter_tools(requested_tools)
         
-        # 4. Configure the Native Client (Cost-Careful Ceiling Enforced)
+        # Pull the structured definitions directly out of the ToolDispatcher block
+        bound_tools = []
+        for tool_block in self.dispatcher.tools:
+            matching_decls = [
+                decl for decl in tool_block.function_declarations 
+                if decl.name in requested_tools
+            ]
+            if matching_decls:
+                bound_tools.append(types.Tool(function_declarations=matching_decls))
+        
+# =====================================================================
+        # FIXED: Core Declarative Schema Mapping
+        # We pass the dispatcher's exact tool definitions so the client handles
+        # the routing turns manually via our while-loop.
+        # =====================================================================
+        requested_tools = memory.get("requested_tools", [])
+        
+        # Pull the structured definitions directly out of the ToolDispatcher block
+        bound_tools = []
+        for tool_block in self.dispatcher.tools:
+            matching_decls = [
+                decl for decl in tool_block.function_declarations 
+                if decl.name in requested_tools
+            ]
+            if matching_decls:
+                bound_tools.append(types.Tool(function_declarations=matching_decls))
+        
+        # Enforce the function constraint loop using a clean string literal
+        tool_config = None
+        if bound_tools:
+            tool_config = types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(
+                    mode="AUTO",  # Fixed: Bypasses non-existent Enum lookups cleanly
+                    # allowed_function_names=requested_tools
+                )
+            )
+        # =====================================================================
+        # 5. Configure Content Generation Parameters
         config = types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.1,
-            tools=bound_tools
+            tools=bound_tools,
+            tool_config=tool_config
         )
         
-        # 5. Initialize the Native Chat Session
+        # 6. Initialize Chat History Session
         history = get_latest_checkpoint(db_conn, thread_id)
         
         chat_session = self.client.chats.create(
@@ -237,11 +292,17 @@ class AgentEngineFactory:
         return chat_session
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python agent_engine.py <agent_name>")
+        print("Usage: python agent_engine.py <agent_name> [thread_suffix]")
         sys.exit(1)
 
     agent_name = sys.argv[1]
-    thread_id = f"thread_{agent_name.lower()}_production_sprint"
+    
+    # FIXED: Allow manual suffixing for running parallel windows
+    if len(sys.argv) >= 3:
+        thread_suffix = sys.argv[2].lower().strip()
+        thread_id = f"thread_{agent_name.lower()}_{thread_suffix}"
+    else:
+        thread_id = f"thread_{agent_name.lower()}_production_sprint"
 
     db_conn = get_db_connection()
     if not db_conn:
@@ -250,29 +311,48 @@ if __name__ == "__main__":
     factory = AgentEngineFactory()
     chat_session = factory.compile_agent_session(agent_name, thread_id, db_conn)
 
-    print(f"\n[BOOT] {agent_name} runtime session synchronized with cloud persistence layer.")
+    print(f"\n[BOOT] {agent_name.upper()} runtime session synchronized with cloud persistence layer.")
+    print(f"[TRACKING REGISTER] Active Thread Context: {thread_id}")
     print("Type 'exit' or 'quit' to end the session block.\n")
 
     try:
         while True:
-            user_input = input("({agent_name}) > ").strip()
+            user_input = input(f"({agent_name.upper()}) > ").strip()
             if not user_input:
                 continue
             if user_input.lower() in ['exit', 'quit']:
                 break
             
+            # 1. Send the URL string turn to Gemini
             response = chat_session.send_message(user_input)
             
-            # FIXED: Added missing automatic function execution routing block
+            # 2. IMMEDIATELY check for function calls before trying to access or print response.text
             while response.function_calls:
+                tool_responses = []
+                
                 for call in response.function_calls:
-                    print(f"[{agent_name} TOOL CALL] Invoking workspace wire: {call.name}...")
-                    tool_result = factory.dispatcher.dispatch(call)
-                    response = chat_session.send_message(tool_result)
+                    print(f"[{agent_name.upper()} TOOL CALL] Invoking workspace wire: {call.name}...")
+                    
+                    if hasattr(call, 'args') and 'url' in call.args:
+                        clean_url = str(call.args['url']).strip().replace('"', '').replace("'", "").replace('\r', '').replace('\n', '')
+                        call.args['url'] = clean_url
+                        
+                    # Execute the real python tool code via dispatcher
+                    tool_output_string = factory.dispatcher.dispatch(call)
+                    
+                    # Package back into proper SDK Parts
+                    tool_responses.append(
+                        types.Part.from_function_response(
+                            name=call.name,
+                            response={"result": tool_output_string}
+                        )
+                    )
+                
+                # Loop back to model to finish the turn and get the final text summary
+                response = chat_session.send_message(tool_responses)
             
+            # 3. Only print and checkpoint AFTER the tool execution loop has settled
             print(f"\n{agent_name.upper()} RESPONSE:\n{response.text}\n")
-            
-            # FIXED: Updated to use the correct SDK history getter method
             save_checkpoint(db_conn, thread_id, chat_session.get_history())
 
     finally:

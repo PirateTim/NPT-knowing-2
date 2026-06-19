@@ -1,1 +1,6 @@
-[]
+[
+  {
+    "rule_directive": "When processing text files originating from 'futurism.com', programmatically filter out lines containing common sidebar navigation terms including 'Search for:', 'IG', 'BS', 'FB', 'Most Popular', and all lines following the 'SEE MORE' footer boundary marker.",
+    "source_context": "Heuristic analysis of corporate news crawl formatting pollution"
+  }
+]

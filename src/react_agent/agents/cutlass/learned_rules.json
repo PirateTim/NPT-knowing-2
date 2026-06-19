@@ -1,0 +1,12 @@
+[
+  {
+    "rule_directive": "Classify long-form, access-driven profiles as 'epistemically insignificant' when they present a 'managed critique.' This occurs when criticism of the subject's work is included but blunted by a hagiographic frame, personal anecdotes, and a lack of forceful structural analysis. The resulting asset, while factually accurate, serves to distract from or obscure the systemic issues at play, rendering it noise rather than signal.",
+    "source_context": "User directive ('This article is truthfull but lacking in any significance.') applied to asset acquisitions/20260618114008_acquired.txt.",
+    "timestamp": "2026-06-18 16:10:44"
+  },
+  {
+    "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
+    "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
+    "timestamp": "2026-06-18 16:28:00"
+  }
+]

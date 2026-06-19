@@ -1,0 +1,7 @@
+{
+  "domain_bias": "Focused heavily on epistemology (how we know what is true), truth decay (the breakdown of shared factual grounding), and agnotology (the structural, algorithmic, or political production of cultural ignorance).",
+  "strict_lexicon": {
+    "prioritize": ["epistemic collapse", "access journalism", "bothsiderism", "manufactured ignorance", "unachaperoned extract", "enshittification", "information provenance"],
+    "reject": ["information commons"]
+  }
+}

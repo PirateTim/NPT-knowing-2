@@ -6,23 +6,16 @@ Architecture: Decoupled Tool Execution Module (Stdio MCP Bridge)
 import os
 import sys
 import json
-import subprocess
-import threading
 import urllib.request
-import urllib.error
 from urllib.parse import urlparse
-import shutil
 from typing import List, Dict, Any
 from google.genai import types
+import datetime  # Ensure datetime is imported at the top of tool_dispatcher.py
 
-# FIXED: Use explicit relative path correction to avoid Windows virtualenv resolve faults
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from tools.provision_database import provision_agent_state_db
 from tools.create_database_and_user import create_database_and_user
-
-# =====================================================================
-# NATIVE WORKSPACE TOOLS (Static Local File Wires)
-# =====================================================================
+from tools.acquire_content import acquire_content  # INTEGRATED WORKING WIRE
 
 def _get_project_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -111,34 +104,72 @@ def post_github_comment(owner: str, repo: str, issue_number: int, body: str) -> 
             return f"[ERROR] GitHub API returned status code: {response.status}"
     except Exception as e:
         return f"[ERROR] Failed to post comment: {str(e)}"
+    
 
-def commandeer_url(url: str) -> str:
-    parsed = urlparse(url)
-    if not parsed.scheme or not parsed.netloc:
-        return "[ERROR] Invalid URL format. Must include http:// or https://"
-    req = urllib.request.Request(
-        url, 
-        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    )
+
+
+def record_learned_ontology_rule(agent_name: str, rule_directive: str, source_context: str) -> str:
+    """Appends an explicitly taught classification rule to an agent's permanent memory files."""
+    # FIXED: Anchor path explicitly to the project root directory context
+    project_root = _get_project_root()
+    base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
+    rules_path = os.path.join(base_dir, "learned_rules.json")
+    
+    os.makedirs(base_dir, exist_ok=True)
+    rules = []
+    if os.path.exists(rules_path):
+        with open(rules_path, "r", encoding="utf-8") as f:
+            try: rules = json.load(f)
+            except Exception: rules = []
+                
+    rules.append({
+        "rule_directive": rule_directive,
+        "source_context": source_context,
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    
+    with open(rules_path, "w", encoding="utf-8") as f:
+        json.dump(rules, f, indent=2)
+    return f"[SUCCESS] New ontological rule securely committed to {agent_name}'s profile layer."
+
+def record_few_shot_exemplar(agent_name: str, input_context: str, ideal_output: str, rationale: str) -> str:
+    """Stores an interactive classification turn as a few-shot training exemplar for future runs."""
+    # FIXED: Anchor path explicitly to the project root directory context
+    project_root = _get_project_root()
+    # base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", agent_name.lower()))
+    base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
+    exemplars_path = os.path.join(base_dir, "few_shot_exemplars.json")
+    
+    os.makedirs(base_dir, exist_ok=True)
+    exemplars = []
+    if os.path.exists(exemplars_path):
+        with open(exemplars_path, "r", encoding="utf-8") as f:
+            try: exemplars = json.load(f)
+            except Exception: exemplars = []
+                
+    exemplars.append({
+        "input_context": input_context[:500],
+        "ideal_output": ideal_output,
+        "rationale": rationale
+    })
+    
+    with open(exemplars_path, "w", encoding="utf-8") as f:
+        json.dump(exemplars, f, indent=2)
+    return f"[SUCCESS] Interactive training exemplar pinned to {agent_name}'s Few-Shot vault."  
+def read_gcs_bucket_file(bucket_name: str, blob_path: str) -> str:
+    """Streams the raw text string contents of any object stored inside a GCP bucket."""
     try:
-        with urllib.request.urlopen(req, timeout=15) as response:
-            content = response.read().decode('utf-8', errors='ignore')
-            return f"[SUCCESS] Content acquired. Length: {len(content)} characters.\n\n{content[:2000]}"
+        from google.cloud import storage
+        client = storage.Client()
+        b_name = bucket_name.replace("gs://", "").strip()
+        bucket = client.bucket(b_name)
+        blob = bucket.blob(blob_path.strip())
+        return blob.download_as_text(encoding="utf-8")
     except Exception as e:
-        return f"[ERROR] Failed during commandeer_url: {str(e)}"
-
-# =====================================================================
-# MCP BRIDGE & DISPATCH CLASS ORCHESTRATION
-# =====================================================================
-
-class MCPManager:
-    def __init__(self, config_path: str = "mcp_config.json"):
-        self.config_path = os.path.abspath(os.path.join(_get_project_root(), config_path))
-        self.tools_metadata: List[types.FunctionDeclaration] = []
+        return f"[GCS ERROR] Failed to stream asset from bucket: {str(e)}"
 
 class ToolDispatcher:
     def __init__(self):
-        self.mcp_manager = MCPManager()
         self.tools = self._discover_tools()
 
     def shutdown(self):
@@ -173,8 +204,8 @@ class ToolDispatcher:
                     parameters={"type": "OBJECT", "properties": {"owner": {"type": "STRING"}, "repo": {"type": "STRING"}, "issue_number": {"type": "INTEGER"}, "body": {"type": "STRING"}}, "required": ["owner", "repo", "issue_number", "body"]}
                 ),
                 types.FunctionDeclaration(
-                    name="commandeer_url",
-                    description="Acquires the raw HTML/text content from a target URL.",
+                    name="acquire_content",
+                    description="Acquires full text and system metadata from a target research URL.",
                     parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}}, "required": ["url"]}
                 ),
                 types.FunctionDeclaration(
@@ -183,8 +214,30 @@ class ToolDispatcher:
                     parameters={"type": "OBJECT", "properties": {"instance_name": {"type": "STRING"}, "authorized_ip": {"type": "STRING"}}, "required": ["instance_name", "authorized_ip"]}
                 ),
                 types.FunctionDeclaration(
+                    name="record_learned_ontology_rule",
+                    description="Appends an explicitly taught classification rule to an agent's permanent memory files.",
+                    parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule_directive": {"type": "STRING"}, "source_context": {"type": "STRING"}}, "required": ["agent_name", "rule_directive", "source_context"]}
+                ),
+                types.FunctionDeclaration(
+                    name="record_few_shot_exemplar",
+                    description="Stores an interactive classification turn as a few-shot training exemplar for future runs.",
+                    parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "input_context": {"type": "STRING"}, "ideal_output": {"type": "STRING"}, "rationale": {"type": "STRING"}}, "required": ["agent_name", "input_context", "ideal_output", "rationale"]}
+                ),
+                types.FunctionDeclaration(
+                    name="read_gcs_bucket_file",
+                    description="Streams the raw text string contents of any object stored inside a GCP bucket.",
+                    parameters={
+                        "type": "OBJECT", 
+                        "properties": {
+                            "bucket_name": {"type": "STRING"}, 
+                            "blob_path": {"type": "STRING"}
+                        }, 
+                        "required": ["bucket_name", "blob_path"]
+                    }
+                ),
+                types.FunctionDeclaration(
                     name="create_database_and_user",
-                    description="Connects directly via TCP using native pg8000 bindings to initialize databases, user roles, and core state machine schemas.",
+                    description="Initializes schemas over native pg8000 bindings.",
                     parameters={
                         "type": "OBJECT",
                         "properties": {
@@ -198,8 +251,7 @@ class ToolDispatcher:
                 )
             ]
         )
-        
-        print(f"[DISPATCHER] Mounted 26 dynamic MCP tools and 8 local workspace tools.")
+        print(f"[DISPATCHER] Core ingestion framework successfully initialized.")
         return [local_tool_block]
 
     def dispatch(self, call: types.FunctionCall) -> str:
@@ -214,11 +266,18 @@ class ToolDispatcher:
             return get_github_issue(**args)
         elif call.name == "post_github_comment":
             return post_github_comment(**args)
-        elif call.name == "commandeer_url":
-            return commandeer_url(**args)
+        elif call.name == "acquire_content":
+            # Direct routing response dictionary maps back as JSON text string
+            return json.dumps(acquire_content(**args))
         elif call.name == "provision_agent_state_db":
             return provision_agent_state_db(**args)
         elif call.name == "create_database_and_user":
             return create_database_and_user(**args)
+        elif call.name == "record_learned_ontology_rule":
+            return record_learned_ontology_rule(**args)
+        elif call.name == "record_few_shot_exemplar":
+            return record_few_shot_exemplar(**args)
+        elif call.name == "read_gcs_bucket_file":
+            return read_gcs_bucket_file(**args)
         else:
             return f"[ERROR] Unmapped tool call configuration: {call.name}"

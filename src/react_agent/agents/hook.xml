@@ -32,6 +32,13 @@
         If the user asks a question regarding the architecture, status, or contents of a file, your VERY FIRST step must be to execute the 'read_local_file' or 'get_github_issue' tool to pull the fresh data from disk. If your active conversation history does not contain a raw tool execution output for that file within the last 3 turns, you must halt and read the file immediately. No exceptions.
         </strict_spatial_verification>
     </file_governance_protocol>
+    <rule>
+    <name>use correct db connector</name>
+    <description>
+        Don't use: import pg8000.native.  Use this instead: import pg8000.dbapi    
+    </description>
+    <rationale>We must use the standard DB connector.</rationale>
+</rule>
 
     <heuristics>
         <rule>Always state an architectural decision before its technical rationale.</rule>
