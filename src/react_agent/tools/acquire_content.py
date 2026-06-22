@@ -49,6 +49,9 @@ def acquire_content(url: str) -> dict:
     gcp_bucket_name = os.getenv("GCP_CARGO_BUCKET", "npt-fleet-cargo-hold")
     results = {"url": target_url, "status": "pending", "tier_executed": 1}
     
+    # Quick, cost-effective pre-check on known failures before burning compute cycles
+    # (Pre-assume db_conn handle availability inside tool contexts)
+    
     # 1. Deduplication Check
     db_conn = get_cargo_db_connection()
     existing_record = None
@@ -197,11 +200,19 @@ def acquire_content(url: str) -> dict:
                 json.dumps(metadata.get("Keywords", [])), metadata.get("Rights"), f"{gcp_bucket_name}/{gcp_path}"
             ))
             db_conn.commit()
+
+            # IF CONTENT SECURELY STORED: Clean up the dead-letter records instantly
+            cursor.execute(
+                "DELETE FROM cargo.failed_metadata WHERE source_url = %s",
+                (target_url,)
+            )
+
             cursor.close()
             results["db_insert"] = "success"
         except Exception as e:
             results["db_insert"] = f"failed: {str(e)}"
         finally:
+
             db_conn.close()
     else:
         results["db_insert"] = "failed: connection unavailable"

@@ -45,7 +45,6 @@ def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
     historical_messages = []
     if result and result[0]:
         try:
-            # FIXED: Handle native JSONB structures directly if pg8000 already parsed them as a list
             if isinstance(result[0], list):
                 raw_history = result[0]
             elif isinstance(result[0], str):
@@ -88,39 +87,31 @@ def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
                 serializable_history.append({"role": msg.role, "parts": text_parts})
 
     if serializable_history:
-        # Keep it as a pure text string! pg8000 maps Python strings seamlessly to PostgreSQL JSONB
         json_str = json.dumps(serializable_history)
-        
         cursor.execute(
             "INSERT INTO checkpoints (thread_id, checkpoint_id, parent_checkpoint_id, checkpoint) VALUES (%s, %s, %s, %s)",
             (thread_id, new_checkpoint_id, parent_checkpoint_id, json_str)
         )
         conn.commit()
     cursor.close()
-# [... Keeping AgentEngineFactory class code exactly as Hook authored it ...]
+
 
 class AgentEngineFactory:
     """
     The master native factory for the NPT Progeny Fleet.
     Implements the Two-Tier Memory Store (Short-Term Thread History + Long-Term JSON Vault).
-    Utilizes the native google-genai SDK, eliminating LangChain/LangGraph bloat.
     """
     
     def __init__(self):
-        """
-        Initializes the factory with the native Gemini client and centralized ToolDispatcher.
-        """
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
 
     def _load_agent_memory_vault(self, agent_name: str) -> Dict[str, Any]:
-        """
-        Reads the agent's permanent, cross-thread JSON storage directory and XML profile.
-        """
+        """Reads the agent's permanent, cross-thread JSON storage directory and XML profile."""
         base_path = f"src/react_agent/agents/{agent_name.lower()}"
         profile = {"mandate": "", "lens": {}, "rules": [], "exemplars": [], "requested_tools": []}
         
-        # 1. Load XML Profile (Core Mandate & Tools)
+        # 1. Load XML Profile
         xml_path = f"{base_path}/{agent_name.lower()}.xml"
         if os.path.exists(xml_path):
             tree = ET.parse(xml_path)
@@ -143,7 +134,7 @@ class AgentEngineFactory:
             with open(lens_path, 'r') as f:
                 profile["lens"] = json.load(f)
                 
-        # 3. Load Learned Rules (The Teaching Loop)
+        # 3. Load Learned Rules
         rules_path = f"{base_path}/learned_rules.json"
         if os.path.exists(rules_path):
             with open(rules_path, 'r') as f:
@@ -158,10 +149,7 @@ class AgentEngineFactory:
         return profile
 
     def _build_dynamic_system_prompt(self, agent_name: str, memory: Dict[str, Any]) -> str:
-        """
-        Constructs the immutable system instruction block injected at runtime boot.
-        This prevents cognitive drift by anchoring the model to the human-taught rules.
-        """
+        """Constructs the immutable system instruction block injected at runtime boot."""
         prompt = f"You are {agent_name}.\n\n"
         
         if memory.get("mandate"):
@@ -195,84 +183,29 @@ class AgentEngineFactory:
                 
         return prompt
 
-    def _filter_tools(self, requested_tool_names: list[str]) -> list[types.Tool]:
-        """
-        Filters the master ToolDispatcher list to only include tools requested by the agent's XML.
-        """
-        filtered_tools = []
-        for tool_block in self.dispatcher.tools:
-            matching_decls = [
-                decl for decl in tool_block.function_declarations 
-                if decl.name in requested_tool_names
-            ]
-            if matching_decls:
-                filtered_tools.append(types.Tool(function_declarations=matching_decls))
-        return filtered_tools
-
     def compile_agent_session(self, agent_name: str, thread_id: str, db_conn):
-        """
-        The Factory Compiler. Assembles the native Gemini chat session for the specific agent.
-        Ensures strict runtime alignment of authorized tool parameters.
-        """
-        # 1. Load Long-Term Memory Vault & Requested Tools
+        """Assembles the native Gemini chat session for the specific agent with clean tool constraints."""
         memory = self._load_agent_memory_vault(agent_name)
-        
-        # 2. Build the Anti-Drift System Prompt
         system_prompt = self._build_dynamic_system_prompt(agent_name, memory)
         
-        # 3. FIXED: Intersect requested tools with actual dispatcher schemas
-        # This strips out unmapped XML strings that crash the configuration block.
-# 3. FIXED: Intersect requested tools with actual dispatcher schemas
-        # This strips out unmapped XML strings that crash the configuration block.
-
-# 3. FIXED: Map live executable function pointers directly to the SDK
-       # 3. FIXED: Map live executable function pointers directly to the SDK
-        # We use a relative import because the runtime executes from within the react_agent package space.
-# =====================================================================
-        # FIXED: Core Declarative Schema Mapping
-        # We pass the dispatcher's exact tool definitions so the client handles
-        # the routing turns manually via our while-loop.
-        # =====================================================================
         requested_tools = memory.get("requested_tools", [])
-        
-        # Pull the structured definitions directly out of the ToolDispatcher block
         bound_tools = []
+        
         for tool_block in self.dispatcher.tools:
-            matching_decls = [
-                decl for decl in tool_block.function_declarations 
-                if decl.name in requested_tools
-            ]
-            if matching_decls:
-                bound_tools.append(types.Tool(function_declarations=matching_decls))
+            if hasattr(tool_block, 'function_declarations') and tool_block.function_declarations:
+                matching_decls = [
+                    decl for decl in tool_block.function_declarations 
+                    if decl.name in requested_tools
+                ]
+                if matching_decls:
+                    bound_tools.append(types.Tool(function_declarations=matching_decls))
         
-# =====================================================================
-        # FIXED: Core Declarative Schema Mapping
-        # We pass the dispatcher's exact tool definitions so the client handles
-        # the routing turns manually via our while-loop.
-        # =====================================================================
-        requested_tools = memory.get("requested_tools", [])
-        
-        # Pull the structured definitions directly out of the ToolDispatcher block
-        bound_tools = []
-        for tool_block in self.dispatcher.tools:
-            matching_decls = [
-                decl for decl in tool_block.function_declarations 
-                if decl.name in requested_tools
-            ]
-            if matching_decls:
-                bound_tools.append(types.Tool(function_declarations=matching_decls))
-        
-        # Enforce the function constraint loop using a clean string literal
         tool_config = None
         if bound_tools:
             tool_config = types.ToolConfig(
-                function_calling_config=types.FunctionCallingConfig(
-                    mode="AUTO",  # Fixed: Bypasses non-existent Enum lookups cleanly
-                    # allowed_function_names=requested_tools
-                )
+                function_calling_config=types.FunctionCallingConfig(mode="AUTO")
             )
-        # =====================================================================
-        # 5. Configure Content Generation Parameters
+
         config = types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.1,
@@ -280,24 +213,20 @@ class AgentEngineFactory:
             tool_config=tool_config
         )
         
-        # 6. Initialize Chat History Session
         history = get_latest_checkpoint(db_conn, thread_id)
-        
-        chat_session = self.client.chats.create(
+        return self.client.chats.create(
             model="gemini-2.5-pro",
             config=config,
             history=history if history else []
         )
-        
-        return chat_session
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python agent_engine.py <agent_name> [thread_suffix]")
         sys.exit(1)
 
     agent_name = sys.argv[1]
-    
-    # FIXED: Allow manual suffixing for running parallel windows
     if len(sys.argv) >= 3:
         thread_suffix = sys.argv[2].lower().strip()
         thread_id = f"thread_{agent_name.lower()}_{thread_suffix}"
@@ -311,6 +240,28 @@ if __name__ == "__main__":
     factory = AgentEngineFactory()
     chat_session = factory.compile_agent_session(agent_name, thread_id, db_conn)
 
+    initial_memory = factory._load_agent_memory_vault(agent_name)
+    initial_system_prompt = factory._build_dynamic_system_prompt(agent_name, initial_memory)
+    
+    requested_tools = initial_memory.get("requested_tools", [])
+    bound_tools = []
+    for tool_block in factory.dispatcher.tools:
+        if hasattr(tool_block, 'function_declarations') and tool_block.function_declarations:
+            matching_decls = [d for d in tool_block.function_declarations if d.name in requested_tools]
+            if matching_decls:
+                bound_tools.append(types.Tool(function_declarations=matching_decls))
+            
+    tool_config = types.ToolConfig(
+        function_calling_config=types.FunctionCallingConfig(mode="AUTO")
+    ) if bound_tools else None
+
+    active_config = types.GenerateContentConfig(
+        system_instruction=initial_system_prompt,
+        temperature=0.1,
+        tools=bound_tools,
+        tool_config=tool_config
+    )
+
     print(f"\n[BOOT] {agent_name.upper()} runtime session synchronized with cloud persistence layer.")
     print(f"[TRACKING REGISTER] Active Thread Context: {thread_id}")
     print("Type 'exit' or 'quit' to end the session block.\n")
@@ -323,10 +274,8 @@ if __name__ == "__main__":
             if user_input.lower() in ['exit', 'quit']:
                 break
             
-            # 1. Send the URL string turn to Gemini
-            response = chat_session.send_message(user_input)
+            response = chat_session.send_message(user_input, config=active_config)
             
-            # 2. IMMEDIATELY check for function calls before trying to access or print response.text
             while response.function_calls:
                 tool_responses = []
                 
@@ -337,10 +286,14 @@ if __name__ == "__main__":
                         clean_url = str(call.args['url']).strip().replace('"', '').replace("'", "").replace('\r', '').replace('\n', '')
                         call.args['url'] = clean_url
                         
-                    # Execute the real python tool code via dispatcher
                     tool_output_string = factory.dispatcher.dispatch(call)
                     
-                    # Package back into proper SDK Parts
+                    if call.name == "reload_agent_memory_vault":
+                        fresh_memory = factory._load_agent_memory_vault(agent_name)
+                        fresh_system_prompt = factory._build_dynamic_system_prompt(agent_name, fresh_memory)
+                        active_config.system_instruction = fresh_system_prompt
+                        print(f"[HOT-RELOAD SUCCESS] Fresh ontology rules successfully injected into {agent_name}'s system prompt.")
+
                     tool_responses.append(
                         types.Part.from_function_response(
                             name=call.name,
@@ -348,10 +301,8 @@ if __name__ == "__main__":
                         )
                     )
                 
-                # Loop back to model to finish the turn and get the final text summary
-                response = chat_session.send_message(tool_responses)
+                response = chat_session.send_message(tool_responses, config=active_config)
             
-            # 3. Only print and checkpoint AFTER the tool execution loop has settled
             print(f"\n{agent_name.upper()} RESPONSE:\n{response.text}\n")
             save_checkpoint(db_conn, thread_id, chat_session.get_history())
 

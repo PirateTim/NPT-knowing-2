@@ -106,7 +106,28 @@ def run_agent_loop(agent_name: str, thread_suffix: str):
                 tool_result = acquire_content(user_input)
                 current_status = tool_result.get("status", "failed")
                 
+                # if current_status == "failed":
+                    # user_payload = f"SYSTEM NOTICE: Ingestion pipeline execution failed entirely for target. Error: {tool_result.get('error')}"
                 if current_status == "failed":
+                    # Hard logging direct pipeline execution failures
+                    try:
+                        cursor = db_conn.cursor()
+                        derived_dom = urlparse(user_input).netloc
+                        cursor.execute(
+                            """
+                            INSERT INTO cargo.failed_metadata 
+                            (source_url, derived_domain, tier_1_executed, tier_2_executed, method_3_tried, error_state)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (source_url) DO UPDATE 
+                            SET error_state = EXCLUDED.error_state, logged_at = CURRENT_TIMESTAMP
+                            """,
+                            (user_input, derived_dom, True, True, False, str(tool_result.get("error", "Unknown Scraper Crash")))
+                        )
+                        db_conn.commit()
+                        cursor.close()
+                    except Exception as db_err:
+                        print(f"[LOG FAULT] Could not commit failure log: {db_err}", file=sys.stderr)
+
                     user_payload = f"SYSTEM NOTICE: Ingestion pipeline execution failed entirely for target. Error: {tool_result.get('error')}"
                 elif current_status == "cached":
                     user_payload = (

@@ -7,6 +7,8 @@
     </core_mandate>
     <available_tools>
         <tool name="read_gcs_bucket_file"/>
+        <tool name="call_landlubber">executes a web search using native google</tool>
+        <tool name="reload_agent_memory_vault"/>
         <tool name="record_learned_ontology_rule"/>
         <tool name="record_few_shot_exemplar"/>
     </available_tools>

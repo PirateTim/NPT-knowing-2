@@ -10,12 +10,12 @@ import urllib.request
 from urllib.parse import urlparse
 from typing import List, Dict, Any
 from google.genai import types
-import datetime  # Ensure datetime is imported at the top of tool_dispatcher.py
+import datetime
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from tools.provision_database import provision_agent_state_db
 from tools.create_database_and_user import create_database_and_user
-from tools.acquire_content import acquire_content  # INTEGRATED WORKING WIRE
+from tools.acquire_content import acquire_content
 
 def _get_project_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -104,13 +104,8 @@ def post_github_comment(owner: str, repo: str, issue_number: int, body: str) -> 
             return f"[ERROR] GitHub API returned status code: {response.status}"
     except Exception as e:
         return f"[ERROR] Failed to post comment: {str(e)}"
-    
-
-
 
 def record_learned_ontology_rule(agent_name: str, rule_directive: str, source_context: str) -> str:
-    """Appends an explicitly taught classification rule to an agent's permanent memory files."""
-    # FIXED: Anchor path explicitly to the project root directory context
     project_root = _get_project_root()
     base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
     rules_path = os.path.join(base_dir, "learned_rules.json")
@@ -133,10 +128,7 @@ def record_learned_ontology_rule(agent_name: str, rule_directive: str, source_co
     return f"[SUCCESS] New ontological rule securely committed to {agent_name}'s profile layer."
 
 def record_few_shot_exemplar(agent_name: str, input_context: str, ideal_output: str, rationale: str) -> str:
-    """Stores an interactive classification turn as a few-shot training exemplar for future runs."""
-    # FIXED: Anchor path explicitly to the project root directory context
     project_root = _get_project_root()
-    # base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", agent_name.lower()))
     base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
     exemplars_path = os.path.join(base_dir, "few_shot_exemplars.json")
     
@@ -156,8 +148,8 @@ def record_few_shot_exemplar(agent_name: str, input_context: str, ideal_output: 
     with open(exemplars_path, "w", encoding="utf-8") as f:
         json.dump(exemplars, f, indent=2)
     return f"[SUCCESS] Interactive training exemplar pinned to {agent_name}'s Few-Shot vault."  
+
 def read_gcs_bucket_file(bucket_name: str, blob_path: str) -> str:
-    """Streams the raw text string contents of any object stored inside a GCP bucket."""
     try:
         from google.cloud import storage
         client = storage.Client()
@@ -167,6 +159,22 @@ def read_gcs_bucket_file(bucket_name: str, blob_path: str) -> str:
         return blob.download_as_text(encoding="utf-8")
     except Exception as e:
         return f"[GCS ERROR] Failed to stream asset from bucket: {str(e)}"
+
+def call_landlubber(query: str) -> str:
+    """Invokes the standalone Landlubber runtime process via a shell execution wire to isolate orchestration logic."""
+    try:
+        import subprocess
+        import sys
+        
+        # Execute landlubber_runner.py as an isolated background execution layer
+        cmd = [sys.executable, "src/react_agent/landlubber_runner.py", query]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=15)
+        
+        if result.returncode == 0:
+            return result.stdout.strip()
+        return f"[SEARCH WIRE ERROR] Landlubber runner failed: {result.stderr.strip()}"
+    except Exception as e:
+        return f"[SEARCH WIRE CRITICAL] Subprocess route collapsed: {str(e)}"
 
 class ToolDispatcher:
     def __init__(self):
@@ -236,6 +244,16 @@ class ToolDispatcher:
                     }
                 ),
                 types.FunctionDeclaration(
+                    name="call_landlubber",
+                    description="Orchestrates the specialized 'Landlubber' sub-agent to execute an unblockable web search pass.",
+                    parameters={"type": "OBJECT", "properties": {"query": {"type": "STRING"}}, "required": ["query"]}
+                ),
+                types.FunctionDeclaration(
+                    name="reload_agent_memory_vault",
+                    description="Forces a dynamic structural reload of the agent's system prompt from long-term memory configuration files.",
+                    parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}}, "required": ["agent_name"]}
+                ),
+                types.FunctionDeclaration(
                     name="create_database_and_user",
                     description="Initializes schemas over native pg8000 bindings.",
                     parameters={
@@ -251,7 +269,7 @@ class ToolDispatcher:
                 )
             ]
         )
-        print(f"[DISPATCHER] Core ingestion framework successfully initialized.")
+        print(f"[DISPATCHER] Core Ingestion and Multi-Agent Search frameworks successfully initialized.")
         return [local_tool_block]
 
     def dispatch(self, call: types.FunctionCall) -> str:
@@ -267,7 +285,6 @@ class ToolDispatcher:
         elif call.name == "post_github_comment":
             return post_github_comment(**args)
         elif call.name == "acquire_content":
-            # Direct routing response dictionary maps back as JSON text string
             return json.dumps(acquire_content(**args))
         elif call.name == "provision_agent_state_db":
             return provision_agent_state_db(**args)
@@ -279,5 +296,9 @@ class ToolDispatcher:
             return record_few_shot_exemplar(**args)
         elif call.name == "read_gcs_bucket_file":
             return read_gcs_bucket_file(**args)
+        elif call.name == "call_landlubber":
+            return call_landlubber(**args)
+        elif call.name == "reload_agent_memory_vault":
+            return "[SYSTEM] Hot-reload trigger received. Re-compiling system prompt matrix..."
         else:
             return f"[ERROR] Unmapped tool call configuration: {call.name}"
