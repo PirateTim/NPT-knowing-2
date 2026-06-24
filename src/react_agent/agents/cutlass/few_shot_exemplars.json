@@ -10,8 +10,23 @@
     "rationale": "Repeated OpenAI's speculative Sora social platform and safety claims uncritically, all of which collapsed or reversed by mid-2026."
   },
   {
-    "input_context": "Use your bucket tool to stream and analyze gs://npt-fleet-cargo-hold/acquisitions/20260618114032_acquired.txt",
+    "input_context": "ItemType: webpage\nTitle: Generation Z is losing a skill we've had for 5,500 years...\nAuthors: Dr. Kyle Muller\nAbstract: According to recent studies... 40% of this generation are losing their ability to communicate by handwriting... Professor Nedret Kiliceri sees this as an influence of social media... Shortcomings of the education system.\nAuthor Profile: Research Analyst at the Harris County Juvenile Probation Department in Houston, Texas focusing on juvenile justice policies.",
     "ideal_output": "Technological Scapegoating for Systemic Failure",
-    "rationale": "The asset, written by an expert, correctly identifies a decline in youth communication skills but incorrectly blames technology (keyboards, social media) for a systemic, pre-existing failure of the education system."
+    "rationale": "The asset, authored by a credible juvenile justice expert, reports valid eyewitness observation of collapsed communication and literacy skills among disadvantaged youth. However, it commits a structural epistemic failure by scapegoating digital keyboards and social media platforms for what is fundamentally a chronic, pre-existing failure of the public institutional education system to instruct."
+  },
+  {
+    "input_context": "ItemType: webpage\nTitle: 'No driver, no hands, no clue': San Bruno police officers were met with a first after pulling over a Waymo\nContext: Waymo vehicle pulled over for making an illegal U-turn at an explicitly posted ban crossing. Officers unable to issue a ticket because the citation system requires a human violator; legislation sent to manufacturer doesn't take effect until July 2026.",
+    "ideal_output": "Regulatory Arbitrage & Empirical Evidence of Technological Failure",
+    "rationale": "Documents a corporation exploiting enforcement latency in existing public safety laws to run un-ticketable commercial assets, while providing a public, citable empirical record of an autonomous product malfunctioning in a manner that creates public danger."
+  },
+  {
+    "input_context": "ItemType: webpage\nTitle: Most companies aren\u2019t seeing a return on AI investments. This tech CEO wants to change that\nContext: Detailed reporting on Scale AI's data labeling dominance. Documents the industrialization of human qualitative tagging into mass-produced corporate training sets packaged as raw computation.",
+    "ideal_output": "Provenance Severance via Market Commodification (Epistemic Vandalism)",
+    "rationale": "The asset documents the commercial scale of information provenance destruction. The core failure is not data bias or error, but the permanent severance of the evidentiary trail. By masking human subjectivity behind an opaque corporate supply chain, it strips humanity of the ability to verify how a fact was generated, creating an un-auditable foundation for automated intelligence."
+  },
+  {
+    "input_context": "ItemType: webpage\nTitle: Most companies aren\u2019t seeing a return on AI investments. This tech CEO wants to change that\nContext: Detailed reporting on Scale AI's data labeling dominance. Documents the industrialization of human qualitative tagging into mass-produced corporate training sets packaged as raw computation.",
+    "ideal_output": "Provenance Severance via Market Commodification (Epistemic Vandalism)",
+    "rationale": "The asset documents the commercial scale of information provenance destruction. The core failure is not data bias or error, but the permanent severance of the evidentiary trail. By masking human subjectivity behind an opaque corporate supply chain, it strips humanity of the ability to verify how a fact was generated, creating an un-auditable foundation for automated intelligence."
   }
 ]

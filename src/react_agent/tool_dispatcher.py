@@ -126,7 +126,29 @@ def record_learned_ontology_rule(agent_name: str, rule_directive: str, source_co
     with open(rules_path, "w", encoding="utf-8") as f:
         json.dump(rules, f, indent=2)
     return f"[SUCCESS] New ontological rule securely committed to {agent_name}'s profile layer."
-
+#======================
+def request_asset(agent_name: str, URL: str, source_gs_bucket_item: str) -> str:
+    project_root = _get_project_root()
+    base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
+    additional_urls_path = os.path.join(base_dir, "additional_urls.json")
+    
+    os.makedirs(base_dir, exist_ok=True)
+    rules = []
+    if os.path.exists(additional_urls_path):
+        with open(additional_urls_path, "r", encoding="utf-8") as f:
+            try: rules = json.load(f)
+            except Exception: rules = []
+                
+    rules.append({
+        "URL": URL,
+        "source_gs_bucket_item": source_gs_bucket_item,
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    
+    with open(additional_urls_path, "w", encoding="utf-8") as f:
+        json.dump(rules, f, indent=2)
+    return f"[SUCCESS] New URL has been added to additional_urls. Securely committed to {agent_name}'s profile layer."
+#============================
 def record_few_shot_exemplar(agent_name: str, input_context: str, ideal_output: str, rationale: str) -> str:
     project_root = _get_project_root()
     base_dir = os.path.join(project_root, "src", "react_agent", "agents", agent_name.lower())
@@ -168,13 +190,89 @@ def call_landlubber(query: str) -> str:
         
         # Execute landlubber_runner.py as an isolated background execution layer
         cmd = [sys.executable, "src/react_agent/landlubber_runner.py", query]
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=15)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=60)
         
         if result.returncode == 0:
             return result.stdout.strip()
         return f"[SEARCH WIRE ERROR] Landlubber runner failed: {result.stderr.strip()}"
     except Exception as e:
         return f"[SEARCH WIRE CRITICAL] Subprocess route collapsed: {str(e)}"
+    
+    
+def query_system_glossary() -> str:
+    """Retrieves the complete authoritative glossary matrix directly from the npt_cargo_db warehouse."""
+    import os
+    import pg8000.dbapi
+    from urllib.parse import urlparse
+    
+    # Force alignment with the production content warehouse env key
+    content_url = os.getenv("CONTENT_DATABASE_URL")
+    if not content_url:
+        return "[GLOSSARY ERROR] CONTENT_DATABASE_URL is not configured in the environment variables."
+        
+    try:
+        url = urlparse(content_url)
+        conn = pg8000.dbapi.connect(
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port,
+            database=url.path[1:]
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT term, definition FROM system_glossary ORDER BY term ASC")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        if not rows:
+            return "[GLOSSARY] System glossary table is currently empty in npt_cargo_db."
+            
+        glossary_block = ["=== AUTHORITATIVE SYSTEM GLOSSARY ==="]
+        for term, definition in rows:
+            glossary_block.append(f"🎯 {term.upper()}:\n   {definition}\n")
+        return "\n".join(glossary_block)
+    except Exception as e:
+        return f"[GLOSSARY ERROR] Cargo read pass failed: {str(e)}"
+
+def update_system_glossary(term: str, definition: str, provenance_context: str) -> str:
+    """Dynamically appends or corrects a conceptual term inside the centralized fleet glossary inside npt_cargo_db."""
+    import os
+    import pg8000.dbapi
+    from urllib.parse import urlparse
+    
+    content_url = os.getenv("CONTENT_DATABASE_URL")
+    if not content_url:
+        return "[GLOSSARY ERROR] CONTENT_DATABASE_URL is not configured in the environment variables."
+        
+    try:
+        url = urlparse(content_url)
+        conn = pg8000.dbapi.connect(
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port,
+            database=url.path[1:]
+        )
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO system_glossary (term, definition, provenance_context, last_updated) 
+            VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (term) DO UPDATE 
+            SET definition = EXCLUDED.definition, 
+                provenance_context = EXCLUDED.provenance_context, 
+                last_updated = CURRENT_TIMESTAMP
+            """,
+            (term.strip(), definition.strip(), provenance_context.strip())
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return f"[SUCCESS] '{term}' has been securely committed/updated in the npt_cargo_db warehouse."
+    except Exception as e:
+        return f"[GLOSSARY ERROR] Cargo write execution failed: {str(e)}"
+
 
 class ToolDispatcher:
     def __init__(self):
@@ -227,6 +325,11 @@ class ToolDispatcher:
                     parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule_directive": {"type": "STRING"}, "source_context": {"type": "STRING"}}, "required": ["agent_name", "rule_directive", "source_context"]}
                 ),
                 types.FunctionDeclaration(
+                    name="request_asset",
+                    description="Appends an explicitly requested URL to the file request_asset_urls.json.",
+                    parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "URL": {"type": "STRING"}, "source_gs_bucket_item": {"type": "STRING"}}, "required": ["agent_name", "URL", "source_gs_bucket_item"]}
+                ),
+                types.FunctionDeclaration(
                     name="record_few_shot_exemplar",
                     description="Stores an interactive classification turn as a few-shot training exemplar for future runs.",
                     parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "input_context": {"type": "STRING"}, "ideal_output": {"type": "STRING"}, "rationale": {"type": "STRING"}}, "required": ["agent_name", "input_context", "ideal_output", "rationale"]}
@@ -253,6 +356,26 @@ class ToolDispatcher:
                     description="Forces a dynamic structural reload of the agent's system prompt from long-term memory configuration files.",
                     parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}}, "required": ["agent_name"]}
                 ),
+                types.FunctionDeclaration(
+                    name="query_system_glossary",
+                    description="Retrieves the complete authoritative glossary matrix to anchor agent definitions and prevent cognitive drift.",
+                    parameters={"type": "OBJECT", "properties": {}}
+                ),
+                types.FunctionDeclaration(
+                    name="update_system_glossary",
+                    description="Dynamically appends or corrects a conceptual term inside the centralized fleet glossary database.",
+                    parameters={
+                        "type": "OBJECT",
+                        "properties": {
+                            "term": {"type": "STRING"},
+                            "definition": {"type": "STRING"},
+                            "provenance_context": {"type": "STRING"}
+                        },
+                        "required": ["term", "definition", "provenance_context"]
+                    }
+                ),
+                
+
                 types.FunctionDeclaration(
                     name="create_database_and_user",
                     description="Initializes schemas over native pg8000 bindings.",
@@ -298,6 +421,13 @@ class ToolDispatcher:
             return read_gcs_bucket_file(**args)
         elif call.name == "call_landlubber":
             return call_landlubber(**args)
+        elif call.name == "query_system_glossary":
+            return query_system_glossary()
+        elif call.name == "update_system_glossary":
+            return update_system_glossary(**args)
+        elif call.name == "request_asset":
+            return request_asset(**args)
+
         elif call.name == "reload_agent_memory_vault":
             return "[SYSTEM] Hot-reload trigger received. Re-compiling system prompt matrix..."
         else:

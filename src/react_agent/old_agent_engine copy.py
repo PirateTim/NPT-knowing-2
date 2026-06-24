@@ -2,7 +2,6 @@ import os
 import json
 import xml.etree.ElementTree as ET
 from typing import Dict, Any, List
-import copy  # Required for schema isolation during dynamic tool compilation
 from google import genai
 from google.genai import types
 import sys
@@ -10,22 +9,16 @@ import pg8000.dbapi
 from dotenv import load_dotenv
 import uuid
 from urllib.parse import urlparse
-import datetime
 
 load_dotenv()
 from tool_dispatcher import ToolDispatcher
 
 # =====================================================================
-# STATE SAVER: CLOUD PERSISTENCE LAYER
-# Handles the two-tier memory store by serializing active GenAI 
-# dialogue content into pure JSON for long-term database storage.
+# STATE SAVER: FIXED ARCHITECTURE (Pure JSON Text Persistence)
 # =====================================================================
 
 def get_db_connection():
-    """
-    Establishes a reliable data connection to the Cloud SQL instance.
-    Parses the DATABASE_URL environment variable to extract routing credentials.
-    """
+    """Establishes a reliable data connection to our Cloud SQL instance."""
     try:
         url = urlparse(os.getenv("DATABASE_URL"))
         return pg8000.dbapi.connect(
@@ -40,10 +33,7 @@ def get_db_connection():
         return None
 
 def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
-    """
-    Retrieves the most recent JSON state history for a specific thread and 
-    deserializes it back into native GenAI Content types for session initialization.
-    """
+    """Retrieves and deserializes the JSON state history into GenAI types."""
     cursor = conn.cursor()
     cursor.execute(
         "SELECT checkpoint FROM checkpoints WHERE thread_id = %s ORDER BY checkpoint_id DESC LIMIT 1",
@@ -55,7 +45,6 @@ def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
     historical_messages = []
     if result and result[0]:
         try:
-            # Handle variable return types from the DB driver (list, str, or bytes)
             if isinstance(result[0], list):
                 raw_history = result[0]
             elif isinstance(result[0], str):
@@ -63,7 +52,6 @@ def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
             else:
                 raw_history = json.loads(result[0].decode('utf-8'))
                 
-            # Reconstruct the GenAI Content objects required for the chat history
             for turn in raw_history:
                 historical_messages.append(
                     types.Content(
@@ -76,14 +64,10 @@ def get_latest_checkpoint(conn, thread_id: str) -> List[types.Content]:
     return historical_messages
 
 def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
-    """
-    Serializes active text-dialogue memory into clean, human-readable JSON 
-    and commits it to the database, maintaining parent-child checkpoint lineage.
-    """
+    """Commits active text-dialogue checkpoints as clean, human-readable JSON."""
     cursor = conn.cursor()
     new_checkpoint_id = str(uuid.uuid4())
     
-    # Retrieve the preceding checkpoint to maintain state lineage
     cursor.execute(
         "SELECT checkpoint_id FROM checkpoints WHERE thread_id = %s ORDER BY checkpoint_id DESC LIMIT 1",
         (thread_id,)
@@ -91,7 +75,6 @@ def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
     parent_row = cursor.fetchone()
     parent_checkpoint_id = parent_row[0] if parent_row else None
 
-    # Filter and serialize only valid user/model conversational turns
     serializable_history = []
     for msg in history:
         if msg.role in ["user", "model"]:
@@ -103,7 +86,6 @@ def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
             if text_parts:
                 serializable_history.append({"role": msg.role, "parts": text_parts})
 
-    # Commit the new state array to the persistent store
     if serializable_history:
         json_str = json.dumps(serializable_history)
         cursor.execute(
@@ -113,25 +95,23 @@ def save_checkpoint(conn, thread_id: str, history: List[types.Content]):
         conn.commit()
     cursor.close()
 
-# =====================================================================
-# AGENT RUNTIME ENGINE
-# Master factory for building, compiling, and executing agent instances.
-# =====================================================================
 
 class AgentEngineFactory:
+    """
+    The master native factory for the NPT Progeny Fleet.
+    Implements the Two-Tier Memory Store (Short-Term Thread History + Long-Term JSON Vault).
+    """
+    
     def __init__(self):
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
 
     def _load_agent_memory_vault(self, agent_name: str) -> Dict[str, Any]:
-        """
-        Ingests the agent's localized profile configuration, mapping core mandates,
-        cognitive biases, learned rules, and requested tools from standard formats (XML/JSON).
-        """
+        """Reads the agent's permanent, cross-thread JSON storage directory and XML profile."""
         base_path = f"src/react_agent/agents/{agent_name.lower()}"
-        profile = {"mandate": "", "lens": {}, "rules": [], "exemplars": [], "requested_tools": {}}
+        profile = {"mandate": "", "lens": {}, "rules": [], "exemplars": [], "requested_tools": []}
         
-        # 1. Parse XML Profile: Extracts mandate and dynamic tool descriptions
+        # 1. Load XML Profile
         xml_path = f"{base_path}/{agent_name.lower()}.xml"
         if os.path.exists(xml_path):
             tree = ET.parse(xml_path)
@@ -146,24 +126,21 @@ class AgentEngineFactory:
                 for tool_node in tools_elem.findall("tool"):
                     t_name = tool_node.get("name")
                     if t_name:
-                        # Safely map nested semantic tool overrides for specific agents
-                        purpose_node = tool_node.find("purpose")
-                        purpose_text = "".join(purpose_node.itertext()).strip() if purpose_node is not None else ""
-                        profile["requested_tools"][t_name] = purpose_text
+                        profile["requested_tools"].append(t_name)
                 
-        # 2. Parse Cognitive Lens: Dictates behavioral biases and strict lexicon constraints
+        # 2. Load Cognitive Lens
         lens_path = f"{base_path}/cognitive_lens.json"
         if os.path.exists(lens_path):
             with open(lens_path, 'r') as f:
                 profile["lens"] = json.load(f)
                 
-        # 3. Parse Learned Rules: Historical operational adjustments and corrections
+        # 3. Load Learned Rules
         rules_path = f"{base_path}/learned_rules.json"
         if os.path.exists(rules_path):
             with open(rules_path, 'r') as f:
                 profile["rules"] = json.load(f)
                 
-        # 4. Parse Few-Shot Exemplars: Contextual I/O patterns for model alignment
+        # 4. Load Few-Shot Exemplars
         exemplars_path = f"{base_path}/few_shot_exemplars.json"
         if os.path.exists(exemplars_path):
             with open(exemplars_path, 'r') as f:
@@ -172,26 +149,24 @@ class AgentEngineFactory:
         return profile
 
     def _build_dynamic_system_prompt(self, agent_name: str, memory: Dict[str, Any]) -> str:
-        """
-        Compiles the immutable system instruction block injected at session initialization.
-        Fuses static file-based definitions with dynamic system glossary contexts.
-        """
+        """Constructs the immutable system instruction block injected at runtime boot."""
         prompt = f"You are {agent_name}.\n\n"
-        
+
+        # =====================================================================
+        # DYNAMIC INJECTION: Pull down the system glossary from npt_cargo_db
+        # =====================================================================
+        try:
+            from tool_dispatcher import query_system_glossary
+            glossary_text = query_system_glossary()
+            if glossary_text:
+                prompt += glossary_text + "\n\n"
+        except Exception as e:
+            prompt += f"[WARN] Glossary wire offline: {str(e)}\n\n"
+
         if memory.get("mandate"):
             prompt += "=== CORE MANDATE ===\n"
             prompt += memory["mandate"] + "\n\n"
         
-        # Inject real-time organizational definitions to maintain semantic alignment
-        try:
-            from tool_dispatcher import query_system_glossary
-            glossary_context = query_system_glossary()
-            if glossary_context:
-                prompt += glossary_context + "\n\n"
-        except Exception as e:
-            prompt += f"[SYSTEM NOTICE] Glossary wire offline: {e}\n\n"
-        
-        # Apply strict conversational styling and terminology limits
         lens = memory.get("lens", {})
         if lens:
             prompt += "=== COGNITIVE LENS & DOMAIN BIAS ===\n"
@@ -202,7 +177,6 @@ class AgentEngineFactory:
             if lexicon.get("reject"):
                 prompt += "REJECT TERMS: " + ", ".join(lexicon["reject"]) + "\n\n"
                 
-        # Apply permanent overrides and explicit corrections
         rules = memory.get("rules", [])
         if rules:
             prompt += "=== LEARNED RULES (PERMANENT ALIGNMENT) ===\n"
@@ -210,7 +184,6 @@ class AgentEngineFactory:
                 prompt += f"- {rule.get('rule_directive', '')} (Source: {rule.get('source_context', '')})\n"
             prompt += "\n"
             
-        # Provide structural guidance for complex tasks
         exemplars = memory.get("exemplars", [])
         if exemplars:
             prompt += "=== FEW-SHOT EXEMPLARS ===\n"
@@ -222,31 +195,19 @@ class AgentEngineFactory:
         return prompt
 
     def compile_agent_session(self, agent_name: str, thread_id: str, db_conn):
-        """
-        Constructs the native chat session, isolating schema modifications to ensure 
-        parallel agent processes do not corrupt the global tool registry.
-        """
+        """Assembles the native Gemini chat session for the specific agent with clean tool constraints."""
         memory = self._load_agent_memory_vault(agent_name)
         system_prompt = self._build_dynamic_system_prompt(agent_name, memory)
         
-        requested_tools = memory.get("requested_tools", {})
+        requested_tools = memory.get("requested_tools", [])
         bound_tools = []
         
-        # Bind requested tools and safely apply semantic overrides
         for tool_block in self.dispatcher.tools:
             if hasattr(tool_block, 'function_declarations') and tool_block.function_declarations:
-                matching_decls = []
-                for decl in tool_block.function_declarations:
-                    if decl.name in requested_tools:
-                        # CRITICAL: Deepcopy the declaration schema. 
-                        # This isolates dynamic purpose descriptions, preventing global state mutation.
-                        isolated_decl = copy.deepcopy(decl)
-                        custom_purpose = requested_tools[decl.name]
-                        
-                        if custom_purpose:
-                            isolated_decl.description = custom_purpose
-                        matching_decls.append(isolated_decl)
-                        
+                matching_decls = [
+                    decl for decl in tool_block.function_declarations 
+                    if decl.name in requested_tools
+                ]
                 if matching_decls:
                     bound_tools.append(types.Tool(function_declarations=matching_decls))
         
@@ -270,10 +231,6 @@ class AgentEngineFactory:
             history=history if history else []
         )
 
-# =====================================================================
-# EXECUTION ENTRY POINT
-# Handles standard CLI routing, configuration loop, and session looping.
-# =====================================================================
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -297,24 +254,18 @@ if __name__ == "__main__":
     initial_memory = factory._load_agent_memory_vault(agent_name)
     initial_system_prompt = factory._build_dynamic_system_prompt(agent_name, initial_memory)
 
-    # Output grounding audit log to capture the compiled system prompt state
+    # =====================================================================
+    # GROUNDING AUDIT LOG: Dump the absolute ground-truth system prompt
+    # =====================================================================
     with open("src/react_agent/active_system_prompt_compiled.log", "w", encoding="utf-8") as f:
         f.write(initial_system_prompt)
     print(f"[OBSERVABILITY] Compiled system instruction written to active_system_prompt_compiled.log")
     
-    # Rebuild runtime configuration parameters
-    requested_tools = initial_memory.get("requested_tools", {})
+    requested_tools = initial_memory.get("requested_tools", [])
     bound_tools = []
     for tool_block in factory.dispatcher.tools:
         if hasattr(tool_block, 'function_declarations') and tool_block.function_declarations:
-            matching_decls = []
-            for d in tool_block.function_declarations:
-                if d.name in requested_tools:
-                    isolated_decl = copy.deepcopy(d)
-                    custom_purpose = requested_tools[d.name]
-                    if custom_purpose:
-                        isolated_decl.description = custom_purpose
-                    matching_decls.append(isolated_decl)
+            matching_decls = [d for d in tool_block.function_declarations if d.name in requested_tools]
             if matching_decls:
                 bound_tools.append(types.Tool(function_declarations=matching_decls))
             
@@ -343,47 +294,24 @@ if __name__ == "__main__":
             
             response = chat_session.send_message(user_input, config=active_config)
             
-            # Sub-agent execution loop for autonomous tool deployment
             while response.function_calls:
                 tool_responses = []
                 
                 for call in response.function_calls:
                     print(f"[{agent_name.upper()} TOOL CALL] Invoking workspace wire: {call.name}...")
                     
-                    # CRITICAL: Clean parameters directly on the execution object to prevent dispatcher parsing failures
                     if hasattr(call, 'args') and 'url' in call.args:
                         clean_url = str(call.args['url']).strip().replace('"', '').replace("'", "").replace('\r', '').replace('\n', '')
                         call.args['url'] = clean_url
                         
-                    # Decouple the arguments safely for the execution trace log
-                    call_args = dict(call.args) if call.args else {}
-                        
-                    # Maintain observability audit trail for all wire targets
-                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    log_entry = (
-                        f"=== TOOL EXECUTION TRACE: {timestamp} ===\n"
-                        f"Wire Target: {call.name}\n"
-                        f"Arguments Dispatched: {json.dumps(call_args, indent=2)}\n"
-                    )
-                    
-                    # Dispatch executing tool via the sanitized core object
                     tool_output_string = factory.dispatcher.dispatch(call)
                     
-                    log_entry += f"Raw Execution Output Received:\n{tool_output_string}\n"
-                    log_entry += f"=====================================================\n\n"
-                    
-                    # Append transaction trace to persistent log
-                    with open("src/react_agent/active_tool_execution_trace.log", "a", encoding="utf-8") as trace_file:
-                        trace_file.write(log_entry)
-                    
-                    # Hot-reload system parameters without dropping the active session state
                     if call.name == "reload_agent_memory_vault":
                         fresh_memory = factory._load_agent_memory_vault(agent_name)
                         fresh_system_prompt = factory._build_dynamic_system_prompt(agent_name, fresh_memory)
                         active_config.system_instruction = fresh_system_prompt
                         print(f"[HOT-RELOAD SUCCESS] Fresh ontology rules successfully injected into {agent_name}'s system prompt.")
 
-                    # Route tool output back into the primary chat session context
                     tool_responses.append(
                         types.Part.from_function_response(
                             name=call.name,
@@ -397,6 +325,5 @@ if __name__ == "__main__":
             save_checkpoint(db_conn, thread_id, chat_session.get_history())
 
     finally:
-        # Graceful shutdown boundary
         db_conn.close()
         print("[SHUTDOWN] Connection handles successfully released.")
