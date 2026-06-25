@@ -360,3 +360,83 @@ Raw Execution Output Received:
 [SUCCESS] 'Chain of Ruin' has been securely committed/updated in the npt_cargo_db warehouse.
 =====================================================
 
+=== TOOL EXECUTION TRACE: 2026-06-25 08:10:24 ===
+Wire Target: read_gcs_bucket_file
+Arguments Dispatched: {
+  "bucket_name": "npt-fleet-cargo-hold",
+  "blob_path": "acquisitions/20260618114106_acquired.txt"
+}
+Raw Execution Output Received:
+---
+ItemType: webpage
+Title: Consultants Forced to Pay Money Back After Getting Caught Using AI for Expensive "Report"
+Domain: futurism.com
+Authors:
+  - Victor Tangermann
+Abstract: Deloitte was forced to reissue the Australian government $291,000 after getting caught including AI hallucinations in its report.
+PublicationTitle: Web Platform Data
+Date: 2025-10-06
+URL: https://futurism.com/future-society/deloitte-government-ai-hallucinations
+AccessDate: 2026-06-18
+Keywords:
+  - Artificial Intelligence
+  - Future Society
+Rights: Unknown
+---
+
+Financial consulting firm Deloitte was forced to reissue the Australian government $291,000 US after getting caught using AI and including hallucinated numbers in a recent report.
+As The Guardian reports, Australia’s Department of Employment and Workplace Relations (DEWR) confirmed that the firm agreed to repay the final installment as part of its contract. It had been commissioned in December to review a system that automates penalties in the welfare system in case jobseekers don’t meet their mutual obligations.
+However, the “independent assurance review” bore concerning signs that Deloitte had cut corners, and included multiple errors such as references to nonexistent citations — a hallmark of AI slop.
+The “hallucinations” once again highlight how generative AI use in the workplace can allow glaring mistakes to slip through, from lawyers getting caught citing nonexistent cases to Trump’s Centers for Disease Control referencing a study that was dreamed up by AI earlier this year.
+Deloitte, among other consulting firms, have poured billions of dollars into developing AI tools that they say could speed up their audits, as the Financial Times reports.
+Earlier today, the newspaper noted that the United Kingdom’s six largest accounting firms hadn’t been formally monitoring how AI impacts the quality of their audits, highlighting the possibility that many other reports may include similar hallucinations.
+University of Sydney sociological lecturer Christopher Rudge, who first highlighted the issues with Deloitte’s DEWR report, said that the company tried to cover its tracks after sharing an updated version of the error-laden report.
+“Instead of just substituting one hallucinated fake reference for a new ‘real’ reference, they’ve substituted the fake hallucinated references and in the new version, there’s like five, six or seven or eight in their place,” he told The Guardian. “So what that suggests is that the original claim made in the body of the report wasn’t based on any one particular evidentiary source.”
+Despite being caught red-handed using AI to generate hallucinated citations, Deloitte said that the overall thrust of its guidance hadn’t changed. A footnote in the revised version noted that staffers had used OpenAI’s GPT-4o for the report.
+“Deloitte conducted the independent assurance review and has confirmed some footnotes and references were incorrect,” a spokesperson told The Guardian. “The substance of the independent review is retained, and there are no changes to the recommendations.”
+But outraged lawmakers calling for more oversight.
+“Deloitte has a human intelligence problem,” Labor senator Deborah O’Neill, who represents New South Wales, told the Australian Financial Review. “This would be laughable if it wasn’t so lamentable… too often, as our parliamentary inquiries have shown, these consulting firms win contracts by promising their expertise, and then when the deal is signed, they give you whatever [staff] costs them the least.”
+“Anyone looking to contract these firms should be asking exactly who is doing the work they are paying for, and having that expertise and no AI use verified,” O’Neill added. “Otherwise, perhaps instead of a big consulting firm procurers would be better off signing up for a ChatGPT subscription.”
+“This report was meant to help expose the failures in our welfare system and ensure fair treatment for income support recipients, but instead Labor [is] letting Deloitte take them for a ride,” Greens senator Penny Allman-Payne told the AFR. “Labor should be insisting on a full refund from Deloitte, and they need to stop outsourcing their decisions to their consultant mates.”
+More on hallucinations: Fixing Hallucinations Would Destroy ChatGPT, Expert Finds
+=====================================================
+
+=== TOOL EXECUTION TRACE: 2026-06-25 08:12:55 ===
+Wire Target: call_landlubber
+Arguments Dispatched: {
+  "query": "Deloitte Australia government AI hallucination report refund"
+}
+Raw Execution Output Received:
+[SEARCH WIRE CRITICAL] Subprocess route collapsed: 'NoneType' object has no attribute 'strip'
+=====================================================
+
+=== TOOL EXECUTION TRACE: 2026-06-25 08:13:08 ===
+Wire Target: call_landlubber
+Arguments Dispatched: {
+  "query": "Deloitte forced to refund Australian government for AI-generated report with errors"
+}
+Raw Execution Output Received:
+**Deloitte to Refund Australian Government for Flawed AI-Generated Report**
+
+Deloitte Australia has agreed to issue a partial refund to the federal government after a report produced with the assistance of generative artificial intelligence was found to contain significant errors. The report, commissioned by the Department of Employment and Workplace Relations (DEWR), was a review of the targeted compliance framework and its associated IT system.
+
+The A$440,000 report, delivered in July 2025, was found to include multiple inaccuracies, such as references to non-existent experts and case law, and a fabricated quote attributed to a Federal Court judgment. An academic from the University of Sydney, Dr. Christopher Rudge, first identified these "hallucinations," a term used to describe instances where AI models generate false information.
+
+Following the discovery of the errors, Deloitte agreed to repay the final installment of its contract with the DEWR. The exact amount of the refund was over A$97,000 (US$63,000).
+
+In an updated version of the report, Deloitte disclosed its use of a generative AI large language model, specifically Azure OpenAI GPT-4o, which was licensed and hosted by the DEWR. While Deloitte acknowledged that some footnotes and references were incorrect, the company maintained that the substantive content, findings, and recommendations of the report were not affected by the corrections. The DEWR also stated that the changes did not alter the review's overall substance or recommendations.
+=====================================================
+
+=== TOOL EXECUTION TRACE: 2026-06-25 08:16:42 ===
+Wire Target: call_landlubber
+Arguments Dispatched: {
+  "query": "\"Deloitte\" \"refund\" \"Australian government\" \"AI report\" \"The Guardian\" OR \"Australian Financial Review\" OR \"The Register\""
+}
+Raw Execution Output Received:
+Deloitte has agreed to issue a partial refund to the Australian government for a report that contained significant errors attributed to the use of artificial intelligence. The report, which cost AU$440,000, was commissioned by the Department of Employment and Workplace Relations to review its welfare compliance framework and associated IT system.
+
+The errors in the 237-page report included fabricated references, non-existent academic citations, and invented court case details, which are characteristic of AI "hallucinations." These inaccuracies were first highlighted by Dr. Christopher Rudge, an academic from the University of Sydney.
+
+Deloitte acknowledged the use of a generative AI tool (Azure OpenAI GPT-4o) in the production of the report. While the company has since released a corrected version of the report and stated that the core findings and recommendations remain unchanged, it agreed to return a portion of the fee. The exact amount of the partial refund has not been publicly disclosed.
+=====================================================
+
