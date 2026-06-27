@@ -17,7 +17,7 @@ from google import genai
 from google.genai import types
 
 # Import decoupled local tools
-import tool_dispatcher
+import react_agent.core.tool_dispatcher as tool_dispatcher
 from tools.agent_logger import agent_logger
 
 # Initialize local caching profile

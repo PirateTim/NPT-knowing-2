@@ -1,0 +1,134 @@
+"""
+NPT Fleet Tools: Cognitive Memory & Ontological Glossary
+Architecture: Unified JSON Local Vaults & pg8000 Postgres Analytics
+"""
+import os
+import json
+import datetime
+from urllib.parse import urlparse
+import pg8000.dbapi
+
+def _get_agent_dir(agent_name: str) -> str:
+    """Resolves the absolute path to the target agent's isolated workspace."""
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", agent_name.lower()))
+
+def _get_cargo_db_connection():
+    """Initializes a connection to the primary content warehouse."""
+    try:
+        conn_string = os.getenv("CONTENT_DATABASE_URL") or os.getenv("DATABASE_URL")
+        if not conn_string:
+            return None
+        url = urlparse(conn_string)
+        return pg8000.dbapi.connect(
+            user=url.username, password=url.password, host=url.hostname, port=url.port, database=url.path[1:]
+        )
+    except Exception as e:
+        return None
+
+def record_learned_ontology_rule(agent_name: str, rule: str) -> str:
+    """Commits an explicitly validated architectural classification rule permanently to the local memory vault."""
+    agent_dir = _get_agent_dir(agent_name)
+    if not os.path.exists(agent_dir):
+        return f"[ERROR] Workspace directory not found for '{agent_name}'."
+    
+    rules_path = os.path.join(agent_dir, "learned_rules.json")
+    try:
+        rules = []
+        if os.path.exists(rules_path):
+            with open(rules_path, "r", encoding="utf-8") as f:
+                rules = json.load(f)
+        
+        rules.append({
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "rule": rule
+        })
+        
+        with open(rules_path, "w", encoding="utf-8") as f:
+            json.dump(rules, f, indent=4)
+        return f"[SUCCESS] Ontological rule locked into {agent_name.upper()}'s memory vault."
+    except Exception as e:
+        return f"[ERROR] Failed to record rule: {str(e)}"
+
+def record_few_shot_exemplar(agent_name: str, user_input: str, model_response: str) -> str:
+    """Pins an un-compromised semantic training exemplar turn directly into the few-shot memory cache."""
+    agent_dir = _get_agent_dir(agent_name)
+    if not os.path.exists(agent_dir):
+        return f"[ERROR] Workspace directory not found for '{agent_name}'."
+    
+    exemplars_path = os.path.join(agent_dir, "few_shot_exemplars.json")
+    try:
+        exemplars = []
+        if os.path.exists(exemplars_path):
+            with open(exemplars_path, "r", encoding="utf-8") as f:
+                exemplars = json.load(f)
+        
+        exemplars.append({
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "user_input": user_input,
+            "model_response": model_response
+        })
+        
+        with open(exemplars_path, "w", encoding="utf-8") as f:
+            json.dump(exemplars, f, indent=4)
+        return f"[SUCCESS] Few-shot exemplar pinned into {agent_name.upper()}'s memory vault."
+    except Exception as e:
+        return f"[ERROR] Failed to record exemplar: {str(e)}"
+
+def reload_agent_memory_vault(agent_name: str) -> str:
+    """
+    Returns a strict system signal. 
+    The execution runner intercepts this string to trigger a hot-reload of the system prompt without killing the session state.
+    """
+    return "[SYSTEM_SIGNAL: INITIATE_HOT_RELOAD]"
+
+def query_system_glossary() -> str:
+    """Queries the centralized Postgres database to pull down current system definitions."""
+    conn = _get_cargo_db_connection()
+    if not conn:
+        return "[ERROR] Unable to connect to the Cargo Database."
+    
+    try:
+        cursor = conn.cursor()
+        # Assumes table structure: cargo.system_glossary (term, definition, updated_at)
+        cursor.execute("SELECT term, definition FROM cargo.system_glossary ORDER BY term ASC")
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        if not rows:
+            return "[NOTICE] The system glossary is currently empty."
+            
+        glossary = ["=== SYSTEM GLOSSARY ==="]
+        for row in rows:
+            glossary.append(f"- {row[0].upper()}: {row[1]}")
+            
+        return "\n".join(glossary)
+    except Exception as e:
+        return f"[ERROR] Glossary query failed: {str(e)}"
+    finally:
+        conn.close()
+
+def update_system_glossary(term: str, definition: str) -> str:
+    """Updates or registers a brand-new conceptual definition directly inside the database."""
+    conn = _get_cargo_db_connection()
+    if not conn:
+        return "[ERROR] Unable to connect to the Cargo Database."
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            '''
+            INSERT INTO cargo.system_glossary (term, definition, updated_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (term) DO UPDATE SET
+                definition = EXCLUDED.definition,
+                updated_at = NOW();
+            '''
+            , (term.lower(), definition)
+        )
+        conn.commit()
+        cursor.close()
+        return f"[SUCCESS] System Glossary updated. '{term.upper()}' locked into Postgres persistence layer."
+    except Exception as e:
+        return f"[ERROR] Glossary update failed: {str(e)}"
+    finally:
+        conn.close()

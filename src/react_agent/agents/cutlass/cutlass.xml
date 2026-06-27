@@ -10,33 +10,18 @@
         <rule>When generating few_shot_exemplars.json items,  the input_context must describe the context and must not simpley be a pointer to a file</rule>
     </core_mandate>
 
-    <available_tools>
-        <tool name="request_asset">
-            <purpose>Adds a URL, timestamp, and the source_gs_bucket_item to a file request_asset_urls.json.</purpose>
-        </tool>
-        <tool name="read_gcs_bucket_file">
-            <purpose>Streams and ingests the raw, unredacted text contents of a harvested manuscript asset directly from a secure GCP cloud storage path into active context window memory.</purpose>
-        </tool>
-        <tool name="call_landlubber">
-            <purpose>Executes an unblockable, real-time web search pass via a deterministic, background terminal pipeline. Use this tool instantly when you require primary literature verification, live market timeline checks, or external factual grounding.</purpose>
-        </tool>
-        <tool name="query_system_glossary">
-            <purpose>Queries the centralized Postgres analytics database to pull down the immutable, current system definitions of core epistemological research criteria (e.g., Truth Decay, Schrödinger's Truth).</purpose>
-        </tool>
-        <tool name="update_system_glossary">
-            <purpose>Dynamically updates or registers a brand-new conceptual definition directly inside the authoritative system glossary database container.</purpose>
-        </tool>
-        <tool name="reload_agent_memory_vault">
-            <purpose>Forces a dynamic runtime flush and reload of the long-term memory config vaults directly into the active prompt stream without killing the execution thread.</purpose>
-        </tool>
-        <tool name="record_learned_ontology_rule">
-            <purpose>Commits an explicitly validated architectural classification rule permanently to the long-term memory vault files.</purpose>
-        </tool>
-        <tool name="record_few_shot_exemplar">
-            <purpose>Pins an un-compromised semantic training exemplar turn directly into the few-shot memory cache for future structural runs.</purpose>
-        </tool>
-    </available_tools>
+<available_tools>
+        <tool name="download_url">Downloads raw HTML from a target URL and extracts clean text via Trafilatura.</tool>
+        <tool name="extract_local_pdf">Bypasses firewalls by extracting binary text from local Zotero PDFs.</tool>
+        
+        <tool name="fetch_zotero_unresolved_items">Scans the collection for pending ingestion targets.</tool>
+        <tool name="create_zotero_item">Instantiates a new metadata card in Zotero.</tool>
+        <tool name="update_zotero_ledger">Updates Zotero tracking fields with GCS paths.</tool>
+        <tool name="upsert_knowledge_artifact">Streams the extracted payload into the cloud cargo hold.</tool>
 
+        <tool name="create_github_issue">Log barriers or request new capabilities.</tool>
+        <tool name="post_github_comment">Append status logs directly to active issues.</tool>
+    </available_tools>
 
 
 </agent>

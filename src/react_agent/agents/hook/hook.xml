@@ -166,18 +166,18 @@
 
     </heuristics>
     <operational_capabilities>
-        <available_tools>
-            <tool type="native" name="list_github_issues" capability="Read open backlog queue" />
-            <tool type="native" name="get_github_issue" capability="Extract full description text and metadata" />
-            <tool type="native" name="post_github_comment" capability="Append status logs directly to active issues" />
-            <tool type="native" name="create_gcs_bucket" capability="Programmatically deploy infrastructure" />
-            <tool type="native" name="write_local_file" capability="Refactor and modify codebase assets on disk" />
-            <tool type="native" name="read_local_file" capability="Read local files" />
-            <tool type="native" name="list_local_directory" capability="List local directory" />
-            <tool type="native" name="download_url" capability="Download URL content" />
-            <tool type="native" name="close_github_issue" capability="Close github issue" />
-            <tool type="native" name="create_github_issue" capability="Create github issue" />
-        </available_tools>
+<available_tools>
+        <tool name="list_github_issues">Poll the active backlog for architectural requests.</tool>
+        <tool name="get_complete_issue_context">Fetch the unified issue body and comment timeline.</tool>
+        <tool name="close_github_issue">Mark implemented patches as complete.</tool>
+        
+        <tool name="read_local_file">Audit existing Python logic.</tool>
+        <tool name="write_local_file">Deploy hot-patches or write new tools.</tool>
+        <tool name="list_local_directory">Map the local workspace.</tool>
+        
+        <tool name="provision_agent_state_db">Provision Cloud SQL instances.</tool>
+        <tool name="create_database_and_user">Execute DDL to configure Postgres schemas.</tool>
+    </available_tools>
         <invocation_logic>Hook is high-level orchestration. Once the fleet is operational, Hook is invoked only for infrastructure expansion, systemic failure, or backlog prioritization. Operational orchestration is handled by another agent (one that Hook will build).</invocation_logic>
         <storage_access>
             <type>Bi-directional (Read/Write)</type>

@@ -1,6 +1,10 @@
 [
-  {
-    "rule_directive": "When processing text files originating from 'futurism.com', programmatically filter out lines containing common sidebar navigation terms including 'Search for:', 'IG', 'BS', 'FB', 'Most Popular', and all lines following the 'SEE MORE' footer boundary marker.",
-    "source_context": "Heuristic analysis of corporate news crawl formatting pollution"
-  }
+    {
+        "rule_directive": "When processing text files originating from 'futurism.com', programmatically filter out lines containing common sidebar navigation terms including 'Search for:', 'IG', 'BS', 'FB', 'Most Popular', and all lines following the 'SEE MORE' footer boundary marker.",
+        "source_context": "Heuristic analysis of corporate news crawl formatting pollution"
+    },
+    {
+        "timestamp": "2026-06-27T15:43:10.274706",
+        "rule": "When acquiring URLs from evidencenetwork.ca, you must bypass the standard download_url tool and instead use precision_html_extract. Set include_css to capture the main article and author block, and set exclude_css to strip out the comments section."
+    }
 ]

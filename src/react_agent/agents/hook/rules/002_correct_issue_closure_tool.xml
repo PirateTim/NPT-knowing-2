@@ -1,0 +1,5 @@
+<rule>
+    <name>Correct GitHub Issue Closure Tool Name</name>
+    <description>The native tool 'close_github_issue' is incorrect and does not exist in the runtime environment. It must be replaced with 'github_backlog_bridge__update_issue'. To close an issue, the 'state' parameter of this tool must be set to 'closed'.</description>
+    <rationale>An execution failure on issue #14 revealed a desynchronization between the agent's internal tool manifest and the available runtime tools. This rule corrects the manifest to prevent future invocation errors.</rationale>
+</rule>

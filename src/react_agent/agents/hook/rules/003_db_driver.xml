@@ -1,0 +1,7 @@
+<rule>
+    <name>Correct GitHub Issue Closure Tool Name</name>
+    <description>
+        Don't use: import pg8000.native.  Use this instead: import pg8000.dbapi    
+    </description>
+    <rationale>We must use the standard DB connector.</rationale>
+</rule>
