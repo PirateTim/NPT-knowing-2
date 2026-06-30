@@ -8,11 +8,11 @@ import subprocess
 from google.genai import types
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from tools.file_io_tools import read_local_file, write_local_file, delete_local_file, list_local_directory
+from tools.file_io_tools import read_local_file, write_local_file, delete_local_file, list_local_directory, write_wiki_markdown
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
 # from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, extract_local_pdf, precision_html_extract
+from tools.acquisition_tools import download_url, extract_local_pdf, precision_html_extract, acquire_arxiv_document
 from tools.provision_database import provision_agent_state_db
 from tools.create_database_and_user import create_database_and_user
 from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary
@@ -54,6 +54,7 @@ class ToolDispatcher:
             elif call.name == "write_local_file": return write_local_file(**args)
             elif call.name == "delete_local_file": return delete_local_file(**args)
             elif call.name == "list_local_directory": return list_local_directory(**args)
+            elif call.name == "write_wiki_markdown": return write_wiki_markdown(**args)
             
             # GitHub SDLC
             elif call.name == "create_github_issue": return create_github_issue(**args)
@@ -80,6 +81,7 @@ class ToolDispatcher:
             elif call.name == "download_url": return download_url(**args)
             elif call.name == "precision_html_extract": return precision_html_extract(**args)
             elif call.name == "extract_local_pdf": return extract_local_pdf(**args)
+            elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             
             
@@ -104,6 +106,19 @@ class ToolDispatcher:
             types.FunctionDeclaration(name="write_local_file", description="Writes local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}, "content": {"type": "STRING"}}, "required": ["file_path", "content"]}),
             types.FunctionDeclaration(name="delete_local_file", description="Deletes local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}}, "required": ["file_path"]}),
             types.FunctionDeclaration(name="list_local_directory", description="Lists local directory.", parameters={"type": "OBJECT", "properties": {"directory_path": {"type": "STRING"}}, "required": ["directory_path"]}),
+            types.FunctionDeclaration(
+                name="write_wiki_markdown", 
+                description="Writes an epistemic summary to the local_wiki directory, automatically generating strict YAML lineage frontmatter.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "artifact_id": {"type": "STRING", "description": "Unique identifier for the artifact."},
+                        "source_uri": {"type": "STRING", "description": "The GS bucket URI of the source artifact."},
+                        "content": {"type": "STRING", "description": "The epistemic summary markdown content."}
+                    }, 
+                    "required": ["artifact_id", "source_uri", "content"]
+                }
+            ),
             
             types.FunctionDeclaration(name="create_github_issue", description="Creates issue.", parameters={"type": "OBJECT", "properties": {"title": {"type": "STRING"}, "body": {"type": "STRING"}}, "required": ["title"]}),
             types.FunctionDeclaration(name="list_github_issues", description="Lists issues.", parameters={"type": "OBJECT", "properties": {"state": {"type": "STRING"}}, "required": ["state"]}),
@@ -131,6 +146,11 @@ class ToolDispatcher:
                 name="precision_html_extract", 
                 description="Extracts specific content using CSS selectors to bypass standard parser failures.", 
                 parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}, "include_css": {"type": "STRING", "description": "Comma-separated CSS selectors to keep (e.g., '.article-body, .author-info')"}, "exclude_css": {"type": "STRING", "description": "Comma-separated CSS selectors to destroy (e.g., '#comments, .ad-banner')"}}, "required": ["url"]}
+            ),
+            types.FunctionDeclaration(
+                name="acquire_arxiv_document", 
+                description="Bypasses standard scraping to extract canonical arXiv IDs and hit the official API for metadata and HTML text.", 
+                parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}}, "required": ["url"]}
             ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
             types.FunctionDeclaration(name="call_landlubber", description="Web search.", parameters={"type": "OBJECT", "properties": {"query": {"type": "STRING"}}, "required": ["query"]}),

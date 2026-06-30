@@ -83,5 +83,25 @@
     "rule_directive": "Identify 'Epistemic Corruption via Privacy Destruction' when the non-consensual collection and decontextualization of private data is framed as a necessary resource for knowledge creation (e.g., AI training). This act constitutes foundational epistemic vandalism because it intrinsically corrupts information at the point of capture by: (1) Severing the data from its original human context, intent, and nuance; (2) Laundering what is often stolen or private discourse into seemingly neutral ground-truth; and (3) Creating a chilling effect that pollutes the future information ecosystem by discouraging the authentic dialogue necessary for genuine knowledge formation.",
     "source_context": "User directive to codify the principle that privacy destruction is a foundational act of epistemic vandalism, following the analysis of asset acquisitions/20260618114101_acquired.txt and our subsequent dialogue.",
     "timestamp": "2026-06-23 18:49:43"
+  },
+  {
+    "rule_directive": "Epistemic Engine for Provenance Laundering",
+    "source_context": "Identifies assets that describe or constitute tools, designed to democratize the creation of systems (e.g., LLMs) that systematically destroy information provenance. The core mechanism involves ingesting information in a way that decontextualizes it and enables output with no verifiable evidentiary chain. The existence and distribution of such an 'engine' represents a scalable vector for epistemic collapse by commodifying the process of provenance destruction.",
+    "timestamp": "2026-06-29 10:49:43"
+  },
+  {
+    "rule_directive": "Classify an asset as 'Paradigm-Constrained Remediation' when it documents a scenario where practitioners from a structurally flawed professional paradigm attempt to solve a crisis that their own paradigm created or exacerbated. The key indicators are: 1. The Problem's Origin: The crisis (e.g., widespread misinformation) is presented as an external threat (like AI), while the evidence shows it is a direct consequence of the long-term, systemic failures of a specific professional class (e.g., journalism's broken business models, university-taught ethical frameworks that produce 'bothsidesism', and the collapse of verification standards). 2. The Proposed Solution: The solution is proposed by members of that same professional class and relies on a technological fix that operates *within* the flawed assumptions of their original paradigm, rather than challenging them. 3. The Core Blind Spot: The proponents of the solution demonstrate no awareness that their own profession's foundational principles and practices are a primary vector for the problem they claim to be solving. They are trying to fix the flood while standing in the river, unable to see the source.",
+    "source_context": "User directive refining the analysis of asset acquisitions/can-ai-save-us-from-misinformation-macleans-ca.txt, identifying that the core failure is when a professional class (journalism) proposes a technological solution to a problem (misinformation) that their own defective professional paradigm created and perpetuates.",
+    "timestamp": "2026-06-29 12:16:46"
+  },
+  {
+    "rule_directive": "Identify 'Epistemic Intimidation via Legal Process' when a corporate or state actor uses the mechanisms of the legal system (such as subpoenas or strategic lawsuits) not for their stated purpose of discovering truth, but as a tool to suppress public debate. The key indicators are: (1) The action imposes disproportionate financial or logistical costs on critics, advocates, or journalists, creating a chilling effect that discourages public participation. (2) The legal action serves to intimidate and silence opposition rather than to address a legitimate legal claim. (3) This tactic functions as a form of agnotology by actively removing critical voices from the public square, thereby manufacturing a false consensus and undermining the potential for informed, democratic oversight.",
+    "source_context": "User directive refining the analysis of asset acquisitions/openai-accused-of-pressuring-ai-regulation-advocates-with-subpoenas.txt. The rule was developed to classify the use of SLAPP-style legal tactics as a specific mechanism for creating a chilling effect and suppressing public discourse.",
+    "timestamp": "2026-06-29 12:41:00"
+  },
+  {
+    "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
+    "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
+    "timestamp": "2026-06-29 14:10:48"
   }
 ]

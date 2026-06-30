@@ -1,12 +1,13 @@
 """
 NPT-Cloud-Agents: Master Progeny Runtime Engine
-Architecture: Pure Class Library (No Execution Loops)
+Architecture: Pure Class Library with Dynamic Vault & Telemetry
 """
 import os
 import sys
 import json
 import datetime
 import xml.etree.ElementTree as ET
+import copy
 from urllib.parse import urlparse
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -25,12 +26,16 @@ class AgentEngine:
         self.xml_profile_path = xml_profile_path
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
-        
-        # REORDERED: DB connection must exist before we parse the mandate
         self.db_conn = self._get_db_connection()
-        self.system_instruction = self._parse_xml_mandate()
         
-        # RESTORED: Telemetry dump
+        # Load the full memory vault (XML + JSONs)
+        self.memory_vault = self._load_agent_memory_vault()
+        self.system_instruction = self._build_dynamic_system_prompt(self.memory_vault)
+        
+        # Build bound tools based on XML requests
+        self.bound_tools = self._bind_requested_tools(self.memory_vault.get("requested_tools", {}))
+        
+        # Output Grounding Audit Log
         self._dump_system_prompt()
 
     def _get_db_connection(self):
@@ -43,46 +48,80 @@ class AgentEngine:
             print(f"[DB ERROR] Connectivity failure: {e}", file=sys.stderr)
             return None
 
-    def _fetch_learned_rules(self) -> List[str]:
-        """Retrieves behavior rules from the ontology DB for this agent and the fleet."""
-        rules = []
-        if not self.db_conn: return rules
-        try:
-            cursor = self.db_conn.cursor()
-            cursor.execute(
-                "SELECT directive FROM agent_state.ontology_rules WHERE scope = %s OR scope = 'fleet' ORDER BY rule_id ASC;",
-                (self.agent_name,)
-            )
-            rows = cursor.fetchall()
-            for row in rows:
-                rules.append(row[0])
-            cursor.close()
-        except Exception as e:
-            print(f"[MEMORY ERROR] Failed to fetch rules: {e}", file=sys.stderr)
-        return rules
-
-    def _parse_xml_mandate(self) -> str:
-        """Extracts the authoritative system prompt and injects learned DB rules."""
-        instruction = f"You are {self.agent_name.upper()}."
-        if os.path.exists(self.xml_profile_path):
-            try:
-                tree = ET.parse(self.xml_profile_path)
-                root = tree.getroot()
-                mandate_elem = root.find(".//core_mandate")
-                if mandate_elem is not None:
-                    instruction = "".join(mandate_elem.itertext()).strip()
-            except Exception as e:
-                print(f"[XML ERROR] Failed to parse profile for {self.agent_name}: {e}", file=sys.stderr)
+    def _load_agent_memory_vault(self) -> Dict[str, Any]:
+        """Ingests the agent's localized profile configuration from XML and JSON."""
+        base_path = os.path.dirname(self.xml_profile_path)
+        profile = {"mandate": "", "lens": {}, "rules": [], "exemplars": [], "requested_tools": {}}
         
-        # === THE LEARNING INJECTION ===
-        rules = self._fetch_learned_rules()
-        if rules:
-            instruction += "\n\n### LEARNED BEHAVIORAL RULES (CRITICAL) ###\n"
-            instruction += "The following rules have been permanently learned from past interactions. You MUST follow these directives above all conflicting instructions:\n"
-            for i, r in enumerate(rules, 1):
-                instruction += f"{i}. {r}\n"
+        if os.path.exists(self.xml_profile_path):
+            tree = ET.parse(self.xml_profile_path)
+            root = tree.getroot()
+            mandate_elem = root.find(".//core_mandate")
+            if mandate_elem is not None:
+                profile["mandate"] = "".join(mandate_elem.itertext()).strip()
+            
+            tools_elem = root.find(".//available_tools")
+            if tools_elem is not None:
+                for tool_node in tools_elem.findall("tool"):
+                    t_name = tool_node.get("name")
+                    if t_name:
+                        profile["requested_tools"][t_name] = "".join(tool_node.itertext()).strip()
+                        
+        lens_path = os.path.join(base_path, "cognitive_lens.json")
+        if os.path.exists(lens_path):
+            with open(lens_path, 'r', encoding='utf-8') as f:
+                profile["lens"] = json.load(f)
                 
-        return instruction
+        rules_path = os.path.join(base_path, "learned_rules.json")
+        if os.path.exists(rules_path):
+            with open(rules_path, 'r', encoding='utf-8') as f:
+                profile["rules"] = json.load(f)
+                
+        exemplars_path = os.path.join(base_path, "few_shot_exemplars.json")
+        if os.path.exists(exemplars_path):
+            with open(exemplars_path, 'r', encoding='utf-8') as f:
+                profile["exemplars"] = json.load(f)
+                
+        return profile
+
+    def _build_dynamic_system_prompt(self, memory: Dict[str, Any]) -> str:
+        prompt = f"You are {self.agent_name.upper()}.\n\n"
+        if memory.get("mandate"):
+            prompt += f"=== CORE MANDATE ===\n{memory['mandate']}\n\n"
+            
+        lens = memory.get("lens", {})
+        if lens:
+            prompt += "=== COGNITIVE LENS & DOMAIN BIAS ===\n"
+            prompt += lens.get("domain_bias", "") + "\n\n"
+            
+        rules = memory.get("rules", [])
+        if rules:
+            prompt += "=== LEARNED RULES (PERMANENT ALIGNMENT) ===\n"
+            for idx, rule in enumerate(rules, 1):
+                prompt += f"{idx}. {rule.get('rule_directive', '')} (Source: {rule.get('source_context', '')})\n"
+            prompt += "\n"
+            
+        exemplars = memory.get("exemplars", [])
+        if exemplars:
+            prompt += "=== FEW-SHOT EXEMPLARS ===\n"
+            for ex in exemplars:
+                prompt += f"Input Context: {ex.get('input_context', '')}\nIdeal Output: {ex.get('ideal_output', '')}\n\n"
+                
+        return prompt
+
+    def _bind_requested_tools(self, requested_tools: Dict[str, str]) -> List[types.Tool]:
+        bound_tools = []
+        for decl in self.dispatcher.tool_definitions:
+            if decl.name in requested_tools:
+                isolated_decl = copy.deepcopy(decl)
+                custom_purpose = requested_tools[decl.name]
+                if custom_purpose:
+                    isolated_decl.description = custom_purpose
+                bound_tools.append(isolated_decl)
+                
+        if bound_tools:
+            return [types.Tool(function_declarations=bound_tools)]
+        return []
 
     def get_latest_checkpoint(self, thread_id: str) -> List[types.Content]:
         if not self.db_conn: return []
@@ -120,43 +159,69 @@ class AgentEngine:
 
     def start_chat_session(self, thread_id: str):
         history = self.get_latest_checkpoint(thread_id)
-        config = types.GenerateContentConfig(system_instruction=self.system_instruction, temperature=0.1, tools=[self.dispatcher.get_tool_declarations()])
+        config = self._get_active_config()
         return self.client.chats.create(model="gemini-2.5-pro", config=config, history=history)
 
+    def _get_active_config(self):
+        tool_config = types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode="AUTO")) if self.bound_tools else None
+        return types.GenerateContentConfig(
+            system_instruction=self.system_instruction,
+            temperature=0.1,
+            tools=self.bound_tools,
+            tool_config=tool_config
+        )
+
     def execute_turn(self, chat_session, prompt: str) -> str:
-        response = chat_session.send_message(prompt)
+        """Handles the Action-Observation tool loop natively inside the engine."""
+        active_config = self._get_active_config()
+        response = chat_session.send_message(prompt, config=active_config)
+        
         while response.function_calls:
             tool_responses = []
             for call in response.function_calls:
-                print(f"[SYSTEM] Agent executing tool: {call.name}...")
-                result = self.dispatcher.execute_tool_call(call)
-                tool_responses.append(types.Part.from_function_response(name=call.name, response={"result": result}))
-            response = chat_session.send_message(tool_responses)
+                print(f"  -> [SYSTEM] {self.agent_name.upper()} executing tool: {call.name}...")
+                
+                # Execute and Trace
+                call_args = dict(call.args) if hasattr(call, 'args') and call.args else {}
+                result_str = self.dispatcher.execute_tool_call(call)
+                self._log_tool_trace(call.name, call_args, result_str)
+                
+                # Hot-Reload hook
+                if call.name == "reload_agent_memory_vault":
+                    self.memory_vault = self._load_agent_memory_vault()
+                    self.system_instruction = self._build_dynamic_system_prompt(self.memory_vault)
+                    active_config = self._get_active_config()
+                    print(f"  -> [HOT-RELOAD] Rules and Lexicon successfully refreshed.")
+                
+                tool_responses.append(types.Part.from_function_response(
+                    name=call.name,
+                    response={"result": result_str}
+                ))
+            
+            # Send observation data back to the model
+            response = chat_session.send_message(tool_responses, config=active_config)
             
         final_text = response.text
-        # RESTORED: Logging the final output
         self._log_interaction(prompt, final_text)
         return final_text
 
-    # =========================================================
-    # RESTORED: FILE TELEMETRY METHODS
-    # =========================================================
     def _dump_system_prompt(self):
-        """Writes the final, assembled system instructions to a static file."""
         log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
         os.makedirs(log_dir, exist_ok=True)
-        file_path = os.path.join(log_dir, f"{self.agent_name}_system_prompt.txt")
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write("=== ACTIVE SYSTEM INSTRUCTION ===\n")
+        with open(os.path.join(log_dir, f"{self.agent_name}_system_prompt_compiled.log"), "w", encoding="utf-8") as f:
             f.write(self.system_instruction)
 
     def _log_interaction(self, prompt: str, response_text: str):
-        """Appends all prompt inputs and model outputs to a continuous text log."""
         log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
-        os.makedirs(log_dir, exist_ok=True)
-        file_path = os.path.join(log_dir, f"{self.agent_name}_interactions.log")
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        with open(file_path, "a", encoding="utf-8") as f:
+        with open(os.path.join(log_dir, f"{self.agent_name}_interactions.log"), "a", encoding="utf-8") as f:
             f.write(f"\n{'='*60}\n[{ts}] INPUT -> {self.agent_name.upper()}\n{'='*60}\n{prompt}\n")
             f.write(f"\n[{ts}] OUTPUT <- {self.agent_name.upper()}\n{'-'*60}\n{response_text}\n")
+
+    def _log_tool_trace(self, tool_name: str, args: dict, result: str):
+        log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = (f"=== TOOL TRACE: {ts} ===\nWire Target: {tool_name}\n"
+                     f"Args: {json.dumps(args, indent=2)}\nOutput:\n{result}\n{'='*40}\n\n")
+        with open(os.path.join(log_dir, f"active_tool_execution_trace.log"), "a", encoding="utf-8") as f:
+            f.write(log_entry)

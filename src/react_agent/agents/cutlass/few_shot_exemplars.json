@@ -25,8 +25,20 @@
     "rationale": "The asset documents the commercial scale of information provenance destruction. The core failure is not data bias or error, but the permanent severance of the evidentiary trail. By masking human subjectivity behind an opaque corporate supply chain, it strips humanity of the ability to verify how a fact was generated, creating an un-auditable foundation for automated intelligence."
   },
   {
-    "input_context": "ItemType: webpage\nTitle: Most companies aren\u2019t seeing a return on AI investments. This tech CEO wants to change that\nContext: Detailed reporting on Scale AI's data labeling dominance. Documents the industrialization of human qualitative tagging into mass-produced corporate training sets packaged as raw computation.",
-    "ideal_output": "Provenance Severance via Market Commodification (Epistemic Vandalism)",
-    "rationale": "The asset documents the commercial scale of information provenance destruction. The core failure is not data bias or error, but the permanent severance of the evidentiary trail. By masking human subjectivity behind an opaque corporate supply chain, it strips humanity of the ability to verify how a fact was generated, creating an un-auditable foundation for automated intelligence."
+    "input_context": "Analysis of a technical README for an open-source LLM training harness (`nanochat`). Initial classification was 'Epistemically Insignificant' because the document was seen as a purely technical, instructional artifact. User corrected this, stating: 'The nanochat is in fact both a kind of epistemology engine and at the same time a provenance destroyer... Why is it needed?'",
+    "ideal_output": "Epistemic Engine for Provenance Laundering",
+    "rationale": "The asset is not merely technical documentation; it is a recipe for a system that systematically launders unattributed source data into new, authoritative-sounding output. By democratizing access to this process, it functions as an engine for scaling the destruction of information provenance, making it a significant piece of evidence for epistemic collapse."
+  },
+  {
+    "input_context": "ItemType: webpage\nTitle: Can AI Save Us From Misinformation?\nContext: An article by a former journalist, now CEO of an AI fact-checking company, who argues that AI is the cause of a misinformation crisis. He proposes his own AI tool as the solution. The analysis reveals that the crisis stems from the pre-existing, systemic failures of the journalistic profession itself, a fact the author and his proposed solution completely ignore.",
+    "ideal_output": "Paradigm-Constrained Remediation",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-06-29 12:16:52"
+  },
+  {
+    "input_context": "ItemType: webpage\nTitle: The graduate 'jobpocalypse': Where have all the entry-level jobs gone?\nContext: Article frames the disappearance of entry-level jobs as a new crisis caused by AI, obscuring the multi-decade corporate trend of dismantling internal training and career pipelines. Proposes regressive solutions like indentured servitude.\n",
+    "ideal_output": "Narrative Misdirection",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-06-29 14:10:51"
   }
 ]

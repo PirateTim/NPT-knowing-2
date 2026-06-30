@@ -116,6 +116,87 @@ def precision_html_extract(url: str, include_css: str = "", exclude_css: str = "
 
     return f"=== TITLE: {native_title} ===\n=== RAW TEXT ACQUIRED FROM {target_url} ===\n\n{purified_text}"
 
+
+def acquire_arxiv_document(url: str) -> str:
+    """
+    Extracts the canonical arXiv ID from any arXiv URL variant (abs/pdf/html),
+    queries the official API for structured metadata, and fetches the full HTML text.
+    """
+    import re
+    import urllib.request
+    import urllib.error
+    import xml.etree.ElementTree as ET
+    from bs4 import BeautifulSoup
+
+    # 1. Isolate the ArXiv ID using Regex (handles post-2007 and legacy formats)
+    target_url = url.strip().replace('"', '').replace("'", "")
+    id_match = re.search(r"(\d{4}\.\d{4,5}(?:v\d+)?|[a-z\-]+(?:\.[A-Z]{2})?\/\d{7}(?:v\d+)?)", target_url)
+    
+    if not id_match:
+        return f"[ERROR] Could not extract a valid arXiv ID from the provided URL: {target_url}"
+    
+    arxiv_id = id_match.group(1)
+    
+    # 2. Fetch Perfect Metadata from the Official API
+    api_url = f"http://export.arxiv.org/api/query?id_list={arxiv_id}"
+    metadata_block = []
+    
+    try:
+        with urllib.request.urlopen(api_url, timeout=10) as response:
+            xml_data = response.read()
+            root = ET.fromstring(xml_data)
+            
+            # ArXiv uses the Atom namespace
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            entry = root.find('atom:entry', ns)
+            
+            if entry is not None:
+                title = entry.find('atom:title', ns).text.replace('\n', ' ').strip()
+                published = entry.find('atom:published', ns).text
+                abstract = entry.find('atom:summary', ns).text.strip()
+                authors = [author.find('atom:name', ns).text for author in entry.findall('atom:author', ns)]
+                
+                metadata_block.append(f"=== TITLE: {title} ===")
+                metadata_block.append(f"=== AUTHORS: {', '.join(authors)} ===")
+                metadata_block.append(f"=== PUBLISHED: {published} ===")
+                metadata_block.append(f"=== ARXIV ID: {arxiv_id} ===")
+                metadata_block.append(f"=== ABSTRACT ===\n{abstract}\n")
+            else:
+                metadata_block.append(f"=== ARXIV ID: {arxiv_id} (Metadata not found in API) ===")
+    except Exception as e:
+        metadata_block.append(f"[METADATA API ERROR] {str(e)}")
+
+    # 3. Fetch Full Body Text from the /html/ endpoint
+    html_url = f"https://arxiv.org/html/{arxiv_id}"
+    body_text = ""
+    
+    try:
+        req = urllib.request.Request(html_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html_bytes = response.read()
+            soup = BeautifulSoup(html_bytes, "html.parser")
+            
+            # Clean out scripts, styles, and the standard arXiv navigation headers
+            for element in soup(["script", "style", "nav", "header", "footer"]):
+                element.decompose()
+            
+            # Find the main article body (arXiv HTML usually puts content in 'article' or 'ltx_document')
+            article = soup.find("article") or soup.find(class_="ltx_document")
+            if article:
+                body_text = article.get_text(separator="\n\n", strip=True)
+            else:
+                body_text = soup.get_text(separator="\n", strip=True)
+                
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            body_text = "[CONTENT WARNING] Full HTML text is not yet available for this paper. The author has not compiled the LaTeX to HTML, or it is a legacy paper. Only the Abstract is provided above."
+        else:
+            body_text = f"[ACCESS BARRIER] HTML fetch failed: HTTP {e.code}"
+    except Exception as e:
+        body_text = f"[HTML PARSE ERROR] {str(e)}"
+
+    return "\n".join(metadata_block) + "\n=== FULL TEXT ===\n" + body_text
+
 def extract_local_pdf(zotero_storage_key: str) -> str:
     """Bypasses cloud firewalls by extracting binary text from local Zotero PDFs."""
     try:

@@ -15,20 +15,28 @@ def run_interactive_audit():
     print(" NPT FLEET TERMINAL: CUTLASS (EPISTEMIC AUDITOR) ")
     print("=========================================================")
     
-    # 1. Define exact paths for Cutlass
     agent_name = "cutlass"
     xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "cutlass", "cutlass.xml"))
     
-    # 2. Boot the engine
     engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
     
-    # 3. Establish Thread State
-    thread_suffix = input("Enter Thread Suffix (or press Enter for new session): ").strip()
-    thread_id = f"thread_{agent_name}_{thread_suffix}" if thread_suffix else f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"
+    thread_input = input("Enter Thread ID or Suffix (or press Enter for new session): ").strip()
     
+    if thread_input:
+        # If the user pasted the full ID, use it directly. Otherwise, format it.
+        if thread_input.startswith(f"thread_{agent_name}_"):
+            thread_id = thread_input
+        else:
+            thread_id = f"thread_{agent_name}_{thread_input}"
+    else:
+        thread_id = f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"
+        
+    print(f"\n[SYSTEM] Active Thread ID: {thread_id}")
+    print("[SYSTEM] (Copy this ID to resume this exact session later)")
+    
+    # -> THE MISSING LINE REINSTATED <-
     chat_session = engine.start_chat_session(thread_id)
     
-    # 4. The Execution Loop
     while True:
         try:
             user_input = input("\n[AUTHOR] -> ")
@@ -38,14 +46,10 @@ def run_interactive_audit():
             if not user_input.strip():
                 continue
 
-            # Standard pass
-            response = chat_session.send_message(user_input)
+            # The engine automatically handles the entire Action-Observation tool loop
+            final_response = engine.execute_turn(chat_session, user_input)
             
-            # Note: The Engine will eventually need the AFC (Automatic Function Calling) 
-            # dispatch loop added back to handle tool resolution natively, 
-            # but the terminal interface remains clean.
-            
-            print(f"\n[CUTLASS] -> {response.text}")
+            print(f"\n[CUTLASS] -> {final_response}")
             
             # Persist State
             engine.save_checkpoint(thread_id, chat_session.get_history())
@@ -59,4 +63,3 @@ def run_interactive_audit():
 
 if __name__ == "__main__":
     run_interactive_audit()
-    

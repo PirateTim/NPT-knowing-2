@@ -138,11 +138,15 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
         # 1. Upsert the successful metadata
         cursor.execute(
             '''
-            INSERT INTO cargo.content_metadata (source_url, item_type, title, gcp_bucket_path, created_at)
-            VALUES (%s, %s, %s, %s, NOW())
-            ON CONFLICT (source_url) DO UPDATE SET
-                title = EXCLUDED.title, 
-                gcp_bucket_path = EXCLUDED.gcp_bucket_path, 
+            INSERT INTO cargo.content_metadata (source_url, item_type, title, authors, abstract, gcp_bucket_path)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (source_url) 
+            DO UPDATE SET 
+                item_type = EXCLUDED.item_type,
+                title = EXCLUDED.title,
+                authors = EXCLUDED.authors,
+                abstract = EXCLUDED.abstract,
+                gcp_bucket_path = EXCLUDED.gcp_bucket_path,
                 created_at = NOW();
             ''',
             (source_url, item_type, title, gcp_bucket_path)

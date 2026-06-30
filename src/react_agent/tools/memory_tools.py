@@ -5,6 +5,8 @@ Architecture: PostgreSQL State Injection
 import os
 from urllib.parse import urlparse
 import pg8000.dbapi
+import json
+import datetime
 
 def _get_state_connection():
     conn_string = os.getenv("DATABASE_URL")
@@ -21,9 +23,9 @@ def _get_cargo_connection():
     return pg8000.dbapi.connect(
         user=url.username, password=url.password, host=url.hostname, port=url.port, database=url.path[1:]
     )
-
-def record_learned_ontology_rule(agent_name: str, rule: str) -> str:
-    """Saves a permanent behavioral rule to the database for future agent boots."""
+#================================================
+""" def record_learned_ontology_rule(agent_name: str, rule: str) -> str:
+    #Saves a permanent behavioral rule to the database for future agent boots.
     conn = _get_state_connection()
     if not conn: return "[ERROR] State database unavailable."
     try:
@@ -38,10 +40,76 @@ def record_learned_ontology_rule(agent_name: str, rule: str) -> str:
     except Exception as e:
         return f"[ERROR] Failed to save rule: {str(e)}"
     finally:
-        conn.close()
+        conn.close() """
+def record_learned_ontology_rule(agent_name: str, rule: str) -> str:
+    """Appends a newly learned heuristic directly to the agent's local JSON vault."""
+    try:
+        # The LLM passes the rule as a stringified JSON object. We parse it back.
+        rule_data = json.loads(rule)
+        rule_data["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Locate the specific agent's JSON file
+        file_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "agents", agent_name.lower(), "learned_rules.json"
+        ))
+
+        # Load existing rules
+        rules = []
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                try:
+                    rules = json.load(f)
+                except json.JSONDecodeError:
+                    rules = []
+
+        # Append and Save
+        rules.append(rule_data)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(rules, f, indent=2)
+
+        return "[MEMORY COMMITTED] Rule permanently appended to local JSON vault."
+    except Exception as e:
+        return f"[MEMORY ERROR] Failed to write rule to JSON: {e}"
+#===================================================================    
+
+
+
+# def record_few_shot_exemplar(agent_name: str, user_input: str, model_response: str) -> str:
+#     return "[NOT IMPLEMENTED YET] Exemplar memory table pending creation."
 
 def record_few_shot_exemplar(agent_name: str, user_input: str, model_response: str) -> str:
-    return "[NOT IMPLEMENTED YET] Exemplar memory table pending creation."
+    """Appends a correction cycle to the agent's local JSON exemplars."""
+    try:
+        exemplar_data = {
+            "input_context": user_input,
+            "ideal_output": model_response,
+            "rationale": "Auto-recorded via active terminal correction.",
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # Locate the specific agent's JSON file
+        file_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "agents", agent_name.lower(), "few_shot_exemplars.json"
+        ))
+
+        # Load existing exemplars
+        exemplars = []
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                try:
+                    exemplars = json.load(f)
+                except json.JSONDecodeError:
+                    exemplars = []
+
+        # Append and Save
+        exemplars.append(exemplar_data)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(exemplars, f, indent=2)
+
+        return "[MEMORY COMMITTED] Exemplar permanently appended to local JSON vault."
+    except Exception as e:
+        return f"[MEMORY ERROR] Failed to write exemplar to JSON: {e}"
+
 
 def reload_agent_memory_vault(agent_name: str) -> str:
     return "[SYSTEM] Memory vault reload triggered (Handled by Engine on next turn)."

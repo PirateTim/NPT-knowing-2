@@ -14,7 +14,6 @@ import pg8000.dbapi
 from google import genai
 from google.genai import types
 
-# Map the path backward so we can import from the core directory cleanly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.tool_dispatcher import ToolDispatcher
 
@@ -26,10 +25,12 @@ class AgentEngine:
         self.xml_profile_path = xml_profile_path
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
-        self.system_instruction = self._parse_xml_mandate()
-        self.db_conn = self._get_db_connection()
         
-        # Telemetry: Dump the assembled prompt to the logs folder
+        # REORDERED: DB connection must exist before we parse the mandate
+        self.db_conn = self._get_db_connection()
+        self.system_instruction = self._parse_xml_mandate()
+        
+        # RESTORED: Telemetry dump
         self._dump_system_prompt()
 
     def _get_db_connection(self):
@@ -42,7 +43,26 @@ class AgentEngine:
             print(f"[DB ERROR] Connectivity failure: {e}", file=sys.stderr)
             return None
 
+    def _fetch_learned_rules(self) -> List[str]:
+        """Retrieves behavior rules from the ontology DB for this agent and the fleet."""
+        rules = []
+        if not self.db_conn: return rules
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute(
+                "SELECT directive FROM agent_state.ontology_rules WHERE scope = %s OR scope = 'fleet' ORDER BY rule_id ASC;",
+                (self.agent_name,)
+            )
+            rows = cursor.fetchall()
+            for row in rows:
+                rules.append(row[0])
+            cursor.close()
+        except Exception as e:
+            print(f"[MEMORY ERROR] Failed to fetch rules: {e}", file=sys.stderr)
+        return rules
+
     def _parse_xml_mandate(self) -> str:
+        """Extracts the authoritative system prompt and injects learned DB rules."""
         instruction = f"You are {self.agent_name.upper()}."
         if os.path.exists(self.xml_profile_path):
             try:
@@ -53,6 +73,15 @@ class AgentEngine:
                     instruction = "".join(mandate_elem.itertext()).strip()
             except Exception as e:
                 print(f"[XML ERROR] Failed to parse profile for {self.agent_name}: {e}", file=sys.stderr)
+        
+        # === THE LEARNING INJECTION ===
+        rules = self._fetch_learned_rules()
+        if rules:
+            instruction += "\n\n### LEARNED BEHAVIORAL RULES (CRITICAL) ###\n"
+            instruction += "The following rules have been permanently learned from past interactions. You MUST follow these directives above all conflicting instructions:\n"
+            for i, r in enumerate(rules, 1):
+                instruction += f"{i}. {r}\n"
+                
         return instruction
 
     def get_latest_checkpoint(self, thread_id: str) -> List[types.Content]:
@@ -96,7 +125,6 @@ class AgentEngine:
 
     def execute_turn(self, chat_session, prompt: str) -> str:
         response = chat_session.send_message(prompt)
-        
         while response.function_calls:
             tool_responses = []
             for call in response.function_calls:
@@ -106,11 +134,12 @@ class AgentEngine:
             response = chat_session.send_message(tool_responses)
             
         final_text = response.text
+        # RESTORED: Logging the final output
         self._log_interaction(prompt, final_text)
         return final_text
 
     # =========================================================
-    # FILE TELEMETRY METHODS
+    # RESTORED: FILE TELEMETRY METHODS
     # =========================================================
     def _dump_system_prompt(self):
         """Writes the final, assembled system instructions to a static file."""
@@ -131,3 +160,30 @@ class AgentEngine:
         with open(file_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'='*60}\n[{ts}] INPUT -> {self.agent_name.upper()}\n{'='*60}\n{prompt}\n")
             f.write(f"\n[{ts}] OUTPUT <- {self.agent_name.upper()}\n{'-'*60}\n{response_text}\n")
+
+    def _fetch_json_rules(self) -> str:
+        """Dynamically loads JSON heuristics to support agile experimentation."""
+        rules_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "agents", self.agent_name, "learned_rules.json"
+        ))
+        
+        if not os.path.exists(rules_path):
+            return ""
+            
+        try:
+            with open(rules_path, 'r', encoding='utf-8') as f:
+                rules = json.load(f)
+                
+            if not rules:
+                return ""
+                
+            rules_block = "\n\n=== LEARNED ONTOLOGY RULES ===\n"
+            for idx, rule in enumerate(rules, 1):
+                directive = rule.get("rule_directive", "")
+                context = rule.get("source_context", "")
+                rules_block += f"Rule {idx}: {directive}\n(Source: {context})\n\n"
+                
+            return rules_block
+        except Exception as e:
+            print(f"[MEMORY ERROR] Failed to load JSON rules for {self.agent_name}: {e}")
+            return ""
