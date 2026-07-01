@@ -22,7 +22,17 @@ def run_spyglass():
     agent_name = "spyglass"
     xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "spyglass", "spyglass.xml"))
     
-    engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
+    # 1. Instantiate the Engine
+    # engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
+    # 1. Parse optional CLI arguments for model overrides
+    model_override = sys.argv[1] if len(sys.argv) > 1 else None
+    
+    # 2. Instantiate the Engine with the override payload
+    engine = AgentEngine(
+        agent_name=agent_name, 
+        xml_profile_path=xml_path, 
+        model_override=model_override
+    )
     
     # Thread Logic: Use provided, or generate new
     thread_id = args.thread if args.thread else f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"

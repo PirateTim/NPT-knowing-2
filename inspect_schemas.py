@@ -57,3 +57,4 @@ if __name__ == "__main__":
     
     inspect_table("DATABASE_URL", "agent_state", "checkpoints")
     inspect_table("CONTENT_DATABASE_URL", "cargo", "system_glossary")
+    inspect_table("CONTENT_DATABASE_URL", "cargo", "content_metadata")

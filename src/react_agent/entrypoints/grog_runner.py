@@ -11,12 +11,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.agent_engine import AgentEngine
 
 def run_interactive_audit():
+# Change the header print statements to match Grog
     print("=========================================================")
-    print(" NPT FLEET TERMINAL: CUTLASS (EPISTEMIC AUDITOR) ")
+    print(" NPT FLEET TERMINAL: GROG (STRUCTURAL EXTRACTION) ")
     print("=========================================================")
     
-    agent_name = "cutlass"
-    xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "cutlass", "cutlass.xml"))
+# Change the agent name and xml path
+    agent_name = "grog"
+    xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "grog", "grog.xml"))
     
     # 1. Instantiate the Engine
     # engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
@@ -59,7 +61,8 @@ def run_interactive_audit():
             # The engine automatically handles the entire Action-Observation tool loop
             final_response = engine.execute_turn(chat_session, user_input)
             
-            print(f"\n[CUTLASS] -> {final_response}")
+            # Change the output print statement
+            print(f"\n[GROG] -> {final_response}")
             
             # Persist State
             engine.save_checkpoint(thread_id, chat_session.get_history())

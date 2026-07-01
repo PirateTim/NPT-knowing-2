@@ -147,3 +147,22 @@ def update_system_glossary(term: str, definition: str) -> str:
         return f"[ERROR] Failed to update glossary: {str(e)}"
     finally:
         conn.close()
+
+def delete_system_glossary_term(term: str) -> str:
+    """Permanently deletes a term from the cargo.system_glossary table."""
+    conn = _get_cargo_connection()
+    if not conn: return "[ERROR] Database unavailable."
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cargo.system_glossary WHERE term = %s", (term,))
+        deleted_count = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        
+        if deleted_count > 0:
+            return f"[SUCCESS] Term '{term}' permanently deleted from the glossary."
+        return f"[NOTICE] Term '{term}' was not found in the glossary."
+    except Exception as e:
+        return f"[ERROR] Failed to delete term: {str(e)}"
+    finally:
+        conn.close()

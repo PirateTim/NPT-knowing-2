@@ -15,7 +15,7 @@ from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge
 from tools.acquisition_tools import download_url, extract_local_pdf, precision_html_extract, acquire_arxiv_document
 from tools.provision_database import provision_agent_state_db
 from tools.create_database_and_user import create_database_and_user
-from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary
+from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term
 from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo
 
 
@@ -28,9 +28,20 @@ from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log
 def call_landlubber(query: str) -> str:
     try:
         runner_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "entrypoints", "landlubber_runner.py"))
-        result = subprocess.run([sys.executable, runner_path, query], capture_output=True, text=True, timeout=60)
-        if result.returncode != 0 or not result.stdout.strip():
-            return "[SYSTEM_ERROR: LANDLUBBER_SEARCH_TIMEOUT. DO NOT HALLUCINATE A RESPONSE.]"
+        
+        # Inject current working directory into PYTHONPATH for the subprocess
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        
+        result = subprocess.run(
+            [sys.executable, runner_path, query], 
+            capture_output=True, 
+            text=True, 
+            timeout=60,
+            env=env
+        )
+        if result.returncode != 0:
+            return f"[SYSTEM_ERROR: LANDLUBBER_FAILED. Stderr: {result.stderr}]"
         return result.stdout.strip()
     except Exception as e:
         return f"[SYSTEM_ERROR: Landlubber routing failed - {str(e)}]"
@@ -83,6 +94,7 @@ class ToolDispatcher:
             elif call.name == "extract_local_pdf": return extract_local_pdf(**args)
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
+            elif call.name == "delete_system_glossary_term": return delete_system_glossary_term(**args)
             
             
             # Memory & Glossary
@@ -108,15 +120,17 @@ class ToolDispatcher:
             types.FunctionDeclaration(name="list_local_directory", description="Lists local directory.", parameters={"type": "OBJECT", "properties": {"directory_path": {"type": "STRING"}}, "required": ["directory_path"]}),
             types.FunctionDeclaration(
                 name="write_wiki_markdown", 
-                description="Writes an epistemic summary to the local_wiki directory, automatically generating strict YAML lineage frontmatter.", 
+                description="Writes a summary to the local_wiki directory, automatically generating strict YAML lineage frontmatter.", 
                 parameters={
                     "type": "OBJECT", 
                     "properties": {
                         "artifact_id": {"type": "STRING", "description": "Unique identifier for the artifact."},
                         "source_uri": {"type": "STRING", "description": "The GS bucket URI of the source artifact."},
-                        "content": {"type": "STRING", "description": "The epistemic summary markdown content."}
+                        "content": {"type": "STRING", "description": "The summary markdown content."},
+                        "agent_name": {"type": "STRING", "description": "Your agent name (e.g., grog, cutlass, bilgeladle)."},
+                        "skill": {"type": "STRING", "description": "The specific skill you executed (e.g., structural_extraction, epistemic_summary)."}
                     }, 
-                    "required": ["artifact_id", "source_uri", "content"]
+                    "required": ["artifact_id", "source_uri", "content", "agent_name", "skill"]
                 }
             ),
             
@@ -135,7 +149,23 @@ class ToolDispatcher:
             types.FunctionDeclaration(name="upsert_knowledge_artifact", description="Uploads to GCS.", parameters={"type": "OBJECT", "properties": {"artifact_name": {"type": "STRING"}, "content": {"type": "STRING"}}, "required": ["artifact_name", "content"]}),
             
             types.FunctionDeclaration(name="check_cargo_manifest", description="Checks Postgres for duplicates.", parameters={"type": "OBJECT", "properties": {"target_url": {"type": "STRING"}}, "required": ["target_url"]}),
-            types.FunctionDeclaration(name="log_content_metadata", description="Logs to Postgres.", parameters={"type": "OBJECT", "properties": {"source_url": {"type": "STRING"}, "title": {"type": "STRING"}, "gcp_bucket_path": {"type": "STRING"}, "item_type": {"type": "STRING"}}, "required": ["source_url", "title", "gcp_bucket_path"]}),
+            # types.FunctionDeclaration(name="log_content_metadata", description="Logs to Postgres.", parameters={"type": "OBJECT", "properties": {"source_url": {"type": "STRING"}, "title": {"type": "STRING"}, "gcp_bucket_path": {"type": "STRING"}, "item_type": {"type": "STRING"}}, "required": ["source_url", "title", "gcp_bucket_path"]}),
+            types.FunctionDeclaration(
+                name="log_content_metadata", 
+                description="Logs to Postgres.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "source_url": {"type": "STRING"}, 
+                        "title": {"type": "STRING"}, 
+                        "gcp_bucket_path": {"type": "STRING"}, 
+                        "item_type": {"type": "STRING"},
+                        "authors": {"type": "STRING"},
+                        "abstract": {"type": "STRING"}
+                    }, 
+                    "required": ["source_url", "title", "gcp_bucket_path"]
+                }
+            ),
             types.FunctionDeclaration(name="log_ingestion_failure", description="Logs a completely failed acquisition to the Postgres dead-letter queue.", parameters={"type": "OBJECT", "properties": {"source_url": {"type": "STRING"}, "error_message": {"type": "STRING"}}, "required": ["source_url", "error_message"]}),
             types.FunctionDeclaration(name="purge_corrupted_cargo", description="Purges a corrupted ingestion by deleting the GCS file, removing the DB record, and logging the URL to the dead-letter queue.", parameters={"type": "OBJECT", "properties": {"source_url": {"type": "STRING"}, "error_message": {"type": "STRING"}}, "required": ["source_url", "error_message"]}),
 
@@ -153,13 +183,42 @@ class ToolDispatcher:
                 parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}}, "required": ["url"]}
             ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
-            types.FunctionDeclaration(name="call_landlubber", description="Web search.", parameters={"type": "OBJECT", "properties": {"query": {"type": "STRING"}}, "required": ["query"]}),
-            
+            # types.FunctionDeclaration(name="call_landlubber", description="Web search.", parameters={"type": "OBJECT", "properties": {"query": {"type": "STRING"}}, "required": ["query"]}),
+            types.FunctionDeclaration(
+                name="call_landlubber", 
+                description="Performs real-time web search for factual verification.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "query": {"type": "STRING", "description": "The search query string."}
+                    }, 
+                    "required": ["query"]
+                }
+            ),
+
+
             types.FunctionDeclaration(name="record_learned_ontology_rule", description="Saves rule.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule": {"type": "STRING"}}, "required": ["agent_name", "rule"]}),
             types.FunctionDeclaration(name="record_few_shot_exemplar", description="Saves exemplar.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "user_input": {"type": "STRING"}, "model_response": {"type": "STRING"}}, "required": ["agent_name", "user_input", "model_response"]}),
             types.FunctionDeclaration(name="reload_agent_memory_vault", description="Reloads memory.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}}, "required": ["agent_name"]}),
             types.FunctionDeclaration(name="query_system_glossary", description="Queries glossary.", parameters={"type": "OBJECT", "properties": {}}),
-            types.FunctionDeclaration(name="update_system_glossary", description="Updates glossary.", parameters={"type": "OBJECT", "properties": {"term": {"type": "STRING"}, "definition": {"type": "STRING"}}, "required": ["term", "definition"]}),
+            types.FunctionDeclaration(
+                name="update_system_glossary", 
+                description="Adds or updates a terminology definition in the cargo.system_glossary database table.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "term": {"type": "STRING", "description": "The exact concept or vocabulary term (e.g., 'Active Ignorance')."},
+                        "definition": {"type": "STRING", "description": "The precise definition aligned with the manuscript."}
+                    }, 
+                    "required": ["term", "definition"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="delete_system_glossary_term", 
+                description="Deletes a term from the system glossary.", 
+                parameters={"type": "OBJECT", "properties": {"term": {"type": "STRING"}}, "required": ["term"]}
+            ),
+
 
             types.FunctionDeclaration(name="provision_agent_state_db", description="Provisions Cloud SQL.", parameters={"type": "OBJECT", "properties": {"instance_name": {"type": "STRING"}, "authorized_ip": {"type": "STRING"}}, "required": ["instance_name", "authorized_ip"]}),
             types.FunctionDeclaration(name="create_database_and_user", description="DDL schema.", parameters={"type": "OBJECT", "properties": {"instance_ip": {"type": "STRING"}, "db_name": {"type": "STRING"}, "user_name": {"type": "STRING"}, "password": {"type": "STRING"}}, "required": ["instance_ip", "db_name", "user_name", "password"]})

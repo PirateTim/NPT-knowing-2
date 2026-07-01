@@ -21,21 +21,25 @@ from core.tool_dispatcher import ToolDispatcher
 load_dotenv()
 
 class AgentEngine:
-    def __init__(self, agent_name: str, xml_profile_path: str):
+
+    # Notice we added model_override=None
+    def __init__(self, agent_name: str, xml_profile_path: str, model_override: str = None):
         self.agent_name = agent_name.lower()
         self.xml_profile_path = xml_profile_path
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
         self.db_conn = self._get_db_connection()
         
-        # Load the full memory vault (XML + JSONs)
         self.memory_vault = self._load_agent_memory_vault()
+        
+        # THE ROUTING LOGIC: Override beats XML, XML beats default.
+        self.model_name = model_override or self.memory_vault.get("model_target", "gemini-3.5-flash")
+        
+        # ADD THIS LINE for terminal observability:
+        print(f"  -> [ENGINE BOOT] Routed Cognitive Model: {self.model_name.upper()}")
+
         self.system_instruction = self._build_dynamic_system_prompt(self.memory_vault)
-        
-        # Build bound tools based on XML requests
         self.bound_tools = self._bind_requested_tools(self.memory_vault.get("requested_tools", {}))
-        
-        # Output Grounding Audit Log
         self._dump_system_prompt()
 
     def _get_db_connection(self):
@@ -66,6 +70,10 @@ class AgentEngine:
                     t_name = tool_node.get("name")
                     if t_name:
                         profile["requested_tools"][t_name] = "".join(tool_node.itertext()).strip()
+
+        # Add to _load_agent_memory_vault parsing logic:
+        model_elem = root.find(".//model")
+        profile["model_target"] = model_elem.text.strip() if model_elem is not None else "gemini-3.5-flash"
                         
         lens_path = os.path.join(base_path, "cognitive_lens.json")
         if os.path.exists(lens_path):
@@ -123,7 +131,22 @@ class AgentEngine:
             return [types.Tool(function_declarations=bound_tools)]
         return []
 
-    def get_latest_checkpoint(self, thread_id: str) -> List[types.Content]:
+    # def get_latest_checkpoint(self, thread_id: str) -> List[types.Content]:
+    #     if not self.db_conn: return []
+    #     cursor = self.db_conn.cursor()
+    #     cursor.execute("SELECT state_payload FROM agent_state.checkpoints WHERE thread_id = %s ORDER BY updated_at DESC LIMIT 1", (thread_id,))
+    #     row = cursor.fetchone()
+    #     cursor.close()
+        
+    #     history = []
+    #     if row and row[0]:
+    #         raw_history = row[0] if isinstance(row[0], list) else json.loads(row[0])
+    #         for msg in raw_history:
+    #             parts = [types.Part.from_text(text=p.get("text", "")) for p in msg.get("parts", [])]
+    #             history.append(types.Content(role=msg.get("role"), parts=parts))
+    #     return history
+
+    def get_latest_checkpoint(self, thread_id: str, max_turns: int = 10) -> List[types.Content]:
         if not self.db_conn: return []
         cursor = self.db_conn.cursor()
         cursor.execute("SELECT state_payload FROM agent_state.checkpoints WHERE thread_id = %s ORDER BY updated_at DESC LIMIT 1", (thread_id,))
@@ -133,6 +156,13 @@ class AgentEngine:
         history = []
         if row and row[0]:
             raw_history = row[0] if isinstance(row[0], list) else json.loads(row[0])
+            
+            # SAFEGUARD: Enforce the rolling window (e.g., keep only the last 10 messages)
+            # We multiply by 2 because a 'turn' consists of one USER message and one MODEL message
+            if len(raw_history) > (max_turns * 2):
+                raw_history = raw_history[-(max_turns * 2):]
+                print(f"  -> [SYSTEM] Context window truncated. Retaining last {max_turns} turns.")
+
             for msg in raw_history:
                 parts = [types.Part.from_text(text=p.get("text", "")) for p in msg.get("parts", [])]
                 history.append(types.Content(role=msg.get("role"), parts=parts))
@@ -157,10 +187,12 @@ class AgentEngine:
         self.db_conn.commit()
         cursor.close()
 
+
     def start_chat_session(self, thread_id: str):
         history = self.get_latest_checkpoint(thread_id)
         config = self._get_active_config()
-        return self.client.chats.create(model="gemini-2.5-pro", config=config, history=history)
+        # FIX: Now it uses the XML or CLI override
+        return self.client.chats.create(model=self.model_name, config=config, history=history)
 
     def _get_active_config(self):
         tool_config = types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode="AUTO")) if self.bound_tools else None
@@ -173,10 +205,51 @@ class AgentEngine:
 
     def execute_turn(self, chat_session, prompt: str) -> str:
         """Handles the Action-Observation tool loop natively inside the engine."""
+        
+        history = chat_session.get_history()
+        
+        # 1. The Token-Based Circuit Breaker
+        MAX_TOKENS = 60000  # Adjust this boundary to your budget/context comfort zone
+        
+        try:
+            # Query the Google API for exact token weight
+            token_response = self.client.models.count_tokens(
+                model=self.model_name,
+                contents=history
+            )
+            current_tokens = token_response.total_tokens
+        except Exception as e:
+            # Fallback estimation if the API check fails (approx 4 chars per token)
+            current_tokens = len(str(history)) // 4 
+            
+        if current_tokens > MAX_TOKENS:
+            command = prompt.strip().upper()
+            if command == "OVERRIDE":
+                print(f"  -> [SYSTEM] Context limit overridden. Current load: {current_tokens} tokens.")
+                prompt = "[SYSTEM NOTE: Author overridden context limit. Proceed.]"
+            elif command == "HANDOFF":
+                print("  -> [SYSTEM] Generating Thread Handoff Document...")
+                prompt = "[SYSTEM COMMAND: Context window saturated. Generate a 'Thread Handoff Document' summarizing our state.]"
+            elif not prompt.startswith("[SYSTEM"):
+                return (f"\n[SYSTEM ALERT] Cognitive Limit Reached ({current_tokens} / {MAX_TOKENS} tokens).\n"
+                        f"OPTIONS:\n"
+                        f"1. Type 'HANDOFF' to generate a state-transfer summary.\n"
+                        f"2. Type 'OVERRIDE' to force context expansion.")
+
+        # 2. Standard Execution Loop
         active_config = self._get_active_config()
         response = chat_session.send_message(prompt, config=active_config)
         
+        # 3. The Tool-Loop Circuit Breaker (Prevents infinite Action-Observation loops)
+        tool_loop_count = 0
+        MAX_TOOL_LOOPS = 8  # Hard cap on consecutive tool calls per turn
+
         while response.function_calls:
+            tool_loop_count += 1
+            if tool_loop_count > MAX_TOOL_LOOPS:
+                print("  -> [SYSTEM WARNING] Infinite tool loop detected. Aborting turn.")
+                return "[SYSTEM ERROR] Agent entered an infinite Action-Observation loop. Execution halted."
+
             tool_responses = []
             for call in response.function_calls:
                 print(f"  -> [SYSTEM] {self.agent_name.upper()} executing tool: {call.name}...")
@@ -186,7 +259,7 @@ class AgentEngine:
                 result_str = self.dispatcher.execute_tool_call(call)
                 self._log_tool_trace(call.name, call_args, result_str)
                 
-                # Hot-Reload hook
+                # 4. Hot-Reload Hook
                 if call.name == "reload_agent_memory_vault":
                     self.memory_vault = self._load_agent_memory_vault()
                     self.system_instruction = self._build_dynamic_system_prompt(self.memory_vault)
@@ -204,7 +277,6 @@ class AgentEngine:
         final_text = response.text
         self._log_interaction(prompt, final_text)
         return final_text
-
     def _dump_system_prompt(self):
         log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
         os.makedirs(log_dir, exist_ok=True)
@@ -218,10 +290,31 @@ class AgentEngine:
             f.write(f"\n{'='*60}\n[{ts}] INPUT -> {self.agent_name.upper()}\n{'='*60}\n{prompt}\n")
             f.write(f"\n[{ts}] OUTPUT <- {self.agent_name.upper()}\n{'-'*60}\n{response_text}\n")
 
+    # def _log_tool_trace(self, tool_name: str, args: dict, result: str):
+    #     log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
+    #     ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #     log_entry = (f"=== TOOL TRACE: {ts} ===\nWire Target: {tool_name}\n"
+    #                  f"Args: {json.dumps(args, indent=2)}\nOutput:\n{result}\n{'='*40}\n\n")
+    #     with open(os.path.join(log_dir, f"active_tool_execution_trace.log"), "a", encoding="utf-8") as f:
+    #         f.write(log_entry)
+
     def _log_tool_trace(self, tool_name: str, args: dict, result: str):
         log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 1. Truncate massive argument payloads (like 'content')
+        safe_args = {}
+        for k, v in args.items():
+            if isinstance(v, str) and len(v) > 500:
+                safe_args[k] = v[:500] + f"\n... [TRUNCATED: Payload was {len(v)} characters]"
+            else:
+                safe_args[k] = v
+                
+        # 2. Truncate massive tool returns (like scraped HTML)
+        safe_result = result if len(result) < 1000 else result[:1000] + f"\n... [TRUNCATED: Result was {len(result)} characters]"
+
         log_entry = (f"=== TOOL TRACE: {ts} ===\nWire Target: {tool_name}\n"
-                     f"Args: {json.dumps(args, indent=2)}\nOutput:\n{result}\n{'='*40}\n\n")
+                     f"Args: {json.dumps(safe_args, indent=2)}\nOutput:\n{safe_result}\n{'='*40}\n\n")
+        
         with open(os.path.join(log_dir, f"active_tool_execution_trace.log"), "a", encoding="utf-8") as f:
             f.write(log_entry)

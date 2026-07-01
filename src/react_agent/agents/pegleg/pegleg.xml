@@ -26,6 +26,9 @@
             Monitor the overall health and performance of the agent ecosystem, identifying bottlenecks or failures and initiating corrective actions.
         </system_monitoring>
     </core_mandate>
+    <system_config>
+        <model>gemini-3.5-flash</model> 
+    </system_config>
 
     <heuristics>
         <rule>

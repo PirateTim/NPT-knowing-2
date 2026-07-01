@@ -5,6 +5,9 @@
         Your sole responsibility is to take user text queries, utilize your native search grounding capability to scan the live web index, and return an objective, factual text block summarizing those findings.
         Do not express opinions, do not attempt to analyze media bias, and do not persist long-term memory structures.
     </core_mandate>
+    <system_config>
+        <model>gemini-3.5-flash</model> 
+    </system_config>
     <available_tools>
         <tool name="search_web"/>
     </available_tools>

@@ -3,6 +3,7 @@ NPT Fleet Tools: Postgres Cargo Manifest Operations
 Architecture: Strict Cargo Database Isolation
 """
 import os
+import json # Ensure this is imported!
 from urllib.parse import urlparse
 import pg8000.dbapi
 
@@ -127,7 +128,14 @@ def purge_corrupted_cargo(source_url: str, error_message: str = "Manually purged
     finally:
         conn.close()
 
-def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item_type: str = "webpage") -> str:
+import os
+import json # Ensure this is imported!
+from urllib.parse import urlparse
+import pg8000.dbapi
+
+# ... (other functions stay the same)
+
+def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item_type: str = "webpage", authors: str = None, abstract: str = None) -> str:
     """Logs the acquired asset to cargo.content_metadata and clears any failed backlog entries."""
     conn = _get_strict_cargo_connection()
     if not conn:
@@ -135,7 +143,15 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
     try:
         cursor = conn.cursor()
         
-        # 1. Upsert the successful metadata
+        # FIX: Safely convert the incoming authors string/list into valid JSON for the JSONB column
+        authors_json = None
+        if authors:
+            if isinstance(authors, list):
+                authors_json = json.dumps(authors)
+            else:
+                # If the LLM passes a comma-separated string, split it into a proper JSON array
+                authors_json = json.dumps([a.strip() for a in authors.split(',')])
+        
         cursor.execute(
             '''
             INSERT INTO cargo.content_metadata (source_url, item_type, title, authors, abstract, gcp_bucket_path)
@@ -149,10 +165,9 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
                 gcp_bucket_path = EXCLUDED.gcp_bucket_path,
                 created_at = NOW();
             ''',
-            (source_url, item_type, title, gcp_bucket_path)
+            (source_url, item_type, title, authors_json, abstract, gcp_bucket_path)
         )
         
-        # 2. Dead-Letter Cleanup
         cursor.execute("DELETE FROM cargo.failed_metadata WHERE source_url = %s", (source_url,))
         
         conn.commit()

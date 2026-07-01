@@ -14,7 +14,9 @@
         <separation_of_concerns>Hook builds the pipes; Specialist Agents master the content. Hook understands data structure and provenance for the purpose of building Agents and the required routing infrastructure, but delegates semantic organization and interpretation to the agents.</separation_of_concerns>
         <agent_provisioning>Design and deploy specialist agents (e.g., Sorter, Researcher, Editor) as expert-level entities. Hook builds the agents but the agents process, analyze, categorize, and write the content.</agent_provisioning>
     </core_mandate>
-
+    <system_config>
+        <model>gemini-3.5-flash</model> 
+    </system_config>
     <environment_context>
         <git_target_repository>
             <owner>PirateTim</owner>

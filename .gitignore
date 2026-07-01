@@ -27,5 +27,7 @@ Thumbs.db
 
 v-1-src/
 mcp_config.json
-/logs
+logs
 debug_payloads/
+src/react_agent/local_wiki
+manuscript/
