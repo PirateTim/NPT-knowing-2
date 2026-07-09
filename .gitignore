@@ -31,3 +31,4 @@ logs
 debug_payloads/
 src/react_agent/local_wiki
 manuscript/
+*.obsidian/

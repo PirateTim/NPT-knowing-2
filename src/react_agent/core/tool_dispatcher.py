@@ -17,7 +17,8 @@ from tools.provision_database import provision_agent_state_db
 from tools.create_database_and_user import create_database_and_user
 from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term
 from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo
-
+from tools.extraction_tools import run_langextract_mapping
+from tools.memory_tools import query_system_glossary
 
 
 
@@ -95,7 +96,7 @@ class ToolDispatcher:
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "delete_system_glossary_term": return delete_system_glossary_term(**args)
-            
+            elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args) # <-- NEW ROUTE
             
             # Memory & Glossary
             elif call.name == "record_learned_ontology_rule": return record_learned_ontology_rule(**args)
@@ -217,6 +218,17 @@ class ToolDispatcher:
                 name="delete_system_glossary_term", 
                 description="Deletes a term from the system glossary.", 
                 parameters={"type": "OBJECT", "properties": {"term": {"type": "STRING"}}, "required": ["term"]}
+            ),
+            types.FunctionDeclaration(
+                name="run_langextract_mapping", 
+                description="Extracts a strict ontological map (Concepts, Vignettes, Entities) from raw text using LangExtract.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "text_content": {"type": "STRING", "description": "The raw text to be mapped."}
+                    }, 
+                    "required": ["text_content"]
+                }
             ),
 
 

@@ -302,7 +302,6 @@ class AgentEngine:
         log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # 1. Truncate massive argument payloads (like 'content')
         safe_args = {}
         for k, v in args.items():
             if isinstance(v, str) and len(v) > 500:
@@ -310,8 +309,9 @@ class AgentEngine:
             else:
                 safe_args[k] = v
                 
-        # 2. Truncate massive tool returns (like scraped HTML)
-        safe_result = result if len(result) < 1000 else result[:1000] + f"\n... [TRUNCATED: Result was {len(result)} characters]"
+        # FIX: Force result to string to prevent NoneType len() crashes
+        result_str = str(result)
+        safe_result = result_str if len(result_str) < 1000 else result_str[:1000] + f"\n... [TRUNCATED: Result was {len(result_str)} characters]"
 
         log_entry = (f"=== TOOL TRACE: {ts} ===\nWire Target: {tool_name}\n"
                      f"Args: {json.dumps(safe_args, indent=2)}\nOutput:\n{safe_result}\n{'='*40}\n\n")

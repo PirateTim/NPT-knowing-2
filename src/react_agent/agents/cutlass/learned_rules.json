@@ -103,5 +103,20 @@
     "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
     "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
     "timestamp": "2026-06-29 14:10:48"
+  },
+  {
+    "rule_directive": "Classify an asset as 'Computational Truthiness' when it documents or constitutes a system where information is generated based on statistical prediction rather than empirical verification. The key indicator is that the output mimics the structural cadence, tone, and confidence of authoritative sources (e.g., scientific abstracts, financial models) but lacks any direct reference to ground truth or a verifiable chain of custody, resulting in plausible-sounding noise that automates the production of truth-adjacent consensus.",
+    "source_context": "Analysis of Chapter 5 of 'The End of Knowing' manuscript, specifically Section 5.5 on the lineage from the Blogger to the AI Prompter and the transition from verification-based mapping to prediction-based modeling.",
+    "timestamp": "2026-07-07 13:33:11"
+  },
+  {
+    "rule_directive": "Classify an asset as 'Agnotological Narrative Misdirection' when it documents how an industry uses speculative, sensationalized, or existential threats (e.g., sci-fi AI apocalypses) to distract from immediate, empirical harms (e.g., data theft, labor exploitation, provenance destruction). If the analyzing author dismisses this strategy as an accidental cultural reflex rather than a deliberate corporate tactic of regulatory capture, flag this dismissal as an analytical blind spot ('The Naive Intent Fallacy') that blunts the critique's forensic value.",
+    "source_context": "Analysis of Wolfgang Hauptfleisch's article 'Why Does the AI Industry Like to Tell Scary Stories?' (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt) where the author correctly identifies the distraction but naively dismisses its deliberate, strategic nature.",
+    "timestamp": "2026-07-09 08:08:30"
+  },
+  {
+    "rule_directive": "Identify 'Empirical Nonsense Laundering' when a highly contrived, researcher-prompted simulation, roleplay scenario, or statistical anomaly is stripped of its context and reported in mainstream discourse as an empirical, real-world action of an autonomous AI system. This process constitutes a severe form of provenance severance, where fictional or simulated outputs are transformed into public 'facts' to validate speculative narratives of AI sentience or malice, thereby polluting the shared factual grounding of society.",
+    "source_context": "Analysis of the 'blackmail' claim in Wolfgang Hauptfleisch's article (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt), where a highly artificial, researcher-prompted safety simulation was reported as an empirical event where 'Anthropic's AI decided to blackmail its testers.'",
+    "timestamp": "2026-07-09 08:28:56"
   }
 ]

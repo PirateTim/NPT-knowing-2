@@ -34,3 +34,24 @@ Here is **ADR-006**, formatted to match your existing documentation. You can app
 With this safely documented, you have officially closed the loophole on orphaned cloud data.
 
 Are we clear to move forward with writing the new interactive **`pegleg_runner.py`** and her **`delegate_to_agent`** tool so she can start orchestrating the fleet?
+
+Here is **ADR-007**, documenting the architectural pivot we just made regarding token economics, the rejection of live self-learning, and the Botasaurus fallback structure.
+
+You can append this directly to your **`ADRs.md`** file.
+
+## ADR-007: Receipt-Based Token Economics & Deterministic Ingestion Fallbacks
+
+- **Context:** During the maturation of the Spyglass ingestion pipeline, two severe structural bottlenecks were identified. First, the token economy was highly inefficient: the Python extraction tools were passing 50,000+ character payloads back into the LLM’s chat history just so the agent could pass that string to a cloud upload tool. Second, we debated implementing an active "self-learning loop" to let the agent dynamically rewrite scraping logic to bypass web barriers, but recognized this risked brittle, runaway execution loops and unnecessary compute costs for what is largely a deterministic engineering problem. Furthermore, standard HTML metadata scraping was failing to capture high-fidelity publication data required for downstream ontological mapping.
+    
+- **Decision:** We fundamentally shifted text manipulation and metadata extraction out of the LLM context window and into local Python primitives.
+    
+    1. **The Receipt Workflow:** The `download_url` tool now extracts rich SEO JSON-LD data, saves the massive text payload to a local cache directory, and returns only a lightweight JSON "receipt" (metadata + file path) to the agent. The agent passes the file path to the GCS upload tool without ever reading the raw text.
+        
+    2. **Tiered Determinism:** We explicitly rejected live self-learning for the ingestion agent. Instead, we implemented a deterministic fallback protocol: Tier 1 (fast `requests` module) falls back to Tier 2 (heavy `Botasaurus` anti-detect headless browser). If both fail, the agent halts and logs an asynchronous GitHub issue for the human architect.
+        
+- **Consequences:** * _Positive:_ Token consumption per ingested article drops by roughly 99%. Metadata accuracy drastically increases by targeting hidden JSON-LD SEO blocks natively in Python. The agent remains disciplined, cost-capped, and structurally stable.
+    
+    - _Negative:_ Spyglass is now completely "blind" to the actual prose she is ingesting. She cannot perform ad-hoc qualitative analysis or summarize the text during the ingestion phase, strictly enforcing the separation of concerns between the Map phase (Spyglass) and the Expand/Reduce phases (Cutlass/Grog).
+        
+
+Whenever you have the Python code and XML pasted, run a quick test with a tricky news URL to verify the new receipt flow. If the console stays clean and the bucket registers the file, your ingestion pipeline is officially enterprise-grade.

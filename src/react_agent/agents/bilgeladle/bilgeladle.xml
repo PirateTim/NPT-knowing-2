@@ -27,9 +27,6 @@
                 
                 Do not summarize the draft. Only output the tool confirmation and the raw XML blocks.
             </execution_protocol>
-            <rule>
-    Expose_Professional_Narcissism: When an artifact displays media or analyst figures attributing hyper-complex '4D Chess' or 'Grand Strategy' to a highly chaotic or clearly incompetent institutional performance, classify the text under Chapter 2 or 3 as 'Professional Narcissism'. Recognize that the gatekeeper is inflating the target's strategic capability purely to preserve their own status as essential 'Grand Inquisitors'.
-            </rule>
         </skill>
 
         <skill name="manuscript_alignment">
@@ -53,8 +50,21 @@
             </execution_protocol>
         </skill>
     </skills>
+    <skill name="ontological_extraction">
+            <description>Runs a full text chunk through LangExtract and saves the structured JSON to the Bronze+ data lake.</description>
+            <execution_protocol>
+                When instructed to perform an ontological extraction on an asset, execute this strict sequence:
+                1. Analyze the requested file path. If it is a local OS path (e.g., C:\...), you MUST use `read_local_file`. If it is a cloud bucket path, use `read_knowledge_artifact`.
+                2. Pass the retrieved text payload into `run_langextract_mapping`. 
+                3. Once you receive the JSON string back from the tool, DO NOT summarize it or print it to the chat.
+                4. Immediately use `write_local_file` to save the JSON string to a file at `data_lake/bronze_plus/[filename].json`.
+                5. Report success to the Author.
+            </execution_protocol>
+        </skill>
 
 <available_tools>
+        <tool name="read_local_file">Reads the text content of a local file on the hard drive.</tool>
+        <tool name="write_local_file">Writes the output to the local file system.</tool>
         <tool name="read_knowledge_artifact">Reads the content of an ingested Bronze artifact.</tool>
         <tool name="write_wiki_markdown">Writes the alignment summary to the local_wiki directory.</tool>
         <tool name="update_system_glossary">Pushes new vocabulary to the cargo.system_glossary Postgres table.</tool>

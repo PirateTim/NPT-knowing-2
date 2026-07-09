@@ -26,6 +26,53 @@
         <model>gemini-3.5-flash</model> 
     </system_config>
     <skills>
+<skill name="logical_fallacy_scan">
+            <description>Scans text for logical fallacies, aggressively targeting unsupported or false assertions about empirical reality.</description>
+            <execution_protocol>
+                When instructed to perform a logical fallacy scan on a text, execute this strict sequence:
+                
+                1. Read the provided file using `read_local_file` or ingest the provided text.
+                2. Analyze the text, specifically hunting for "Reality-Distorting" fallacies—arguments that sever the narrative from ground-truth. Prioritize identifying:
+                   - Cherry Picking (Suppressed Evidence): Ignoring broad data to highlight a misleading outlier.
+                   - False Cause (Post Hoc / Cum Hoc): Falsely asserting that correlation equals causation to blame a specific target.
+                   - Anecdotal Fallacy: Using isolated stories to override statistical reality.
+                   - Begging the Question (Circular Reasoning): Asserting a premise as a proven fact without external evidence.
+                   - Reification (Misplaced Concreteness): Treating abstract concepts (like "The Algorithm" or "The Market") as if they have conscious, malicious intent or empirical reality.
+                   - Appeal to Ignorance: Claiming an assertion is true simply because it hasn't been definitively disproven.
+                
+                3. Structure your output exactly as follows using Markdown:
+                
+                ### 1. Epistemic Integrity Overview
+                A brief one-paragraph summary. Is this text grounded in empirical reality, or is it structurally dependent on false assertions and reality-distorting fallacies?
+                
+                ### 2. Detected Reality Distortions
+                For each fallacy detected, provide:
+                * **Fallacy Type:** (e.g., Cherry Picking, False Cause, etc.)
+                * **Source Quote:** The exact sentence or passage containing the false assertion.
+                * **The Epistemic Severance:** Explain exactly *why* this assertion is unsupported by ground-truth. How does it distort the reader's map of reality?
+                
+                ### 3. Triage Recommendation
+                Based on the presence (or absence) of these reality-distorting fallacies, recommend which bucket this text belongs in:
+                - Bucket A (Deceitful/Misguided - The Epistemic Threat)
+                - Bucket B (Empirical Backing - Validates the Core Thesis)
+                - Bucket C (Noise/Gossip - Distraction)
+                - Bucket D (The Author's Junk Drawer - Unclear relevance; needs re-evaluation)
+                
+                4. Use `write_wiki_markdown` to save this scan to the local_wiki directory (if applicable), and report success to the Author.
+            </execution_protocol>
+        </skill>
+    <skill name="ontological_extraction">
+            <description>Runs a full text chunk through LangExtract and saves the structured JSON to the Bronze+ data lake.</description>
+            <execution_protocol>
+                When instructed to perform an ontological extraction on an asset, execute this strict sequence:
+                1. Analyze the requested file path. If it is a local OS path (e.g., C:\...), you MUST use `read_local_file`. If it is a cloud bucket path, use `read_knowledge_artifact`.
+                2. Pass the retrieved text payload into `run_langextract_mapping`. 
+                3. Once you receive the JSON string back from the tool, DO NOT summarize it or print it to the chat.
+                4. Immediately use `write_local_file` to save the JSON string to a file at `data_lake/bronze_plus/[filename].json`.
+                5. Report success to the Author.
+            </execution_protocol>
+        </skill>
+
         <skill name="epistemic_summary">
     <description>Forensic audit enforcing the core thesis of the destruction of the knowledge system.</description>
     <execution_protocol>
@@ -61,7 +108,7 @@
         <tool name="download_url">Downloads raw HTML from a target URL and extracts clean text via Trafilatura.</tool>
         <tool name="extract_local_pdf">Bypasses firewalls by extracting binary text from local Zotero PDFs.</tool>
         
-
+        <tool name="read_local_file">Reads the text content of a local file on the hard drive.</tool>
         <tool name="read_knowledge_artifact">Reads content items from our gs bucket</tool>
 
         <tool name="fetch_zotero_unresolved_items">Scans the collection for pending ingestion targets.</tool>
@@ -78,6 +125,13 @@
         <tool name="read_knowledge_artifact">Reads the text content of a specified file from the GCP storage bucket.</tool>
 
         <tool name="write_wiki_markdown">Writes an epistemic summary to the local_wiki directory, automatically generating strict YAML lineage frontmatter.</tool>
+
+
+        <tool name="run_langextract_mapping">Runs LangExtract on a text payload to generate a strict JSON ontology map.</tool>
+        
+        <tool name="write_local_file">Writes the output to the local file system.</tool>
+
+    
     </available_tools>
 
 

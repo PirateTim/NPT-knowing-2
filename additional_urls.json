@@ -1,0 +1,16 @@
+{
+  "anthropic_agentic_misalignment": {
+    "blog_post": "https://www.anthropic.com/research/agentic-misalignment",
+    "arxiv_paper": "https://arxiv.org/abs/2510.05179",
+    "github_repo": "https://github.com/anthropic-experimental/agentic-misalignment"
+  },
+  "anthropic_teaching_claude_why": {
+    "blog_post": "https://alignment.anthropic.com/2026/teaching-claude-why/"
+  },
+  "anthropic_j_space_j_lens": {
+    "blog_post": "https://www.anthropic.com/research/global-workspace",
+    "research_paper": "https://transformer-circuits.pub/2026/workspace/",
+    "github_repo": "https://github.com/anthropics/jacobian-lens",
+    "neuronpedia_demo": "https://neuronpedia.org/jlens"
+  }
+}

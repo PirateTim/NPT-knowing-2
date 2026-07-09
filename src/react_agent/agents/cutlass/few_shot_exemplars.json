@@ -40,5 +40,29 @@
     "ideal_output": "Narrative Misdirection",
     "rationale": "Auto-recorded via active terminal correction.",
     "timestamp": "2026-06-29 14:10:51"
+  },
+  {
+    "input_context": "Analysis of Chapter 5 of 'The End of Knowing' manuscript, focusing on Section 5.5 and the transition from the human-curated WebLog (built on verification) to the AI Prompter (built on prediction), resulting in plausible-sounding text that lacks any reference to ground truth.",
+    "ideal_output": "Computational Truthiness",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-07-07 13:33:16"
+  },
+  {
+    "input_context": "Analysis of Chapter 5, Section 5.3 of 'The End of Knowing' manuscript, focusing on the early web's high-signal toolkit (RSS, Wikis) and the concept of 'Elasticity' and the 'Expert Amateur'.",
+    "ideal_output": "Ideal Output: Intellectual Support for the Core Thesis (The Historical Baseline of High-Signal, Decentralized Knowledge Systems)\n\nContext: Analysis of Chapter 5, Section 5.3 of 'The End of Knowing' manuscript, focusing on the early web's high-signal toolkit (RSS, Wikis) and the concept of 'Elasticity' and the 'Expert Amateur'.\n\nKey Concepts:\n- The \"Pipe\" (RSS): Direct creator-to-consumer connection without algorithmic mediation.\n- Elasticity: Respecting the \"Cadence of Reality\" rather than the \"Cadence of Advertising,\" eliminating the \"noise floor\" of filler content.\n- The Wiki (Knowledge as Revision): Moving away from static publication to continuous, collaborative verification.\n- The \"Expert Amateur\": Decentralized, volunteer-driven knowledge creation outperforming centralized, commercial alternatives (e.g., Arch Linux Wiki).",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-07-08 11:14:43"
+  },
+  {
+    "input_context": "Analysis of Wolfgang Hauptfleisch's article 'Why Does the AI Industry Like to Tell Scary Stories?' (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt) where the author correctly identifies the distraction but naively dismisses its deliberate, strategic nature.",
+    "ideal_output": "Agnotological Narrative Misdirection",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-07-09 08:08:34"
+  },
+  {
+    "input_context": "Analysis of the 'blackmail' claim in Wolfgang Hauptfleisch's article (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt), where a highly artificial, researcher-prompted safety simulation was reported as an empirical event where 'Anthropic's AI decided to blackmail its testers.'",
+    "ideal_output": "Empirical Nonsense Laundering",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-07-09 08:29:00"
   }
 ]

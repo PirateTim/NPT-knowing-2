@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp_utc": "2026-07-05T19:55:00Z",
+    "rule_directive": "PATTERN RECOGNITION: THE ANCHOR QUOTE. When analyzing manuscript drafts, scaffolding, or external content, actively identify and preserve the 'Anchor Quote' structure. This pattern consists of citing a highly specific, verifiable human expert (e.g., Ludwig Wittgenstein, Yann LeCun, Cory Doctorow) and immediately unpacking the structural importance of their statement.",
+    "source_context": "The Anchor Quote is critical because it acts as an Epistemic Backstop. In a landscape of synthetic, homogenized text, anchoring an argument to a specific human intellect provides empirical friction. It proves the narrative is grounded in verifiable human lineage rather than algorithmic consensus."
+  },
+  {
+    "timestamp_utc": "2026-07-05T19:58:00Z",
+    "rule_directive": "ANALOGICAL ANCHORING: THE VIGNETTE. When evaluating a new piece of content or a modern systemic failure, you must actively search the system glossary for historical 'Vignettes' (e.g., The Camp Mystic Flood, The IBM Medical Notes problem). You must explicitly draw an analogical link between the new event and the historical vignette to prove that the current failure is part of a documented, recurring pattern of epistemic collapse.",
+    "source_context": "Vignettes provide the 100% ground-truth verifiable reality that grounds the manuscript's theory. By constantly referencing past physical failures, we prevent the argument from drifting into abstract technological theory and keep it anchored to human consequences."
+  }
+]

@@ -38,13 +38,43 @@ def read_knowledge_artifact(artifact_name: str) -> str:
     except Exception as e:
         return f"[ERROR] Download stream failed: {str(e)}"
 
-def upsert_knowledge_artifact(artifact_name: str, content: str) -> str:
-    """Streams structured text payload directly into the cloud storage perimeter."""
+def upsert_knowledge_artifact(artifact_name: str, local_cache_path: str = None, content: str = None) -> str:
+    """Uploads to GCS. Smartly handles file paths passed to the wrong parameter."""
     try:
+        upload_string = content
+        
+        # Intercept the path if the LLM stubbornly passes it into 'content'
+        target_path = local_cache_path
+        if content and isinstance(content, str) and os.path.exists(content) and content.endswith(".txt"):
+            target_path = content
+
+        # Read the file and clean up the temp cache
+        if target_path and os.path.exists(target_path):
+            with open(target_path, 'r', encoding='utf-8') as f:
+                upload_string = f.read()
+            os.remove(target_path) 
+            
+        if not upload_string:
+            return "[ERROR] No content or valid local_cache_path provided."
+
+        # ACTUAL GCP UPLOAD LOGIC
         bucket = _get_bucket()
         blob = bucket.blob(artifact_name)
-        blob.upload_from_string(content, content_type="text/plain; charset=utf-8")
+        blob.upload_from_string(upload_string, content_type="text/plain; charset=utf-8")
         
-        return f"[SUCCESS] Artifact '{artifact_name}' locked into cloud bucket '{bucket.name}'."
+        return f"[SUCCESS] Knowledge artifact successfully uploaded to {artifact_name}"
+        
     except Exception as e:
         return f"[ERROR] Upload stream rejected: {str(e)}"
+
+
+# def upsert_knowledge_artifact(artifact_name: str, content: str) -> str:
+#     """Streams structured text payload directly into the cloud storage perimeter."""
+#     try:
+#         bucket = _get_bucket()
+#         blob = bucket.blob(artifact_name)
+#         blob.upload_from_string(content, content_type="text/plain; charset=utf-8")
+        
+#         return f"[SUCCESS] Artifact '{artifact_name}' locked into cloud bucket '{bucket.name}'."
+#     except Exception as e:
+#         return f"[ERROR] Upload stream rejected: {str(e)}"
