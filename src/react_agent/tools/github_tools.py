@@ -1,13 +1,29 @@
 """
 NPT Fleet Tools: GitHub Operations & SDLC Management
 Architecture: PyGithub REST Client, Unified Context Delivery
+
+ARCHITECTURAL ROADMAP NOTE:
+This custom PyGithub REST wrapper is a bridging solution. We were forced to build 
+and maintain this module because first-generation GitHub Model Context Protocol (MCP) 
+implementations failed to reliably handle deep asynchronous comment chains and file 
+attachments. The progenitor agent (Hook) and human architects must periodically monitor 
+upstream MCP updates. Once a native GitHub MCP server natively supports full timeline 
+traversal, comment editing, and media/attachment streaming, this file should be 
+deprecated and replaced to minimize codebase surface area.
 """
 import os
 from github import Github
 
+# =====================================================================
+# INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
+# =====================================================================
+
 def _get_repo():
-    """Initializes the authenticated PyGithub client against the target repository."""
-    # Uses standard GitHub PAT loaded via dotenv in the engine
+    """
+    Internal Helper: PyGithub Client Initializer.
+    Purpose: Establishes an authenticated REST connection to the target repository 
+    using the local workstation environment GITHUB_TOKEN or GITHUB_PAT.
+    """
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GITHUB_PAT")
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "PirateTim")
     repo_name = os.getenv("GITHUB_REPO_NAME", "NPT-knowing-2")
@@ -18,8 +34,19 @@ def _get_repo():
     g = Github(token)
     return g.get_user(repo_owner).get_repo(repo_name)
 
+
+# =====================================================================
+# AGENT TOOLS (Exposed via tool_dispatcher.py)
+# =====================================================================
+
 def create_github_issue(title: str, body: str = "") -> str:
-    """Opens a new tracking issue in the repository backlog."""
+    """
+    Agent Tool: Open Backlog Ticket.
+    Purpose: Opens a new tracking issue in the repository backlog to log technical 
+    barriers, request new features from Hook, or report system bugs.
+    Invoked By: HOOK (The Factory), SPYGLASS (for reporting access barriers), 
+    CUTLASS, and PLANK (for logging ontological conflicts).
+    """
     try:
         repo = _get_repo()
         issue = repo.create_issue(title=title, body=body)
@@ -27,8 +54,15 @@ def create_github_issue(title: str, body: str = "") -> str:
     except Exception as e:
         return f"[ERROR] GitHub API rejected creation: {str(e)}"
 
+
 def list_github_issues(state: str = "open") -> str:
-    """Retrieves a list of backlog items, filtered by open/closed status."""
+    """
+    Agent Tool: Retrieve Backlog.
+    Purpose: Returns a list of all active or completed backlog items to help agents 
+    evaluate pending tasks. Explicitly filters out Pull Requests to keep 
+    the focus entirely on issue tracking.
+    Invoked By: HOOK (for checking her assigned backlog) and PEGLEG (for workflow tracking).
+    """
     try:
         repo = _get_repo()
         issues = repo.get_issues(state=state)
@@ -46,8 +80,15 @@ def list_github_issues(state: str = "open") -> str:
     except Exception as e:
         return f"[ERROR] GitHub API query failed: {str(e)}"
 
+
 def close_github_issue(issue_number: int, closing_comment: str = "") -> str:
-    """Marks a GitHub Issue as completed and applies a final resolution comment."""
+    """
+    Agent Tool: Resolve Ticket.
+    Purpose: Marks a backlog issue as completed and optionally applies a final 
+    resolution comment detailing the changes made.
+    Invoked By: HOOK (upon completing a build/refactoring block).
+    Note: Calling this tool in hook_runner.py triggers her post-build self-learning audit.
+    """
     try:
         repo = _get_repo()
         issue = repo.get_issue(number=issue_number)
@@ -58,8 +99,14 @@ def close_github_issue(issue_number: int, closing_comment: str = "") -> str:
     except Exception as e:
         return f"[ERROR] Closure operation failed: {str(e)}"
 
+
 def post_github_comment(agent_name: str, issue_number: int, body: str) -> str:
-    """Appends a comment to an active issue, explicitly tagging the agent's identity."""
+    """
+    Agent Tool: Post Execution Log.
+    Purpose: Appends a comment to an active backlog issue, explicitly tagging the 
+    agent's identity at the top to ensure a clean, human-readable collaborative trace.
+    Invoked By: HOOK, PEGLEG, SPYGLASS, CUTLASS, and PLANK (The entire collaborative SDLC).
+    """
     try:
         repo = _get_repo()
         issue = repo.get_issue(number=issue_number)
@@ -69,10 +116,15 @@ def post_github_comment(agent_name: str, issue_number: int, body: str) -> str:
     except Exception as e:
         return f"[ERROR] Comment operation failed: {str(e)}"
 
+
 def get_complete_issue_context(issue_number: int) -> str:
     """
-    The Super-Tool: Fetches the issue title, state, initial body, and every 
-    chronological comment in a single unified text block to prevent context fragmentation.
+    Agent Tool: Complete Backlog Thread Extractor (The Super-Tool).
+    Purpose: Resolves context fragmentation. Fetches the title, state, description, 
+    and the entire historical comment timeline of an issue in one single text block. 
+    This enables Hook to understand the complete structural discussion between the 
+    Human Architect and previous runs without reading fragmented API responses.
+    Invoked By: HOOK (The Factory) and PEGLEG (The Mission Commander).
     """
     try:
         repo = _get_repo()

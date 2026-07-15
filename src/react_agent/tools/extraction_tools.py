@@ -1,11 +1,23 @@
-# tools/extraction_tools.py
+"""
+NPT Fleet Tools: Semantic Extraction Engine
+Architecture: Google LangExtract Native Integration (Grounded Extraction)
+"""
 import json
 import textwrap
 import langextract as lx
 
+# =====================================================================
+# AGENT TOOLS (Exposed via tool_dispatcher.py)
+# =====================================================================
+
 def run_langextract_mapping(text_content: str) -> str:
     """
-    Runs the official Google LangExtract engine to extract the ontology with precise source grounding.
+    Agent Tool: The Strict Ontology Mapper.
+    Purpose: Bridges unstructured Bronze text into structured Silver JSON data. 
+    It forces the extraction of exact, verbatim concepts, vignettes, and arguments. 
+    Critically, it uses LangExtract's `char_interval` check to automatically strip out 
+    any LLM hallucinations that do not physically exist in the source text.
+    Invoked By: PLANK (The Information Mapper) and BILGELADLE (Thesis Alignment).
     """
     try:
         # 1. Define the overarching extraction instructions
@@ -24,28 +36,25 @@ def run_langextract_mapping(text_content: str) -> str:
         # 2. Provide a strict ExampleData template to guide the model's output schema
         examples = [
             lx.data.ExampleData(
-                text="The tragedy at Camp Mystic was not a glitch... On April 21, 2025, the office’s Warning Coordination Meteorologist, Paul Yura, announced his early retirement. They realized they didn't need the computer to understand the definition... they only needed the machine to know that, statistically... This was the Statistical Turn, and it introduced a specific metric...",
+                text="The tragedy at Camp Mystic was not a glitch... On April 21, 2025, the office’s Warning Coordination Meteorologist, Paul Yura, announced his early retirement. They realized they didn't need the computer to understand the definition... they only needed the machine to know that, statistically...",
                 extractions=[
                     lx.data.Extraction(
+                        # The missing Vignette example
                         extraction_class="vignette",
                         extraction_text="The tragedy at Camp Mystic was not a glitch...",
-                        attributes={"summary": "Automated flood warnings failed without a human WCM."}
+                        attributes={"summary": "Camp Mystic Tragedy"}
                     ),
                     lx.data.Extraction(
-                        extraction_class="empirical_entity",
-                        extraction_text="Paul Yura",
-                        attributes={"item_type": "real person", "role": "Human witness possessing tacit knowledge."}
-                    ),
-                    lx.data.Extraction(
+                        # The missing Chronology example
                         extraction_class="chronology",
-                        extraction_text="April 21, 2025",
-                        attributes={"description": "WCM Paul Yura retires"}
+                        extraction_text="On April 21, 2025",
+                        attributes={"date": "2025-04-21"}
                     ),
                     lx.data.Extraction(
-                        # The missing Concept example
-                        extraction_class="concept",
-                        extraction_text="This was the Statistical Turn, and it introduced a specific metric...",
-                        attributes={"term": "The Statistical Turn"}
+                        # The missing Empirical Entity example
+                        extraction_class="empirical_entities",
+                        extraction_text="Warning Coordination Meteorologist, Paul Yura",
+                        attributes={"role": "Meteorologist"}
                     ),
                     lx.data.Extraction(
                         # The missing Argument example
@@ -75,6 +84,7 @@ def run_langextract_mapping(text_content: str) -> str:
                 "attributes": e.attributes,
             }
             for e in result.extractions
+            if e.char_interval  # THE FIX: Absolute grounding enforcement
         ]
         
         return json.dumps(extracted_data, indent=2)

@@ -15,32 +15,47 @@ from bs4 import BeautifulSoup
 from botasaurus.browser import browser, Driver
 
 
-# --- BOTASAURUS ANTI-DETECT ENGINE ---
+# =====================================================================
+# INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
+# =====================================================================
+
 @browser(headless=True)
 def botasaurus_fetch(driver: Driver, data: dict):
-    """Tier 2 Fallback: Bypasses Cloudflare/PerimeterX and returns the rendered DOM."""
+    """
+    Internal Helper: Botasaurus Anti-Detect Engine.
+    Purpose: Acts as the heavy Tier 2 fallback to bypass Cloudflare/PerimeterX 
+    barriers when standard requests fail. Returns the fully rendered DOM.
+    Invoked By: Called internally by download_url.
+    """
     url = data.get("url")
     driver.get(url)
     return driver.page_html
 
-
-
 def _clean_string_metadata(text_str: str) -> str:
-    """Resolves standard HTML entities and normalizes string layout to clean UTF-8 text."""
+    """
+    Internal Helper: UTF-8 Sanitization.
+    Purpose: Resolves standard HTML entities and normalizes string layout to clean text.
+    Invoked By: Called internally by extraction tools.
+    """
     if not text_str:
         return ""
     unescaped_text = html.unescape(text_str)
     return unescaped_text.encode('utf-8', errors='ignore').decode('utf-8')
 
 def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
-    """Hunts for hidden JSON-LD SEO blocks and retains the raw payload."""
+    """
+    Internal Helper: JSON-LD SEO Extraction.
+    Purpose: Hunts for hidden JSON-LD SEO blocks inside the HTML header to extract 
+    highly accurate metadata (author, publisher, date) and retains the raw payload for the bucket.
+    Invoked By: Called internally by download_url.
+    """
     meta = {
         "title": target_url, 
         "authors": [], 
         "published_date": "UNKNOWN", 
         "publisher": "UNKNOWN", 
         "abstract": "",
-        "raw_json_ld": []  # NEW: We will capture the unedited JSON here
+        "raw_json_ld": []  # CAPTURE THE RAW SLURRY FOR THE BUCKET
     }
     
     # 1. Trafilatura Baseline
@@ -57,7 +72,7 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
     for script in soup.find_all('script', type='application/ld+json'):
         try:
             ld_data = json.loads(script.string)
-            meta["raw_json_ld"].append(ld_data)  # CAPTURE THE RAW SLURRY FOR THE BUCKET
+            meta["raw_json_ld"].append(ld_data) 
             
             # Handle nested graph arrays for our basic DB index
             if isinstance(ld_data, dict) and '@graph' in ld_data:
@@ -84,58 +99,17 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
     return meta
 
 
-# def download_url(url: str) -> str:
-    """
-    Downloads raw HTML using a Tier 1 (Requests) -> Tier 2 (Urllib) fallback sequence.
-    Extracts and purifies text via Trafilatura.
-    """
-    target_url = url.strip().replace('"', '').replace("'", "").replace('\r', '').replace('\n', '')
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-    html_bytes = None
-    
-    # TIER 1: Standard Requests
-    try:
-        response = requests.get(target_url, headers=headers, timeout=15)
-        if response.status_code == 200:
-            html_bytes = response.content
-        else:
-            raise ValueError(f"HTTP {response.status_code}")
-    except Exception as e1:
-        # TIER 2: Urllib Fallback
-        try:
-            req = urllib.request.Request(target_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=15) as response:
-                html_bytes = response.read()
-        except Exception as e2:
-            return f"[ACCESS BARRIER] Both extraction tiers failed for {target_url}. Error: {str(e2)}"
-
-    # Parse and Clean
-    if html_bytes:
-        try:
-            html_string = html_bytes.decode('utf-8', errors='replace')
-        except Exception:
-            html_string = html_bytes.decode('latin-1', errors='replace')
-            
-        clean_content = trafilatura.extract(html_string)
-        if not clean_content:
-            clean_content = html_string[:10000] # Fallback to raw string if Trafilatura fails
-            
-        purified_text = _clean_string_metadata(clean_content)
-        
-        # Extract basic native title for context
-        native_title = target_url
-        metadata = trafilatura.extract_metadata(html_string)
-        if metadata and hasattr(metadata, 'title') and metadata.title:
-            native_title = _clean_string_metadata(metadata.title)
-            
-        return f"=== TITLE: {native_title} ===\n=== RAW TEXT ACQUIRED FROM {target_url} ===\n\n{purified_text}"
-        
-    return f"[ERROR] Failed to acquire readable bytes from {target_url}."
+# =====================================================================
+# AGENT TOOLS (Exposed via tool_dispatcher.py)
+# =====================================================================
 
 def download_url(url: str) -> str:
     """
-    Tiered Extraction: Requests -> Botasaurus. 
-    Token Saver: Writes text to local disk and returns a lightweight JSON receipt.
+    Agent Tool: Standard Web Ingestion & Fallback Router.
+    Purpose: Executes the Tier 1 (requests) -> Tier 2 (Botasaurus) extraction. 
+    To preserve token economics, it writes the massive text payload to the local disk 
+    and returns a lightweight JSON receipt to the agent.
+    Invoked By: SPYGLASS (The Ingestion Engine).
     """
     target_url = url.strip().replace('"', '').replace("'", "")
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -147,7 +121,7 @@ def download_url(url: str) -> str:
         if response.status_code == 200:
             html_string = response.content.decode('utf-8', errors='replace')
             
-            # THE FIX: Semantic Length Check for Paywalls / JS-Skeletons
+            # Semantic Length Check for Paywalls / JS-Skeletons
             import trafilatura
             temp_clean = trafilatura.extract(html_string)
             if not temp_clean or len(temp_clean) < 800:
@@ -215,8 +189,10 @@ def download_url(url: str) -> str:
 
 def precision_html_extract(url: str, include_css: str = "", exclude_css: str = "") -> str:
     """
-    Surgically extracts HTML using CSS selectors. 
-    Allows explicit inclusion of specific blocks or exclusion of noise (like comments).
+    Agent Tool: Surgical CSS Scraper.
+    Purpose: Used when standard download_url fails or extracts too much noise. 
+    Allows explicit inclusion of specific blocks or destruction of noise (like comments) via CSS selectors.
+    Invoked By: SPYGLASS (The Ingestion Engine).
     """
     import urllib.request
     from bs4 import BeautifulSoup
@@ -266,8 +242,11 @@ def precision_html_extract(url: str, include_css: str = "", exclude_css: str = "
 
 def acquire_arxiv_document(url: str) -> str:
     """
-    Extracts the canonical arXiv ID from any arXiv URL variant (abs/pdf/html),
-    queries the official API for structured metadata, and fetches the full HTML text.
+    Agent Tool: arXiv API Bypass.
+    Purpose: Standard web scrapers fail on arXiv PDFs. This tool bypasses scrapers, 
+    extracts the canonical ID from the URL, hits the official API for perfect metadata, 
+    and fetches the raw HTML body text.
+    Invoked By: SPYGLASS (The Ingestion Engine).
     """
     import re
     import urllib.request
@@ -345,7 +324,12 @@ def acquire_arxiv_document(url: str) -> str:
     return "\n".join(metadata_block) + "\n=== FULL TEXT ===\n" + body_text
 
 def extract_local_pdf(zotero_storage_key: str) -> str:
-    """Bypasses cloud firewalls by extracting binary text from local Zotero PDFs."""
+    """
+    Agent Tool: Local Zotero PDF Extractor.
+    Purpose: Used when cloud firewalls completely block scraping. 
+    Allows the agent to extract binary text directly from the local Zotero storage path.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
     try:
         user_profile = os.environ.get('USERPROFILE', '')
         if not user_profile: return "[ERROR] USERPROFILE path not found."

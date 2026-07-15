@@ -1,0 +1,16 @@
+=== PROJECT ARCHITECTURE HIERARCHY ===
+Root: C:\Users\timot\NPT-knowing-2\helper_scripts
+----------------------------------------
+[DIR] db_provisioning/
+      - build_fleet_enrichments.py
+      - build_memory_schema.py
+      - regrant_permissions.py
+  - build_context.ps1
+  - check_models.py
+  - inspect_schemas.py
+  - manage_threads.py
+  - project_hierarchy.txt
+  - run_build_context.bat
+  - run_view_heirarchy.bat
+  - seed_hook_rule.py
+  - view_hierarchy.ps1

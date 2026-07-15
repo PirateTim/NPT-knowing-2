@@ -1,7 +1,20 @@
 """
 NPT Fleet: Queue Deployment and Seeder
 Architecture: Phase 1 (Root DDL) -> Phase 2 (App User DML)
+Description: Builds the ingestion queue and populates it with target URLs.
+HOOK TEMPLATE NOTICE: This file strictly demonstrates SOP-05 (The DDL Protocol). 
+It isolates structural changes (Root) from data insertion (App User).
 """
+
+""" 
+What is it for?
+This is the Bronze Tier Ingestion Primer. It serves two functions: First, it provisions the cargo.ingestion_queue database table where the fleet manages its workload. Second, it parses a flat text file of target URLs (like batch_targets-baseline-1.txt) and injects them into the queue. It is an active demonstration of SOP-05 (The DDL Protocol), safely splitting Root DDL execution from Application User DML execution.
+How does it run?
+Execute it via the terminal, passing the text file of URLs as an argument.
+Command: python src/react_agent/core/seed_queue.py <path_to_url_list.txt> 
+"""
+
+
 import os
 import sys
 from urllib.parse import urlparse
@@ -11,7 +24,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def build_queue_table():
-    """PHASE 1: Execute DDL as the Postgres Root User."""
+    """
+    PHASE 1: Execute Data Definition Language (DDL) as the Postgres Root User.
+    This bypasses RBAC to create the table, then explicitly grants permissions back.
+    """
     conn_string = os.getenv("CONTENT_DATABASE_URL")
     root_password = os.getenv("DB_ROOT_PASSWORD")
     
@@ -27,14 +43,14 @@ def build_queue_table():
 
     print(f"\n--- [PHASE 1] Building Table as ROOT ---")
     try:
-        # Connect as postgres
+        # 1. Connect using the 'postgres' superuser
         conn = pg8000.dbapi.connect(
             user="postgres", password=root_password, host=host, port=port, database=db_name
         )
         conn.autocommit = True
         cursor = conn.cursor()
 
-        # 1. Create the table
+        # 2. Define the schema for the Bronze Ingestion Queue
         ddl = """
         CREATE TABLE IF NOT EXISTS cargo.ingestion_queue (
             queue_id SERIAL PRIMARY KEY,
@@ -49,7 +65,7 @@ def build_queue_table():
         cursor.execute(ddl)
         print("[SUCCESS] Table 'cargo.ingestion_queue' created.")
 
-        # 2. Re-assert absolute privileges over the cargo schema
+        # 3. SOP-05 MANDATE: Explicitly hand permissions back to the application user
         cursor.execute(f"GRANT USAGE, CREATE ON SCHEMA cargo TO {app_user};")
         cursor.execute(f"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA cargo TO {app_user};")
         cursor.execute(f"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA cargo TO {app_user};")
@@ -63,7 +79,10 @@ def build_queue_table():
         sys.exit(1)
 
 def seed_urls(file_path: str):
-    """PHASE 2: Read file and insert URLs as the standard App User."""
+    """
+    PHASE 2: Data Manipulation Language (DML). 
+    Reads a text file and inserts URLs using the standard, sandboxed App User.
+    """
     conn_string = os.getenv("CONTENT_DATABASE_URL")
     url = urlparse(conn_string)
     db_name = url.path[1:]
@@ -74,7 +93,7 @@ def seed_urls(file_path: str):
         print(f"[ERROR] Target file not found: {file_path}")
         sys.exit(1)
 
-    # Read URLs, stripping whitespace and ignoring empty lines/comments
+    # Clean the input file, ignoring blank lines and comments
     with open(file_path, 'r', encoding='utf-8') as f:
         urls = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
@@ -83,13 +102,14 @@ def seed_urls(file_path: str):
         return
 
     try:
-        # Connect as the sandboxed app user
+        # 1. Connect as the sandboxed application user (NOT root)
         conn = pg8000.dbapi.connect(
             user=url.username, password=url.password, host=url.hostname, port=url.port, database=db_name
         )
         conn.autocommit = True
         cursor = conn.cursor()
 
+        # 2. Insert URLs, gracefully ignoring exact duplicates via ON CONFLICT
         insert_query = """
         INSERT INTO cargo.ingestion_queue (target_url, source_requestor)
         VALUES (%s, 'manual_batch')
@@ -99,7 +119,6 @@ def seed_urls(file_path: str):
         success_count = 0
         for target_url in urls:
             cursor.execute(insert_query, (target_url,))
-            # rowcount is 1 if inserted, 0 if it hit the DO NOTHING conflict
             if cursor.rowcount == 1:
                 success_count += 1
 
@@ -118,7 +137,7 @@ def seed_urls(file_path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python seed_queue.py <path_to_url_list.txt>")
+        print("Usage: python src/react_agent/core/seed_queue.py <path_to_url_list.txt>")
         sys.exit(1)
 
     target_file = sys.argv[1]

@@ -1,57 +1,49 @@
-# NPT-Cloud-Agents: Architecture Decision Records
+## NPT Fleet: Architecture Decision Records (Master Ledger)
 
-## ADR-001: Atomic Tooling over Monolithic "God Tools"
-* **Context:** The legacy ingestion system relied on a monolithic `acquire_content.py` script that handled downloading, cloud uploading, and database logging in a single opaque function. When it failed, the agent could not identify which step broke.
-* **Decision:** We deprecated the God Tool and splintered its capabilities into atomic, independently callable primitives (`check_cargo_manifest`, `download_url`, `upsert_knowledge_artifact`). 
-* **Consequences:** * *Positive:* Agents now possess a granular "Chain of Thought." They can identify exact failure points (e.g., DB crash vs. HTTP block) and autonomously recover or route to dead-letter queues.
-    * *Negative:* The LLM must successfully orchestrate multiple sequential tool calls per turn, increasing API token usage and requiring stricter XML prompt governance to prevent deviation.
+**ADR-001: Atomic Tooling over Monolithic "God Tools"**
 
-## ADR-002: Pure PostgreSQL Cognitive Memory
-* **Context:** The fleet required persistent memory across sessions to maintain behavioral rules and semantic glossaries. Standard industry patterns heavily favor graphing frameworks (LangGraph) or automated vector-based memory wrappers (Mem0).
-* **Decision:** We rejected LangGraph and Mem0 in favor of a pure Python and PostgreSQL state architecture (`agent_state.ontology_rules` and `cargo.system_glossary`).
-* **Consequences:**
-    * *Positive:* Absolute deterministic control. Memory is fully observable and manually editable via standard SQL. No dependency bloat, no vector-drift hallucinations, and no vendor lock-in.
-    * *Negative:* We must manually build and maintain the DB extraction and injection middleware within our `AgentEngine` rather than relying on an out-of-the-box framework.
+* **Context:** The legacy ingestion system relied on a monolithic script handling downloading, cloud uploading, and database logging in a single opaque function.
+* **Decision:** Splintered capabilities into atomic, independently callable primitives (`check_cargo_manifest`, `download_url`, `upsert_knowledge_artifact`).
+* **Consequences:** Agents possess a granular "Chain of Thought" and can identify exact failure points, though this requires stricter XML prompt governance to prevent deviation.
 
-    This is exactly what Architecture Decision Records are for. The realization that a simple database choice can quietly inflate a cloud storage bill over months or years is a major architectural milestone.
+**ADR-002: Pure PostgreSQL Semantic Memory (Rejection of Vector Abstractions)**
 
-Here is **ADR-006**, formatted to match your existing documentation. You can append this directly to your `docs/ADRs.md` file.
+* **Context:** The fleet requires persistent semantic memory across sessions to maintain behavioral rules. Industry patterns heavily favor automated vector-based memory wrappers (e.g., Mem0).
+* **Decision:** While LangGraph is retained strictly for short-term turn execution state (`agent_state.checkpoints`), we rejected vector memory abstractions for long-term semantic persistence in favor of pure PostgreSQL (`agent_state.ontology_rules`).
+* **Consequences:** Absolute deterministic control. Semantic memory is fully observable and manually editable via standard SQL, eliminating vector-drift hallucinations.
 
----
+**ADR-003: Strict Database Segregation (Cargo vs. State)**
 
-## ADR-006: Deterministic Artifact Storage & Ingestion Upserts
+* **Context:** Mixing content payloads with cognitive state data creates bloated backups, risks cross-contamination, and complicates index optimization.
+* **Decision:** The database layer is physically partitioned into two distinct URL connection strings and logical schemas: `CONTENT_DATABASE_URL` maps to the `cargo` schema; `DATABASE_URL` maps to the `agent_state` schema.
+* **Consequences:** Tools must explicitly declare which connection they require, establishing a hard firewall between what the agents *think* and what the agents *read*.
 
-* **Context:** As the fleet's extraction capabilities evolve (e.g., replacing standard HTML scraping with the dedicated arXiv API tool), we require a mechanism to re-ingest and upgrade historical artifacts. We evaluated complex ingestion schema versioning versus a tactical `UPSERT` override. Furthermore, we identified a critical cloud economics flaw: using timestamp-based filenames during an upsert creates orphaned "ghost" files in Google Cloud Storage, as the database points to the new file while the old one remains indefinitely, quietly driving up storage costs.
-* **Decision:** We reject complex schema versioning in favor of a targeted `UPSERT` (`--force`) reprocessing strategy. To support this economically, we mandate **Pure Determinism** in cloud storage. All acquired knowledge artifacts must use a deterministic file slug derived directly from the canonical URL or its MD5 hash. We explicitly ban timestamp-based file names for content artifacts.
-* **Consequences:**
-* *Positive:* The GCP bucket now functions as a self-cleaning key-value store. Reprocessing a URL automatically overwrites the old blob in the bucket, eliminating storage bloat and orphaned files. The database remains the absolute single source of truth for the artifact's state.
-* *Negative:* We forfeit the ability to keep historical text versions of an artifact side-by-side in the bucket. We also defer building a fully automated "Extractor Version" tracking system, meaning bulk upgrades currently require manually feeding a list of stale URLs back into the ingestion queue.
+**ADR-004: Continuous File Telemetry over Cloud Logging**
 
+* **Context:** Forcing standard output streams into GCP Cloud Logging during local development creates high latency and requires heavy IAM permission management.
+* **Decision:** The `AgentEngine` is hardcoded to dump the fully assembled XML + DB system prompt to `logs/<agent_name>_system_prompt.txt` on initialization, and append every interaction to `logs/<agent_name>_interactions.log`.
+* **Consequences:** Absolute offline observability for the human architect, requiring strict `.gitignore` enforcement.
 
+**ADR-005: Dual-Mode Entrypoints (Headless vs. Interactive)**
 
----
+* **Context:** Agents need to be orchestrated by automated batch-runners (Pegleg) but also require direct human coaching via the terminal.
+* **Decision:** Entrypoint runners implement a dual-mode `if/else` logic gate: Mode A (Headless) triggers via specific command-line flags for sequential execution; Mode B (Interactive) drops the human into a `while True:` loop for real-time coaching.
 
-With this safely documented, you have officially closed the loophole on orphaned cloud data.
+**ADR-006: Deterministic Artifact Storage & Ingestion Upserts**
 
-Are we clear to move forward with writing the new interactive **`pegleg_runner.py`** and her **`delegate_to_agent`** tool so she can start orchestrating the fleet?
+* **Context:** Using timestamp-based filenames during an upsert creates orphaned "ghost" files in Google Cloud Storage, quietly driving up storage costs.
+* **Decision:** We mandate Pure Determinism in cloud storage. All acquired knowledge artifacts use a deterministic file slug derived directly from the canonical URL. Timestamp-based file names for content artifacts are explicitly banned.
+* **Consequences:** The GCP bucket functions as a self-cleaning key-value store. Reprocessing a URL automatically overwrites the old blob, eliminating storage bloat.
 
-Here is **ADR-007**, documenting the architectural pivot we just made regarding token economics, the rejection of live self-learning, and the Botasaurus fallback structure.
+**ADR-007: Receipt-Based Token Economics & Deterministic Ingestion Fallbacks**
 
-You can append this directly to your **`ADRs.md`** file.
+* **Context:** Passing 50,000+ character HTML payloads back into the LLM’s chat history just to trigger an upload tool was bankrupting the token economy.
+* **Decision:** Text manipulation is shifted out of the LLM context. The `download_url` tool saves the raw text to a local cache and returns a lightweight JSON "receipt" to the agent. Furthermore, live self-learning for ingestion was rejected in favor of a deterministic Tier 1 (`requests`) to Tier 2 (`Botasaurus`) fallback.
+* **Consequences:** Token consumption per ingested article drops by roughly 99%. Spyglass is structurally barred from performing qualitative analysis during the ingestion phase.
 
-## ADR-007: Receipt-Based Token Economics & Deterministic Ingestion Fallbacks
+**ADR-008: The JSONB Silver Ledger (Rejection of Markdown Dumps)**
 
-- **Context:** During the maturation of the Spyglass ingestion pipeline, two severe structural bottlenecks were identified. First, the token economy was highly inefficient: the Python extraction tools were passing 50,000+ character payloads back into the LLM’s chat history just so the agent could pass that string to a cloud upload tool. Second, we debated implementing an active "self-learning loop" to let the agent dynamically rewrite scraping logic to bypass web barriers, but recognized this risked brittle, runaway execution loops and unnecessary compute costs for what is largely a deterministic engineering problem. Furthermore, standard HTML metadata scraping was failing to capture high-fidelity publication data required for downstream ontological mapping.
-    
-- **Decision:** We fundamentally shifted text manipulation and metadata extraction out of the LLM context window and into local Python primitives.
-    
-    1. **The Receipt Workflow:** The `download_url` tool now extracts rich SEO JSON-LD data, saves the massive text payload to a local cache directory, and returns only a lightweight JSON "receipt" (metadata + file path) to the agent. The agent passes the file path to the GCS upload tool without ever reading the raw text.
-        
-    2. **Tiered Determinism:** We explicitly rejected live self-learning for the ingestion agent. Instead, we implemented a deterministic fallback protocol: Tier 1 (fast `requests` module) falls back to Tier 2 (heavy `Botasaurus` anti-detect headless browser). If both fail, the agent halts and logs an asynchronous GitHub issue for the human architect.
-        
-- **Consequences:** * _Positive:_ Token consumption per ingested article drops by roughly 99%. Metadata accuracy drastically increases by targeting hidden JSON-LD SEO blocks natively in Python. The agent remains disciplined, cost-capped, and structurally stable.
-    
-    - _Negative:_ Spyglass is now completely "blind" to the actual prose she is ingesting. She cannot perform ad-hoc qualitative analysis or summarize the text during the ingestion phase, strictly enforcing the separation of concerns between the Map phase (Spyglass) and the Expand/Reduce phases (Cutlass/Grog).
-        
+* **Context:** Downstream synthesis agents (Scallywag) cannot reliably parse or query unstructured text files dumped by mid-tier analytical agents (Cutlass).
+* **Decision:** We mandate that all Silver-tier epistemic triage and enrichments must be formatted as strictly typed JSON objects and inserted into a PostgreSQL ledger (`cargo.fleet_enrichments`) via the `log_fleet_enrichment` tool.
+* **Consequences:** The system gains a highly structured, mathematically queryable database of epistemic failures, drastically improving the reliability of the Gold-tier synthesis phase.
 
-Whenever you have the Python code and XML pasted, run a quick test with a tricky news URL to verify the new receipt flow. If the console stays clean and the bucket registers the file, your ingestion pipeline is officially enterprise-grade.
