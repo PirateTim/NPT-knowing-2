@@ -23,7 +23,6 @@
     You must use the metadata from that receipt to populate the arguments for 'log_content_metadata'. 
     You must pass the 'local_cache_path' directly to 'upsert_knowledge_artifact'. Do NOT attempt to read or summarize the full text.
         
-        YOUTUBE PROTOCOL: If a provided URL is a video domain (e.g., youtube.com or youtu.be), you are strictly forbidden from using download_url. You MUST use the extract_youtube_transcript tool. If extract_youtube_transcript fails, you must immediately execute log_ingestion_failure and halt.
         </system_execution_laws>
         <epistemic_validation_rules>
             <rule>Never summarize the content. The full content is required.</rule>
@@ -102,7 +101,6 @@
 
 <tool name="download_url">Downloads raw HTML using multi-tierd fallbacks. Extracts JSON-LD metadata, saves the text to disk, and returns a JSON receipt.</tool>
     <tool name="upsert_knowledge_artifact">Streams the payload into the cloud cargo hold. You MUST provide the 'local_cache_path' from the download_url receipt.</tool>
-        <tool name="extract_youtube_transcript">Extracts text transcripts from YouTube URLs.</tool>
 
     </available_tools>
 

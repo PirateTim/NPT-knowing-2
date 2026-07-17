@@ -96,5 +96,6 @@ if __name__ == "__main__":
         
         discover_and_inspect("DATABASE_URL", "agent_state", f)
         discover_and_inspect("CONTENT_DATABASE_URL", "cargo", f)
+        discover_and_inspect("CONTENT_DATABASE_URL", "ship", f)
         
     print(f"[SUCCESS] Schema manifest compiled successfully.")

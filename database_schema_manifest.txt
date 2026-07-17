@@ -1,0 +1,88 @@
+NPT FLEET DATABASE SCHEMA MANIFEST
+Generated dynamically by inspect_schemas.py
+
+==================================================
+SCHEMA: AGENT_STATE (Connection: DATABASE_URL)
+==================================================
+
+--- TABLE: agent_state.checkpoints ---
+  --> thread_id (character varying)
+  --> state_payload (jsonb)
+  --> updated_at (timestamp without time zone)
+
+--- TABLE: agent_state.ontology_rules ---
+  --> rule_id (integer)
+  --> scope (character varying)
+  --> directive (text)
+  --> source_thread_id (character varying)
+  --> created_at (timestamp without time zone)
+
+==================================================
+SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
+==================================================
+
+--- TABLE: cargo.content_metadata ---
+  --> id (integer)
+  --> source_url (text)
+  --> item_type (text)
+  --> title (text)
+  --> authors (jsonb)
+  --> abstract (text)
+  --> publication_title (text)
+  --> publication_date (text)
+  --> keywords (jsonb)
+  --> rights (text)
+  --> gcp_bucket_path (text)
+  --> created_at (timestamp without time zone)
+
+--- TABLE: cargo.failed_metadata ---
+  --> failure_id (integer)
+  --> source_url (text)
+  --> derived_domain (text)
+  --> tier_1_executed (boolean)
+  --> tier_2_executed (boolean)
+  --> method_3_tried (boolean)
+  --> error_state (text)
+  --> logged_at (timestamp without time zone)
+  --> error_message (text)
+  --> failed_at (timestamp without time zone)
+
+--- TABLE: cargo.system_glossary ---
+  --> term (character varying)
+  --> definition (text)
+  --> provenance_context (text)
+  --> last_updated (timestamp without time zone)
+
+--- TABLE: cargo.ingestion_queue ---
+  --> queue_id (integer)
+  --> target_url (text)
+  --> status (character varying)
+  --> source_requestor (character varying)
+  --> added_at (timestamp without time zone)
+  --> last_attempted_at (timestamp without time zone)
+  --> attempt_count (integer)
+
+--- TABLE: cargo.fleet_enrichments ---
+  --> id (integer)
+  --> metadata_id (integer)
+  --> agent_name (text)
+  --> enrichment_type (text)
+  --> payload (jsonb)
+  --> created_at (timestamp without time zone)
+
+==================================================
+SCHEMA: SHIP (Connection: CONTENT_DATABASE_URL)
+==================================================
+
+--- TABLE: ship.letters_of_marque ---
+  --> chunk_id (character varying)
+  --> chapter_number (integer)
+  --> section_number (character varying)
+  --> header_title (text)
+  --> book_sequence_number (integer)
+  --> paragraph_sequence_number (integer)
+  --> chunk_text (text)
+  --> vector_embedding (USER-DEFINED)
+  --> parent_gcs_pointer (text)
+  --> created_at (timestamp with time zone)
+  --> updated_at (timestamp with time zone)

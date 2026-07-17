@@ -18,7 +18,9 @@ import os
 import sys
 import subprocess
 from google.genai import types
-
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # SOP-04, Step 1: Import all external tool modules here.
@@ -31,6 +33,8 @@ from tools.acquisition_tools import download_url, extract_local_pdf, precision_h
 from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens
 from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment
 from tools.extraction_tools import run_langextract_mapping
+from tools.agent_logger import log_agent_action
+from tools.youtube_tools import extract_youtube_transcript
 
 
 # =====================================================================
@@ -58,6 +62,34 @@ def call_landlubber(query: str) -> str:
         return f"[SYSTEM_ERROR: Landlubber routing failed - {str(e)}]"
 
 # =====================================================================
+# MCP FILESYSTEM BRIDGE
+# =====================================================================
+
+def execute_mcp_tool(mcp_tool_name: str, args: dict) -> str:
+    """Synchronous bridge to the Node.js MCP Filesystem Server."""
+    async def _run():
+        # Using npx.cmd ensures subprocess compatibility on Windows
+        server_params = StdioServerParameters(
+            command="npx.cmd",
+            args=["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\timot\\NPT-knowing-2"]
+        )
+        try:
+            async with stdio_client(server_params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    result = await session.call_tool(mcp_tool_name, arguments=args)
+                    
+                    # Extract the text payload returned by the Node server
+                    if result.content and len(result.content) > 0:
+                        return result.content[0].text
+                    return "[SUCCESS] MCP Tool executed successfully, but returned no text."
+        except Exception as e:
+            return f"[MCP CRITICAL ERROR] Failed to execute {mcp_tool_name}: {str(e)}"
+    
+    return asyncio.run(_run())
+
+
+# =====================================================================
 # DISPATCHER CLASS
 # =====================================================================
 
@@ -77,6 +109,13 @@ class ToolDispatcher:
         """
         args = call.args if hasattr(call, 'args') and call.args else {}
         try:
+            # --- MCP NATIVE FILESYSTEM ---
+            # These intercept the standard MCP tool names and pipe them to Node
+            if call.name in ["read_file", "write_file", "list_directory", "get_file_info", "directory_search"]:
+                return execute_mcp_tool(call.name, args)
+
+            # --- Workspace & File I/O (Legacy Python Fallbacks) ---
+            # We keep these for Bilgeladle/Cutlass until they are upgraded
             # --- Workspace & File I/O ---
             if call.name == "read_local_file": return read_local_file(**args)
             elif call.name == "write_local_file": return write_local_file(**args)
@@ -110,6 +149,7 @@ class ToolDispatcher:
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
+            elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
             
             # --- Memory & Glossary ---
             elif call.name == "record_learned_ontology_rule": return record_learned_ontology_rule(**args)
@@ -119,6 +159,9 @@ class ToolDispatcher:
             elif call.name == "update_system_glossary": return update_system_glossary(**args)
             elif call.name == "delete_system_glossary_term": return delete_system_glossary_term(**args)
             elif call.name == "update_cognitive_lens": return update_cognitive_lens(**args)
+
+            # --- Logging ---
+            elif call.name == "log_agent_action": return log_agent_action(**args)
 
             # --- Infrastructure Provisioning ---
             # elif call.name == "provision_agent_state_db": return provision_agent_state_db(**args)
@@ -135,6 +178,29 @@ class ToolDispatcher:
         Strictly typed parameter mapping to ensure LLM generates valid JSON payloads.
         """
         return [
+            # MCP Tools
+            types.FunctionDeclaration(
+                name="read_file",
+                description="MCP Standard: Read the complete contents of a file from the local filesystem.",
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
+                    properties={
+                        "path": types.Schema(type=types.Type.STRING, description="Absolute path to the file to read (must be within C:\\Users\\timot\\NPT-knowing-2)")
+                    },
+                    required=["path"]
+                )
+            ),
+            types.FunctionDeclaration(
+                name="list_directory",
+                description="MCP Standard: Get a detailed listing of all files and directories in a specified path.",
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
+                    properties={
+                        "path": types.Schema(type=types.Type.STRING, description="Absolute path to the directory to list (must be within C:\\Users\\timot\\NPT-knowing-2)")
+                    },
+                    required=["path"]
+                )
+            ),
             # I/O Tools
             types.FunctionDeclaration(name="read_local_file", description="Reads local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}}, "required": ["file_path"]}),
             types.FunctionDeclaration(name="write_local_file", description="Writes local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}, "content": {"type": "STRING"}}, "required": ["file_path", "content"]}),
@@ -227,6 +293,17 @@ class ToolDispatcher:
                     "required": ["query"]
                 }
             ),
+            types.FunctionDeclaration(
+                name="extract_youtube_transcript", 
+                description="Extracts text transcripts from YouTube URLs.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "url": {"type": "STRING", "description": "The YouTube video URL."}
+                    }, 
+                    "required": ["url"]
+                }
+            ),
 
             # Cognitive Memory & System State
             types.FunctionDeclaration(name="record_learned_ontology_rule", description="Saves rule.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule": {"type": "STRING"}}, "required": ["agent_name", "rule"]}),
@@ -272,6 +349,21 @@ class ToolDispatcher:
                         "text_content": {"type": "STRING", "description": "The raw text to be mapped."}
                     }, 
                     "required": ["text_content"]
+                }
+            ),
+
+            # Logging
+            types.FunctionDeclaration(
+                name="log_agent_action", 
+                description="Appends a structured log entry to the local fleet_audit.log file.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "role": {"type": "STRING", "description": "The name/role of the agent (e.g., 'hook', 'spyglass')."},
+                        "action": {"type": "STRING", "description": "The action or tool being executed."},
+                        "payload": {"type": "STRING", "description": "The payload, arguments, or context of the action."}
+                    }, 
+                    "required": ["role", "action", "payload"]
                 }
             ) #,
 

@@ -1,8 +1,8 @@
 {
   "active_environment_context": {
-    "model_tier": "gemini-3.1-pro-preview",
+    "model_tier": "gemini-3.5-flash",
     "gcp_project_id": "npt-reckoning-1",
-    "last_discovery_utc": "2026-06-11T14:50:45.246203Z"
+    "last_discovery_utc": "2026-07-15T23:24:07.991051Z"
   },
   "verified_directory_topology": {
     "root_path": "C:/Users/timot/NPT-knowing-2",
@@ -23,19 +23,14 @@
         "extension": ""
       },
       {
-        "relative_path": "check_models.py",
-        "file_name": "check_models.py",
-        "extension": "py"
+        "relative_path": "additional_urls.json",
+        "file_name": "additional_urls.json",
+        "extension": "json"
       },
       {
-        "relative_path": "hook.log",
-        "file_name": "hook.log",
-        "extension": "log"
-      },
-      {
-        "relative_path": "hook.xml",
-        "file_name": "hook.xml",
-        "extension": "xml"
+        "relative_path": "hook.lo",
+        "file_name": "hook.lo",
+        "extension": "lo"
       },
       {
         "relative_path": "main.py",
@@ -48,6 +43,11 @@
         "extension": "json"
       },
       {
+        "relative_path": "node-v26.5.0-x64.msi",
+        "file_name": "node-v26.5.0-x64.msi",
+        "extension": "msi"
+      },
+      {
         "relative_path": "pyproject.toml",
         "file_name": "pyproject.toml",
         "extension": "toml"
@@ -58,63 +58,93 @@
         "extension": "md"
       },
       {
+        "relative_path": "run_bulk_bootstrap.py",
+        "file_name": "run_bulk_bootstrap.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "uv.lock",
         "file_name": "uv.lock",
         "extension": "lock"
       },
       {
-        "relative_path": "attachments/Achitectural_Principals_v2.md",
-        "file_name": "Achitectural_Principals_v2.md",
-        "extension": "md"
+        "relative_path": "debug_payloads/active_system_instruction.txt",
+        "file_name": "active_system_instruction.txt",
+        "extension": "txt"
       },
       {
-        "relative_path": "attachments/detailed_design_v5.md",
-        "file_name": "detailed_design_v5.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/Functional_Requiremnts_v1 copy.md",
-        "file_name": "Functional_Requiremnts_v1 copy.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/Functional_Requiremnts_v1.md",
-        "file_name": "Functional_Requiremnts_v1.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/PROJECT_CHARTER_v2.md",
-        "file_name": "PROJECT_CHARTER_v2.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/Technical_Design_Document_v2.md",
-        "file_name": "Technical_Design_Document_v2.md",
-        "extension": "md"
-      },
-      {
-        "relative_path": "attachments/tool_dispatcher.py",
-        "file_name": "tool_dispatcher.py",
+        "relative_path": "debug_payloads/agent_engine2026-06-25.py",
+        "file_name": "agent_engine2026-06-25.py",
         "extension": "py"
       },
       {
-        "relative_path": "attachments/spyglass_sources/agents.json",
-        "file_name": "agents.json",
-        "extension": "json"
+        "relative_path": "debug_payloads/bilgeladle_2026-07-13-categories-A.md",
+        "file_name": "bilgeladle_2026-07-13-categories-A.md",
+        "extension": "md"
       },
       {
-        "relative_path": "attachments/spyglass_sources/spyglass-a.xml",
-        "file_name": "spyglass-a.xml",
+        "relative_path": "debug_payloads/bilgeladle_2026-07-13-Gloassary.md",
+        "file_name": "bilgeladle_2026-07-13-Gloassary.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/context-restoration-handoff-2026-07-14.md",
+        "file_name": "context-restoration-handoff-2026-07-14.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/cutlass_runner2026-06-29.py",
+        "file_name": "cutlass_runner2026-06-29.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/database_schema_manifest.txt",
+        "file_name": "database_schema_manifest.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/draft-xml.xml",
+        "file_name": "draft-xml.xml",
         "extension": "xml"
       },
       {
-        "relative_path": "attachments/spyglass_sources/spyglass-b.xml",
-        "file_name": "spyglass-b.xml",
+        "relative_path": "debug_payloads/MANDATORY_MARKDOWN_TEMPLATE.md",
+        "file_name": "MANDATORY_MARKDOWN_TEMPLATE.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/MANDATORY_XML_SCHEMA.xml",
+        "file_name": "MANDATORY_XML_SCHEMA.xml",
         "extension": "xml"
       },
       {
-        "relative_path": "debug_payloads/active_system_instruction.txt",
-        "file_name": "active_system_instruction.txt",
+        "relative_path": "debug_payloads/memory_tools2026-06-29.py",
+        "file_name": "memory_tools2026-06-29.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/project_context_manifest-2026-06-24-01.txt",
+        "file_name": "project_context_manifest-2026-06-24-01.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/project_context_manifest-2026-06-24-02.txt",
+        "file_name": "project_context_manifest-2026-06-24-02.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/project_hierarchy-2026-06-26.txt",
+        "file_name": "project_hierarchy-2026-06-26.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/project_hierarchy-2026-07-14.txt",
+        "file_name": "project_hierarchy-2026-07-14.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "debug_payloads/project_hierarchy.txt",
+        "file_name": "project_hierarchy.txt",
         "extension": "txt"
       },
       {
@@ -123,49 +153,504 @@
         "extension": "json"
       },
       {
-        "relative_path": "docs/accomplishments.md",
+        "relative_path": "debug_payloads/tool_dispatcher2026-06-26.py",
+        "file_name": "tool_dispatcher2026-06-26.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/accomplishments.md",
         "file_name": "accomplishments.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/Achitectural_Principals_v2.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/Achitectural_Principals_v2.md",
         "file_name": "Achitectural_Principals_v2.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/agent_questionaire_hook.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/ADRs.md",
+        "file_name": "ADRs.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/agent_questionaire_hook.md",
         "file_name": "agent_questionaire_hook.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/arb_approved_files.json",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/arb_approved_files.json",
         "file_name": "arb_approved_files.json",
         "extension": "json"
       },
       {
-        "relative_path": "docs/detailed_design_v5.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/detailed_design_v5.md",
         "file_name": "detailed_design_v5.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/Functional_Requiremnts_v1.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/Functional_Requiremnts_v1.md",
         "file_name": "Functional_Requiremnts_v1.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/npt_fleet_design.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/HOOK_ENGINEERING_SOP.md",
+        "file_name": "HOOK_ENGINEERING_SOP.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/npt_fleet_design.md",
         "file_name": "npt_fleet_design.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/PROJECT_CHARTER_v2.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/PROJECT_CHARTER_v2.md",
         "file_name": "PROJECT_CHARTER_v2.md",
         "extension": "md"
       },
       {
-        "relative_path": "docs/Technical_Design_Document_v2.md",
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/SOPs.md",
+        "file_name": "SOPs.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/TECHNICAL_ADRs.md",
+        "file_name": "TECHNICAL_ADRs.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/Technical_Design_Document_v2.md",
         "file_name": "Technical_Design_Document_v2.md",
         "extension": "md"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/Untitled.base",
+        "file_name": "Untitled.base",
+        "extension": "base"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/Untitled.canvas",
+        "file_name": "Untitled.canvas",
+        "extension": "canvas"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/.obsidian/app.json",
+        "file_name": "app.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/.obsidian/appearance.json",
+        "file_name": "appearance.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/.obsidian/core-plugins.json",
+        "file_name": "core-plugins.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "debug_payloads/docs-2026-07-14-ended/.obsidian/workspace.json",
+        "file_name": "workspace.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "debug_payloads/runners/cutlass_runner.py",
+        "file_name": "cutlass_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/runners/hook_runner.py",
+        "file_name": "hook_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/runners/landlubber_runner.py",
+        "file_name": "landlubber_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/runners/pegleg_runner.py",
+        "file_name": "pegleg_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/runners/spyglass_runner.py",
+        "file_name": "spyglass_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/.gitkeep",
+        "file_name": ".gitkeep",
+        "extension": ""
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/.placeholder",
+        "file_name": ".placeholder",
+        "extension": ""
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/acquire_content.py",
+        "file_name": "acquire_content.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/agent_compiler.py",
+        "file_name": "agent_compiler.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/agent_logger.py",
+        "file_name": "agent_logger.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/check_cargo_manifest.py",
+        "file_name": "check_cargo_manifest.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/commandeer_url.py",
+        "file_name": "commandeer_url.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/create_database_and_user.py",
+        "file_name": "create_database_and_user.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/create_tester_agent.py",
+        "file_name": "create_tester_agent.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/get_github_issue.py",
+        "file_name": "get_github_issue.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/learning_loop.py",
+        "file_name": "learning_loop.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/learning_manager.py",
+        "file_name": "learning_manager.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/provision_database.py",
+        "file_name": "provision_database.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/_tools.py",
+        "file_name": "_tools.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "debug_payloads/tools2026-06-26/__init__.py",
+        "file_name": "__init__.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "docs/ADRs.md",
+        "file_name": "ADRs.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/Hook_constitutiuon.md",
+        "file_name": "Hook_constitutiuon.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/PROJECT_CHARTER_v7.md",
+        "file_name": "PROJECT_CHARTER_v7.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "docs/SOPs.md",
+        "file_name": "SOPs.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "helper_scripts/build_context.ps1",
+        "file_name": "build_context.ps1",
+        "extension": "ps1"
+      },
+      {
+        "relative_path": "helper_scripts/check_models.py",
+        "file_name": "check_models.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/inspect_schemas.py",
+        "file_name": "inspect_schemas.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/manage_threads.py",
+        "file_name": "manage_threads.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/project_hierarchy.txt",
+        "file_name": "project_hierarchy.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "helper_scripts/run_build_context.bat",
+        "file_name": "run_build_context.bat",
+        "extension": "bat"
+      },
+      {
+        "relative_path": "helper_scripts/run_view_heirarchy.bat",
+        "file_name": "run_view_heirarchy.bat",
+        "extension": "bat"
+      },
+      {
+        "relative_path": "helper_scripts/seed_hook_rule.py",
+        "file_name": "seed_hook_rule.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/view_hierarchy.ps1",
+        "file_name": "view_hierarchy.ps1",
+        "extension": "ps1"
+      },
+      {
+        "relative_path": "helper_scripts/db_provisioning/build_fleet_enrichments.py",
+        "file_name": "build_fleet_enrichments.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/db_provisioning/build_memory_schema.py",
+        "file_name": "build_memory_schema.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/db_provisioning/create_database_and_user.py",
+        "file_name": "create_database_and_user.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/db_provisioning/provision_database.py",
+        "file_name": "provision_database.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "helper_scripts/db_provisioning/regrant_permissions.py",
+        "file_name": "regrant_permissions.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "logs/active_tool_execution_trace.log",
+        "file_name": "active_tool_execution_trace.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/bilgeladle_interactions.log",
+        "file_name": "bilgeladle_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/bilgeladle_system_prompt_compiled.log",
+        "file_name": "bilgeladle_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/cutlass_interactions.log",
+        "file_name": "cutlass_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/cutlass_system_prompt.txt",
+        "file_name": "cutlass_system_prompt.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "logs/cutlass_system_prompt_compiled.log",
+        "file_name": "cutlass_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/grog_interactions.log",
+        "file_name": "grog_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/grog_system_prompt_compiled.log",
+        "file_name": "grog_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/landlubber_interactions.log",
+        "file_name": "landlubber_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/plank_interactions.log",
+        "file_name": "plank_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/plank_system_prompt_compiled.log",
+        "file_name": "plank_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/spyglass_interactions.log",
+        "file_name": "spyglass_interactions.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "logs/spyglass_system_prompt.txt",
+        "file_name": "spyglass_system_prompt.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "logs/spyglass_system_prompt_compiled.log",
+        "file_name": "spyglass_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "manuscript/2026-02-24AChapters_complete.md",
+        "file_name": "2026-02-24AChapters_complete.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/gossary_2026-06-30.md",
+        "file_name": "gossary_2026-06-30.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/gossary_2026-06-30.pdf",
+        "file_name": "gossary_2026-06-30.pdf",
+        "extension": "pdf"
+      },
+      {
+        "relative_path": "manuscript/Untitled.canvas",
+        "file_name": "Untitled.canvas",
+        "extension": "canvas"
+      },
+      {
+        "relative_path": "manuscript/.obsidian/app.json",
+        "file_name": "app.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/.obsidian/appearance.json",
+        "file_name": "appearance.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/.obsidian/core-plugins.json",
+        "file_name": "core-plugins.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/.obsidian/graph.json",
+        "file_name": "graph.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/.obsidian/workspace.json",
+        "file_name": "workspace.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/chapters/before_ch-5-3.json",
+        "file_name": "before_ch-5-3.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/chapters/ch-5-3.md",
+        "file_name": "ch-5-3.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapters/ch5.md",
+        "file_name": "ch5.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapters/ch5_ontology.json",
+        "file_name": "ch5_ontology.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch1-profile.md",
+        "file_name": "ch1-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch10-profile.md",
+        "file_name": "ch10-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch11-profile.md",
+        "file_name": "ch11-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch12-profile.md",
+        "file_name": "ch12-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch13-profile.md",
+        "file_name": "ch13-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch2-profile.md",
+        "file_name": "ch2-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch3-profile.md",
+        "file_name": "ch3-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch4-profile.md",
+        "file_name": "ch4-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch5-ptofile.md",
+        "file_name": "ch5-ptofile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch6-profile.md",
+        "file_name": "ch6-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch7-profile.md",
+        "file_name": "ch7-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch8-profile.md",
+        "file_name": "ch8-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/ch9-profile.md",
+        "file_name": "ch9-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "manuscript/chapter_profiles/intro-profile.md",
+        "file_name": "intro-profile.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "output/botasaurus_fetch.json",
+        "file_name": "botasaurus_fetch.json",
+        "extension": "json"
       },
       {
         "relative_path": "src/react_agent/.gitkeep",
@@ -173,9 +658,14 @@
         "extension": ""
       },
       {
-        "relative_path": "src/react_agent/agent_engine.py",
-        "file_name": "agent_engine.py",
-        "extension": "py"
+        "relative_path": "src/react_agent/active_system_prompt_compiled.log",
+        "file_name": "active_system_prompt_compiled.log",
+        "extension": "log"
+      },
+      {
+        "relative_path": "src/react_agent/active_tool_execution_trace.log",
+        "file_name": "active_tool_execution_trace.log",
+        "extension": "log"
       },
       {
         "relative_path": "src/react_agent/agent_profile.xsd",
@@ -198,19 +688,9 @@
         "extension": "md"
       },
       {
-        "relative_path": "src/react_agent/runtime_engine.py",
-        "file_name": "runtime_engine.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/test_spyglass.py",
-        "file_name": "test_spyglass.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tool_dispatcher.py",
-        "file_name": "tool_dispatcher.py",
-        "extension": "py"
+        "relative_path": "src/react_agent/project_hierarchy.txt",
+        "file_name": "project_hierarchy.txt",
+        "extension": "txt"
       },
       {
         "relative_path": "src/react_agent/__init__.py",
@@ -228,59 +708,69 @@
         "extension": ""
       },
       {
-        "relative_path": "src/react_agent/agents/hook.xml",
+        "relative_path": "src/react_agent/agents/readme.md",
+        "file_name": "readme.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/agents/bilgeladle/bilgeladle.xml",
+        "file_name": "bilgeladle.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/bilgeladle/cognitive_lens.json",
+        "file_name": "cognitive_lens.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/bilgeladle/learned_rules.json",
+        "file_name": "learned_rules.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/additional_urls.json",
+        "file_name": "additional_urls.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/cognitive_lens.json",
+        "file_name": "cognitive_lens.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/cutlass.xml",
+        "file_name": "cutlass.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/few_shot_exemplars.json",
+        "file_name": "few_shot_exemplars.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/learned_rules.json",
+        "file_name": "learned_rules.json",
+        "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/memory/20260618114008_analysis.txt",
+        "file_name": "20260618114008_analysis.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "src/react_agent/agents/cutlass/memory/20291101185112_analysis.txt",
+        "file_name": "20291101185112_analysis.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "src/react_agent/agents/grog/grog.xml",
+        "file_name": "grog.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/hook.xml",
         "file_name": "hook.xml",
         "extension": "xml"
-      },
-      {
-        "relative_path": "src/react_agent/agents/spyglass.xml",
-        "file_name": "spyglass.xml",
-        "extension": "xml"
-      },
-      {
-        "relative_path": "src/react_agent/agents/tester.xml",
-        "file_name": "tester.xml",
-        "extension": "xml"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_issue-19.json",
-        "file_name": "thread_issue-19.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_issue-19b.json",
-        "file_name": "thread_issue-19b.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_issue-20.json",
-        "file_name": "thread_issue-20.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_issue-21.json",
-        "file_name": "thread_issue-21.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_project-review.json",
-        "file_name": "thread_project-review.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_ticket-10.json",
-        "file_name": "thread_ticket-10.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_ticket-12.json",
-        "file_name": "thread_ticket-12.json",
-        "extension": "json"
-      },
-      {
-        "relative_path": "src/react_agent/agents/hook/thread_ticket-13.json",
-        "file_name": "thread_ticket-13.json",
-        "extension": "json"
       },
       {
         "relative_path": "src/react_agent/agents/hook/rules/001_universal_github_tools.xml",
@@ -290,6 +780,31 @@
       {
         "relative_path": "src/react_agent/agents/hook/rules/002_correct_issue_closure_tool.xml",
         "file_name": "002_correct_issue_closure_tool.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/hook/rules/003_db_driver.xml",
+        "file_name": "003_db_driver.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/landlubber/landlubber.xml",
+        "file_name": "landlubber.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/pegleg/pegleg.xml",
+        "file_name": "pegleg.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/plank/plank.xml",
+        "file_name": "plank.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/agents/skills/logical_fallacy_scan.xml",
+        "file_name": "logical_fallacy_scan.xml",
         "extension": "xml"
       },
       {
@@ -308,6 +823,91 @@
         "extension": "json"
       },
       {
+        "relative_path": "src/react_agent/agents/spyglass/spyglass.xml",
+        "file_name": "spyglass.xml",
+        "extension": "xml"
+      },
+      {
+        "relative_path": "src/react_agent/core/agent_engine.py",
+        "file_name": "agent_engine.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/core/seed_queue.py",
+        "file_name": "seed_queue.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/core/tool_dispatcher.py",
+        "file_name": "tool_dispatcher.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/core/content_lists/batch_targets-baseline-1.txt",
+        "file_name": "batch_targets-baseline-1.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "src/react_agent/core/content_lists/batch_targets-baseline-2.txt",
+        "file_name": "batch_targets-baseline-2.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/batch_ingestion_queue.py",
+        "file_name": "batch_ingestion_queue.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/bilgeladle_runner.py",
+        "file_name": "bilgeladle_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/cutlass_runner.py",
+        "file_name": "cutlass_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/grog_runner.py",
+        "file_name": "grog_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/hook_runner.py",
+        "file_name": "hook_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/landlubber_runner.py",
+        "file_name": "landlubber_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/pegleg_runner.py",
+        "file_name": "pegleg_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/plank_runner.py",
+        "file_name": "plank_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/readme.md",
+        "file_name": "readme.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/spyglass_runner.py",
+        "file_name": "spyglass_runner.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/entrypoints/view_latest_enrichment.py",
+        "file_name": "view_latest_enrichment.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/learning_repository/.placeholder",
         "file_name": ".placeholder",
         "extension": ""
@@ -323,88 +923,303 @@
         "extension": "json"
       },
       {
-        "relative_path": "src/react_agent/tools/.gitkeep",
-        "file_name": ".gitkeep",
-        "extension": ""
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch1_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch1_part2_bilgeladle.md",
+        "extension": "md"
       },
       {
-        "relative_path": "src/react_agent/tools/.placeholder",
-        "file_name": ".placeholder",
-        "extension": ""
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch1_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch1_part3_bilgeladle.md",
+        "extension": "md"
       },
       {
-        "relative_path": "src/react_agent/tools/agent_compiler.py",
-        "file_name": "agent_compiler.py",
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch1_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch1_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part1_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part1_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part5_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part5_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch2_part6_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch2_part6_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch3_part1_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch3_part1_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch3_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch3_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch3_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch3_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch3_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch3_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch4_part1_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch4_part1_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch4_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch4_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch4_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch4_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch4_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch4_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch4_part5_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch4_part5_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch5_part1_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch5_part1_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch5_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch5_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch5_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch5_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch5_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch5_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_ch5_part5_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_ch5_part5_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_intro_ch1_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_intro_ch1_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch10_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch10_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch10_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch10_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch10_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch10_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch10_part4_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch10_part4_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch11_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch11_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch11_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch11_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch12_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch12_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch6_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch6_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch6_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch6_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch7_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch7_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch8_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch8_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch8_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch8_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch8_part3_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch8_part3_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch9_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch9_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/bootstrap_ingestion_rules_ch9_part2_bilgeladle.md",
+        "file_name": "bootstrap_ingestion_rules_ch9_part2_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/can-ai-save-us-from-misinformation-macleans-ca_cutlass.md",
+        "file_name": "can-ai-save-us-from-misinformation-macleans-ca_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/ch-5-3-map-expand_plank.md",
+        "file_name": "ch-5-3-map-expand_plank.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/ch-5-3-ontological-extraction_cutlass.md",
+        "file_name": "ch-5-3-ontological-extraction_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/ch5_manuscript_audit_cutlass.md",
+        "file_name": "ch5_manuscript_audit_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/ch5_ontological_extraction_cutlass.md",
+        "file_name": "ch5_ontological_extraction_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/cutlass_20260618114001_acquired_cutlass.md",
+        "file_name": "cutlass_20260618114001_acquired_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/fleet_glossary_alphabetical_bilgeladle.md",
+        "file_name": "fleet_glossary_alphabetical_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/glossary_deletion_backward_incompatibility_bilgeladle.md",
+        "file_name": "glossary_deletion_backward_incompatibility_bilgeladle.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/grog-b_20260618114001_acquired_cutlass.md",
+        "file_name": "grog-b_20260618114001_acquired_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/grog_20260618114001_acquired_cutlass.md",
+        "file_name": "grog_20260618114001_acquired_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/local_wiki/why-does-the-ai-industry-like-to-tell-scary-stories_cutlass.md",
+        "file_name": "why-does-the-ai-industry-like-to-tell-scary-stories_cutlass.md",
+        "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/tools/acquisition_tools.py",
+        "file_name": "acquisition_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/agent_logger.py",
-        "file_name": "agent_logger.py",
+        "relative_path": "src/react_agent/tools/cargo_db_tools.py",
+        "file_name": "cargo_db_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/check_cargo_manifest.py",
-        "file_name": "check_cargo_manifest.py",
+        "relative_path": "src/react_agent/tools/cloud_knowledge_tools.py",
+        "file_name": "cloud_knowledge_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/commandeer_url.py",
-        "file_name": "commandeer_url.py",
+        "relative_path": "src/react_agent/tools/extraction_tools.py",
+        "file_name": "extraction_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/create_database_and_user.py",
-        "file_name": "create_database_and_user.py",
+        "relative_path": "src/react_agent/tools/file_io_tools.py",
+        "file_name": "file_io_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/create_tester_agent.py",
-        "file_name": "create_tester_agent.py",
+        "relative_path": "src/react_agent/tools/github_tools.py",
+        "file_name": "github_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/create_tester_agent_with_compiler.py",
-        "file_name": "create_tester_agent_with_compiler.py",
+        "relative_path": "src/react_agent/tools/memory_tools.py",
+        "file_name": "memory_tools.py",
         "extension": "py"
       },
       {
-        "relative_path": "src/react_agent/tools/get_github_issue.py",
-        "file_name": "get_github_issue.py",
-        "extension": "py"
+        "relative_path": "src/react_agent/tools/readme.md",
+        "file_name": "readme.md",
+        "extension": "md"
       },
       {
-        "relative_path": "src/react_agent/tools/github_poster.py",
-        "file_name": "github_poster.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/learning_loop.py",
-        "file_name": "learning_loop.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/learning_manager.py",
-        "file_name": "learning_manager.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/provision_database.py",
-        "file_name": "provision_database.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/temp_compiler.py",
-        "file_name": "temp_compiler.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/_tools.py",
-        "file_name": "_tools.py",
-        "extension": "py"
-      },
-      {
-        "relative_path": "src/react_agent/tools/__init__.py",
-        "file_name": "__init__.py",
+        "relative_path": "src/react_agent/tools/zotero_tools.py",
+        "file_name": "zotero_tools.py",
         "extension": "py"
       }
     ]

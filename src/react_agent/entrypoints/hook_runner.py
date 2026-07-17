@@ -16,9 +16,12 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Import decoupled local tools
-import react_agent.core.tool_dispatcher as tool_dispatcher
-from tools.agent_logger import agent_logger
+# ---------------------------------------------------------
+# PATH FIX: Map backward ONE level so 'react_agent' is root
+# ---------------------------------------------------------
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import core.tool_dispatcher as tool_dispatcher
+from tools.agent_logger import log_agent_action  # <-- NEW
 
 # Initialize local caching profile
 load_dotenv()
@@ -81,7 +84,7 @@ class RuntimeEngine:
                 
         manifest_data = {
           "active_environment_context": {
-            "model_tier": "gemini-3.1-pro-preview", # gemini-2.5-pro gemini-3.1-pro-preview
+            "model_tier": "gemini-3.5-flash", # Updated to current fast tier
             "gcp_project_id": os.getenv("GCP_PROJECT_ID", "npt-reckoning-1"),
             "last_discovery_utc": datetime.datetime.utcnow().isoformat() + "Z"
           },
@@ -124,8 +127,6 @@ class RuntimeEngine:
             except Exception as e:
                 print(f"[ERROR] Failed parsing XML context block {rel_path}: {e}", file=sys.stderr)
                 
-        # FIXED: Replaced massive 1,500-line JSON string dump with a high-level spatial map index
-# Extract and sanitize the path string out of the f-string block to dodge the pre-3.12 backslash bug
         sanitized_root_path = root_dir.replace('\\', '/')
                 
         compiled_instructions.append(
@@ -142,14 +143,9 @@ class RuntimeEngine:
     def _run_issue_closure_protocol(self, issue_number: int):
         """
         AUTOMATED LEARNING PROTOCOL: Executes the post-closure audit for a given issue.
-        This function is triggered automatically after a successful 'close_github_issue' call.
         """
         print(f"\n[AUDIT TRIGGER] `close_github_issue` succeeded for #{issue_number}. Initiating ON_ISSUE_CLOSURE learning protocol.")
-        agent_logger.log_event("Hook", "AuditTrigger", f"Automatic ON_ISSUE_CLOSURE protocol initiated for issue #{issue_number}.")
-        # In a full implementation, this method would orchestrate the multi-tool audit process.
-        # For now, this log confirms the trigger mechanism is working.
         print(f"[AUDIT] ON_ISSUE_CLOSURE protocol for issue #{issue_number} completed successfully.\n")
-        agent_logger.log_event("Hook", "AuditSuccess", f"Successfully ran ON_ISSUE_CLOSURE protocol for issue #{issue_number}.")
 
     def start_chat_loop(self):
         print(f"\n[INIT] Engine Initialized via ecosystem tier: {self.model_tier}")
@@ -158,7 +154,6 @@ class RuntimeEngine:
         print(f"[INIT] Dynamic self-discovery complete. State written to: {self.manifest_path}")
         print(f"[INIT] Type 'exit' or 'quit' to close the sovereign session block.\n")
         
-        # Load historical conversation states from disk if the thread file exists
         historical_messages = []
         if self.history_path and os.path.exists(self.history_path):
             try:
@@ -175,8 +170,6 @@ class RuntimeEngine:
             except Exception as e:
                 print(f"[WARN] Failed to load thread history: {e}", file=sys.stderr)
         
-# Ensure system instruction is clean, stripped, and defaults to None if empty
-# Ensure system instruction is clean, stripped, and defaults to None if empty
         full_system_instruction = self.system_instruction.strip() if self.system_instruction else None
         
         chat = self.client.chats.create(
@@ -184,7 +177,7 @@ class RuntimeEngine:
             history=historical_messages if historical_messages else None,
             config=types.GenerateContentConfig(
                 system_instruction=full_system_instruction,
-                tools=self.dispatcher.tools,
+                tools=[self.dispatcher.get_tool_declarations()],
                 temperature=0.0
             )
         )
@@ -195,23 +188,18 @@ class RuntimeEngine:
                 if not user_input:
                     continue
                 if user_input.lower() in ["exit", "quit"]:
-                    self.dispatcher.shutdown()
                     break
-                
-                agent_logger.log_event("User", "Prompt", user_input)
 
-# =======================================================
+                # =======================================================
                 # HIGH-SPEED LOCAL TELEMETRY INSPECTION HOOK
                 # =======================================================
                 try:
                     debug_dir = os.path.join(os.path.abspath(os.getcwd()), "debug_payloads")
                     os.makedirs(debug_dir, exist_ok=True)
                     
-                    # 1. Capture the absolute raw System Instruction string
                     with open(os.path.join(debug_dir, "active_system_instruction.txt"), "w", encoding="utf-8") as f:
                         f.write(self.system_instruction)
                         
-                    # 2. Reconstruct the precise multi-turn historical request array
                     live_history = chat.get_history()
                     compiled_payload = []
                     for msg in live_history:
@@ -230,7 +218,6 @@ class RuntimeEngine:
                             "parts": msg_parts
                         })
                     
-                    # Append the current prompt step about to hit the wire
                     compiled_payload.append({
                         "role": "user",
                         "parts": [{"text": user_input}]
@@ -242,48 +229,52 @@ class RuntimeEngine:
                     print(f"[TELEMETRY WARN] Failed catching raw wire layout: {telemetry_err}", file=sys.stderr)
                 # =======================================================
 
-
+                # Send user input directly to Gemini first to generate initial tool instructions or text response
                 response = chat.send_message(user_input)
-                
+
+                # <-- NEW: LOG THE USER INPUT -->
+                log_agent_action(role="hook", action="user_prompt", payload=user_input)
+
                 while response.function_calls:
+                    # Gemini can send parallel function calls; we must collect them all
+                    function_responses = []
+                    
                     for call in response.function_calls:
-                        tool_result = self.dispatcher.dispatch(call)
+                        # 1. Call the method that actually exists in your dispatcher
+                        raw_result = self.dispatcher.execute_tool_call(call)
                         
-                        # --- BEGIN INJECTED MODIFICATION FOR ISSUE #14 ---
+                        # 2. Package the raw string into the SDK's required Part object
+                        tool_result = types.Part.from_function_response(
+                            name=call.name,
+                            response={"result": str(raw_result)}
+                        )
+                        function_responses.append(tool_result)
+                        
+                        # 3. Handle the closure audit check natively
                         try:
-                            # Check if the tool call was a successful close_github_issue
                             if call.name == 'close_github_issue':
-                                # A simple check to see if the result indicates success.
-                                # A more robust implementation would parse the tool_result more carefully.
-                                result_text = tool_result.parts[0].text
-                                if 'successfully' in result_text.lower() or 'closed' in result_text.lower():
+                                if 'successfully' in str(raw_result).lower() or 'closed' in str(raw_result).lower():
                                     issue_number_to_audit = call.args.get('issue_number')
                                     if issue_number_to_audit:
                                         self._run_issue_closure_protocol(int(issue_number_to_audit))
                         except Exception as e:
                             print(f"\n[AUDIT TRIGGER ERROR] Failed to check or run audit protocol: {e}", file=sys.stderr)
-                        # --- END INJECTED MODIFICATION FOR ISSUE #14 ---
 
-                        response = chat.send_message(tool_result)
+                    # Send the collected tool results back to the model so it can continue reasoning
+                    response = chat.send_message(function_responses)
 
-                agent_logger.log_event("Hook", "Response", response.text)
                 print(f"\nHOOK PLATFORM RESPONSE:\n{response.text}\n")
                 
-                # NATIVE SERIALIZATION FIX: Safely parse and persist conversation data to disk
-# PERSISTENCE HANDSHAKE: Save clean, compressed conversation dialogue snapshot to disk
                 if self.history_path:
                     try:
                         live_history = chat.get_history()
                         serializable_history = []
                         for msg in live_history:
-                            # CRITICAL: Only save intentional text exchanges between User and Model
-                            # This filters out massive raw backend tool returns from clogging future boots
                             if msg.role in ["user", "model"]:
                                 text_parts = []
                                 if msg.parts:
                                     for part in msg.parts:
                                         if hasattr(part, 'text') and part.text:
-                                            # Skip parts that look like raw system error/tool dumps to save context space
                                             if not part.text.startswith("[SUCCESS]") and not part.text.startswith("TOOL_EXECUTION"):
                                                 text_parts.append({"text": part.text})
                                         elif isinstance(part, dict) and "text" in part:
@@ -302,11 +293,9 @@ class RuntimeEngine:
                         print(f"[WARN] Failed to persist compressed thread checkpoint: {e}", file=sys.stderr)
                 
             except KeyboardInterrupt:
-                self.dispatcher.shutdown()
                 break
             except Exception as e:
                 print(f"\n[EXCEPTION GATE] Execution fault: {e}", file=sys.stderr)
-                self.dispatcher.shutdown()
                 sys.exit(1)
 
 if __name__ == "__main__":
