@@ -64,5 +64,11 @@
     "ideal_output": "Empirical Nonsense Laundering",
     "rationale": "Auto-recorded via active terminal correction.",
     "timestamp": "2026-07-09 08:29:00"
+  },
+  {
+    "input_context": "Analysis of Business Insider article 'Adam Mosseri says Instagram has reined in AI costs after shutting down the silly things that were burning tokens' (acquisitions/adam-mosseri-says-instagram-has-reined-in-ai-costs.txt). The article summarizes Mosseri's podcast appearance where he claims to cut costs by shutting down 'silly things' and reducing team sizes from 12-13 to 6-7 generalists, eliminating specialized data scientists and researchers.",
+    "ideal_output": "BILGE (Translation Engine & Narrative Misdirection for Labor Degradation)",
+    "rationale": "Auto-recorded via active terminal correction.",
+    "timestamp": "2026-07-20 17:19:09"
   }
 ]

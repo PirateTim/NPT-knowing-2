@@ -7,6 +7,8 @@ import json
 from urllib.parse import urlparse
 import pg8000.dbapi
 
+from dotenv import load_dotenv
+
 # =====================================================================
 # INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
 # =====================================================================
@@ -19,6 +21,7 @@ def _get_strict_cargo_connection():
     into the agent_state cognitive schema.
     Invoked By: Called internally by all tools in this file.
     """
+    load_dotenv()
     conn_string = os.getenv("CONTENT_DATABASE_URL")
     if not conn_string:
         return None
@@ -250,5 +253,60 @@ def log_fleet_enrichment(agent_name: str, enrichment_type: str, gcp_bucket_path:
         return f"[SUCCESS] '{enrichment_type}' enrichment saved to Silver DB for metadata_id {metadata_id}."
     except Exception as e:
         return f"[ERROR] Failed to log enrichment: {str(e)}"
+    finally:
+        conn.close()
+
+def reseed_failed_cargo_queue() -> str:
+    """
+    Agent Tool: Dead-Letter Queue Reseeder.
+    Purpose: Reads all failed URLs from cargo.failed_metadata, disaggregates YouTube playlists into single videos,
+    and resets their status to 'PENDING' in cargo.ingestion_queue for retry.
+    Invoked By: PEGLEG, SPYGLASS.
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database unavailable."
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT source_url FROM cargo.failed_metadata ORDER BY failed_at DESC;")
+        failed_rows = cursor.fetchall()
+        
+        if not failed_rows:
+            return "[NOTICE] No failed URLs found in dead-letter queue."
+
+        import re, requests
+        retry_urls = []
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+        for (source_url,) in failed_rows:
+            if "list=" in source_url.lower() or "/playlist" in source_url.lower():
+                try:
+                    res = requests.get(source_url, headers=headers, timeout=10)
+                    vids = list(dict.fromkeys(re.findall(r'watch\?v=([a-zA-Z0-9_-]{11})', res.text)))
+                    retry_urls.extend([f"https://www.youtube.com/watch?v={v}" for v in vids])
+                except Exception:
+                    retry_urls.append(source_url)
+            else:
+                retry_urls.append(source_url)
+
+        retry_urls = list(dict.fromkeys(retry_urls))
+
+        upsert_sql = """
+            INSERT INTO cargo.ingestion_queue (target_url, status, source_requestor, added_at)
+            VALUES (%s, 'PENDING', 'dead_letter_reseed', NOW())
+            ON CONFLICT (target_url) 
+            DO UPDATE SET status = 'PENDING', last_attempted_at = NULL;
+        """
+
+        count = 0
+        for url_str in retry_urls:
+            cursor.execute(upsert_sql, (url_str,))
+            count += 1
+
+        conn.commit()
+        cursor.close()
+        return f"[SUCCESS] Reseeded {count} URLs into cargo.ingestion_queue with status='PENDING'."
+    except Exception as e:
+        return f"[ERROR] Reseeding failed: {str(e)}"
     finally:
         conn.close()

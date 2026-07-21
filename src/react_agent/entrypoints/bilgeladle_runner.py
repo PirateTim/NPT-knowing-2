@@ -28,10 +28,11 @@ def run_bilgeladle():
 
 
     # 2. Fetch and Inject the Live DB Glossary
-    print("[SYSTEM] Fetching live glossary from cargo.system_glossary...")
-    live_glossary = query_system_glossary()
+    # 2026-07-17 I am commenting the glossary out because we are going to run mechanical parsing on the whole book today.  In the future, we will add it back for all analysis and self learning tasks.
+    # print("[SYSTEM] Fetching live glossary from cargo.system_glossary...")
+    # live_glossary = query_system_glossary()
     
-    engine.system_instruction += f"\n\n--- CRITICAL FLEET GLOSSARY ---\n{live_glossary}\n-------------------------------"
+    # engine.system_instruction += f"\n\n--- CRITICAL FLEET GLOSSARY ---\n{live_glossary}\n-------------------------------"
     
     # 3. Thread Management
     thread_input = input("Enter Thread ID or Suffix (or press Enter for new session): ").strip()

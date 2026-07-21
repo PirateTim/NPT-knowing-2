@@ -27,11 +27,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from tools.file_io_tools import read_local_file, write_local_file, delete_local_file, list_local_directory, write_wiki_markdown
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, extract_local_pdf, precision_html_extract, acquire_arxiv_document
+from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document
+from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
 from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens
-from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment
+from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, reseed_failed_cargo_queue
 from tools.extraction_tools import run_langextract_mapping
 from tools.agent_logger import log_agent_action
 from tools.youtube_tools import extract_youtube_transcript
@@ -141,15 +142,22 @@ class ToolDispatcher:
             elif call.name == "log_ingestion_failure": return log_ingestion_failure(**args)
             elif call.name == "purge_corrupted_cargo": return purge_corrupted_cargo(**args)
             elif call.name == "log_fleet_enrichment": return log_fleet_enrichment(**args)
+            elif call.name == "reseed_failed_cargo_queue": return reseed_failed_cargo_queue()
 
             # --- Acquisition & Search ---
             elif call.name == "download_url": return download_url(**args)
+            elif call.name == "download_remote_pdf": return download_remote_pdf(**args)
             elif call.name == "precision_html_extract": return precision_html_extract(**args)
             elif call.name == "extract_local_pdf": return extract_local_pdf(**args)
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
+
+            # --- Zotero Integration ---
+            elif call.name == "fetch_zotero_unresolved_items": return fetch_zotero_unresolved_items()
+            elif call.name == "create_zotero_item": return create_zotero_item(**args)
+            elif call.name == "update_zotero_ledger": return update_zotero_ledger(**args)
             
             # --- Memory & Glossary ---
             elif call.name == "record_learned_ontology_rule": return record_learned_ontology_rule(**args)
@@ -268,9 +276,39 @@ class ToolDispatcher:
                     "required": ["agent_name", "enrichment_type", "gcp_bucket_path", "payload"]
                 }
             ),
+            types.FunctionDeclaration(
+                name="reseed_failed_cargo_queue",
+                description="Reads all failed URLs from cargo.failed_metadata, disaggregates YouTube playlists, and resets status to PENDING in cargo.ingestion_queue.",
+                parameters={"type": "OBJECT", "properties": {}}
+            ),
 
             # Acquisition & Web Extractors
-            types.FunctionDeclaration(name="download_url", description="Downloads URL.", parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}}, "required": ["url"]}),
+            types.FunctionDeclaration(
+                name="download_url", 
+                description="Downloads URL and extracts text and rich metadata. Supports cookies and custom headers.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "url": {"type": "STRING", "description": "Target URL to download."},
+                        "cookies": {"type": "STRING", "description": "Optional cookies (JSON string or 'key=val; key2=val2')."},
+                        "custom_headers": {"type": "STRING", "description": "Optional custom HTTP headers (JSON string or 'Header: Value')."}
+                    }, 
+                    "required": ["url"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="download_remote_pdf", 
+                description="Downloads a direct remote PDF binary, extracts page text via pypdf, and writes local cache payload.", 
+                parameters={
+                    "type": "OBJECT", 
+                    "properties": {
+                        "url": {"type": "STRING", "description": "Target direct PDF URL."},
+                        "cookies": {"type": "STRING", "description": "Optional cookies."},
+                        "custom_headers": {"type": "STRING", "description": "Optional custom headers."}
+                    }, 
+                    "required": ["url"]
+                }
+            ),
             types.FunctionDeclaration(
                 name="precision_html_extract", 
                 description="Extracts specific content using CSS selectors to bypass standard parser failures.", 
@@ -302,6 +340,45 @@ class ToolDispatcher:
                         "url": {"type": "STRING", "description": "The YouTube video URL."}
                     }, 
                     "required": ["url"]
+                }
+            ),
+
+            # Zotero Integration Tools
+            types.FunctionDeclaration(
+                name="fetch_zotero_unresolved_items",
+                description="Scans the Zotero library for unresolved items pending acquisition.",
+                parameters={"type": "OBJECT", "properties": {}}
+            ),
+            types.FunctionDeclaration(
+                name="create_zotero_item",
+                description="Creates a structured Zotero reference item with full citation metadata.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "title": {"type": "STRING", "description": "Item title."},
+                        "url": {"type": "STRING", "description": "Source URL."},
+                        "item_type": {"type": "STRING", "description": "Zotero item type (e.g. journalArticle, preprint, report, blogPost, webpage)."},
+                        "authors": {"type": "STRING", "description": "Comma-separated list or JSON array of author names."},
+                        "published_date": {"type": "STRING", "description": "Publication date."},
+                        "publisher": {"type": "STRING", "description": "Publisher or site name."},
+                        "journal_title": {"type": "STRING", "description": "Journal or publication title."},
+                        "doi": {"type": "STRING", "description": "Digital Object Identifier (DOI)."},
+                        "abstract": {"type": "STRING", "description": "Article abstract."}
+                    },
+                    "required": ["title", "url"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="update_zotero_ledger",
+                description="Binds the GCS cloud storage path and capture status to a Zotero item's extra field.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "item_key": {"type": "STRING", "description": "Zotero item key."},
+                        "capture_status": {"type": "STRING", "description": "Capture status (COMPLETED, FAILED)."},
+                        "gcs_path": {"type": "STRING", "description": "GCS cloud storage bucket path."}
+                    },
+                    "required": ["item_key", "capture_status"]
                 }
             ),
 

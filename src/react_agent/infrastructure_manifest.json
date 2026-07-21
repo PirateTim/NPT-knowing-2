@@ -2,7 +2,7 @@
   "active_environment_context": {
     "model_tier": "gemini-3.5-flash",
     "gcp_project_id": "npt-reckoning-1",
-    "last_discovery_utc": "2026-07-15T23:24:07.991051Z"
+    "last_discovery_utc": "2026-07-20T16:43:05.136672Z"
   },
   "verified_directory_topology": {
     "root_path": "C:/Users/timot/NPT-knowing-2",
@@ -28,9 +28,14 @@
         "extension": "json"
       },
       {
-        "relative_path": "hook.lo",
-        "file_name": "hook.lo",
-        "extension": "lo"
+        "relative_path": "database_schema_manifest.txt",
+        "file_name": "database_schema_manifest.txt",
+        "extension": "txt"
+      },
+      {
+        "relative_path": "get_first_row.py",
+        "file_name": "get_first_row.py",
+        "extension": "py"
       },
       {
         "relative_path": "main.py",
@@ -41,11 +46,6 @@
         "relative_path": "mcp_config.json",
         "file_name": "mcp_config.json",
         "extension": "json"
-      },
-      {
-        "relative_path": "node-v26.5.0-x64.msi",
-        "file_name": "node-v26.5.0-x64.msi",
-        "extension": "msi"
       },
       {
         "relative_path": "pyproject.toml",
@@ -60,6 +60,16 @@
       {
         "relative_path": "run_bulk_bootstrap.py",
         "file_name": "run_bulk_bootstrap.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "spot_check_marque.py",
+        "file_name": "spot_check_marque.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "test_bilgeladle_brain.py",
+        "file_name": "test_bilgeladle_brain.py",
         "extension": "py"
       },
       {
@@ -428,6 +438,11 @@
         "extension": "py"
       },
       {
+        "relative_path": "helper_scripts/db_provisioning/build_ship_letters_of_marque.py",
+        "file_name": "build_ship_letters_of_marque.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "helper_scripts/db_provisioning/create_database_and_user.py",
         "file_name": "create_database_and_user.py",
         "extension": "py"
@@ -653,6 +668,11 @@
         "extension": "json"
       },
       {
+        "relative_path": "src/fleet_audit.log",
+        "file_name": "fleet_audit.log",
+        "extension": "log"
+      },
+      {
         "relative_path": "src/react_agent/.gitkeep",
         "file_name": ".gitkeep",
         "extension": ""
@@ -713,6 +733,11 @@
         "extension": "md"
       },
       {
+        "relative_path": "src/react_agent/agents/bilgeladle/bilgeladle copy.xml",
+        "file_name": "bilgeladle copy.xml",
+        "extension": "xml"
+      },
+      {
         "relative_path": "src/react_agent/agents/bilgeladle/bilgeladle.xml",
         "file_name": "bilgeladle.xml",
         "extension": "xml"
@@ -726,6 +751,11 @@
         "relative_path": "src/react_agent/agents/bilgeladle/learned_rules.json",
         "file_name": "learned_rules.json",
         "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/bilgeladle/new-bilgeladle.xml",
+        "file_name": "new-bilgeladle.xml",
+        "extension": "xml"
       },
       {
         "relative_path": "src/react_agent/agents/cutlass/additional_urls.json",
@@ -821,6 +851,11 @@
         "relative_path": "src/react_agent/agents/spyglass/learned_rules.json",
         "file_name": "learned_rules.json",
         "extension": "json"
+      },
+      {
+        "relative_path": "src/react_agent/agents/spyglass/spyglass copy.xml.bak",
+        "file_name": "spyglass copy.xml.bak",
+        "extension": "bak"
       },
       {
         "relative_path": "src/react_agent/agents/spyglass/spyglass.xml",
@@ -1183,6 +1218,11 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/tools/agent_logger.py",
+        "file_name": "agent_logger.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tools/cargo_db_tools.py",
         "file_name": "cargo_db_tools.py",
         "extension": "py"
@@ -1208,6 +1248,16 @@
         "extension": "py"
       },
       {
+        "relative_path": "src/react_agent/tools/manuscript_etl copy.py",
+        "file_name": "manuscript_etl copy.py",
+        "extension": "py"
+      },
+      {
+        "relative_path": "src/react_agent/tools/manuscript_etl.py",
+        "file_name": "manuscript_etl.py",
+        "extension": "py"
+      },
+      {
         "relative_path": "src/react_agent/tools/memory_tools.py",
         "file_name": "memory_tools.py",
         "extension": "py"
@@ -1216,6 +1266,11 @@
         "relative_path": "src/react_agent/tools/readme.md",
         "file_name": "readme.md",
         "extension": "md"
+      },
+      {
+        "relative_path": "src/react_agent/tools/youtube_tools.py",
+        "file_name": "youtube_tools.py",
+        "extension": "py"
       },
       {
         "relative_path": "src/react_agent/tools/zotero_tools.py",

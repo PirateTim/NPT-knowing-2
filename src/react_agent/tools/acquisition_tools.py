@@ -42,20 +42,53 @@ def _clean_string_metadata(text_str: str) -> str:
     unescaped_text = html.unescape(text_str)
     return unescaped_text.encode('utf-8', errors='ignore').decode('utf-8')
 
+def _parse_headers_and_cookies(cookies: str = "", custom_headers: str = "") -> tuple[dict, dict]:
+    """
+    Internal Helper: Parses cookie and custom header inputs (JSON strings or k=v / k:v formats)
+    into Python dictionaries.
+    """
+    headers_dict = {}
+    cookies_dict = {}
+
+    if custom_headers:
+        try:
+            headers_dict = json.loads(custom_headers)
+        except Exception:
+            for line in custom_headers.splitlines():
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    headers_dict[k.strip()] = v.strip()
+
+    if cookies:
+        try:
+            cookies_dict = json.loads(cookies)
+        except Exception:
+            for item in cookies.replace(";", "\n").splitlines():
+                if "=" in item:
+                    k, v = item.split("=", 1)
+                    cookies_dict[k.strip()] = v.strip()
+
+    return headers_dict, cookies_dict
+
 def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
     """
-    Internal Helper: JSON-LD SEO Extraction.
-    Purpose: Hunts for hidden JSON-LD SEO blocks inside the HTML header to extract 
-    highly accurate metadata (author, publisher, date) and retains the raw payload for the bucket.
-    Invoked By: Called internally by download_url.
+    Internal Helper: Comprehensive Zotero-Ready Metadata Extraction.
+    Hunts for Highwire Press, Dublin Core, OpenGraph, and JSON-LD metadata blocks
+    in the HTML to extract citation attributes and infer dynamic item_type.
     """
     meta = {
         "title": target_url, 
         "authors": [], 
         "published_date": "UNKNOWN", 
         "publisher": "UNKNOWN", 
+        "journal_title": "",
+        "doi": "",
+        "volume": "",
+        "issue": "",
+        "pages": "",
         "abstract": "",
-        "raw_json_ld": []  # CAPTURE THE RAW SLURRY FOR THE BUCKET
+        "item_type": "webpage",
+        "raw_json_ld": []
     }
     
     # 1. Trafilatura Baseline
@@ -67,14 +100,63 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
         if traf_meta.sitename: meta["publisher"] = traf_meta.sitename
         if traf_meta.description: meta["abstract"] = traf_meta.description
 
-    # 2. JSON-LD Override & Raw Capture
+    # 2. BeautifulSoup Meta Tag Scraping (Highwire, Dublin Core, OpenGraph)
     soup = BeautifulSoup(html_string, 'html.parser')
+    
+    highwire_authors = []
+    dc_authors = []
+
+    for tag in soup.find_all('meta'):
+        name = tag.get('name', '').lower()
+        prop = tag.get('property', '').lower()
+        content = tag.get('content', '').strip()
+        if not content: continue
+
+        # Highwire Press (Academic standard)
+        if name == 'citation_title': meta["title"] = content
+        elif name == 'citation_author': highwire_authors.append(content)
+        elif name in ['citation_date', 'citation_publication_date']: meta["published_date"] = content
+        elif name == 'citation_journal_title':
+            meta["journal_title"] = content
+            meta["publisher"] = content
+            meta["item_type"] = "journalArticle"
+        elif name == 'citation_doi':
+            meta["doi"] = content
+            meta["item_type"] = "journalArticle"
+        elif name == 'citation_volume': meta["volume"] = content
+        elif name == 'citation_issue': meta["issue"] = content
+        elif name == 'citation_firstpage':
+            meta["pages"] = content
+            if soup.find('meta', attrs={'name': 'citation_lastpage'}):
+                last = soup.find('meta', attrs={'name': 'citation_lastpage'}).get('content', '')
+                if last: meta["pages"] = f"{content}-{last}"
+        elif name == 'citation_abstract': meta["abstract"] = content
+
+        # Dublin Core
+        elif name in ['dc.title', 'dcterms.title']: meta["title"] = content
+        elif name in ['dc.creator', 'dcterms.creator']: dc_authors.append(content)
+        elif name in ['dc.date', 'dcterms.issued', 'dcterms.created']: meta["published_date"] = content
+        elif name in ['dc.publisher', 'dcterms.publisher']: meta["publisher"] = content
+        elif name in ['dc.identifier', 'dcterms.identifier'] and content.startswith('10.'): meta["doi"] = content
+
+        # OpenGraph
+        elif prop == 'og:title' and meta["title"] == target_url: meta["title"] = content
+        elif prop == 'og:site_name' and meta["publisher"] == "UNKNOWN": meta["publisher"] = content
+        elif prop == 'article:author' and not meta["authors"]: meta["authors"].append(content)
+        elif prop == 'article:published_time' and meta["published_date"] == "UNKNOWN": meta["published_date"] = content
+        elif prop == 'og:type':
+            if content in ['article', 'journal']: meta["item_type"] = "journalArticle"
+            elif content in ['video', 'video.other']: meta["item_type"] = "videoRecording"
+
+    if highwire_authors: meta["authors"] = highwire_authors
+    elif dc_authors and not meta["authors"]: meta["authors"] = dc_authors
+
+    # 3. JSON-LD Extraction & Type Mapping
     for script in soup.find_all('script', type='application/ld+json'):
         try:
             ld_data = json.loads(script.string)
             meta["raw_json_ld"].append(ld_data) 
             
-            # Handle nested graph arrays for our basic DB index
             if isinstance(ld_data, dict) and '@graph' in ld_data:
                 items = ld_data['@graph']
             elif isinstance(ld_data, list):
@@ -83,18 +165,36 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
                 items = [ld_data]
 
             for item in items:
-                if item.get('@type') in ['NewsArticle', 'Article', 'Report']:
-                    if 'headline' in item: meta["title"] = item['headline']
-                    if 'datePublished' in item: meta["published_date"] = item['datePublished']
-                    if 'publisher' in item and isinstance(item['publisher'], dict):
-                        meta["publisher"] = item['publisher'].get('name', meta['publisher'])
-                    
-                    if 'author' in item:
-                        authors = item['author']
-                        if isinstance(authors, dict): meta["authors"] = [authors.get('name')]
-                        elif isinstance(authors, list): meta["authors"] = [a.get('name') for a in authors if isinstance(a, dict)]
+                item_type_ld = item.get('@type', '')
+                if item_type_ld in ['ScholarlyArticle', 'JournalArticle']:
+                    meta["item_type"] = "journalArticle"
+                elif item_type_ld in ['NewsArticle', 'BlogPosting']:
+                    if meta["item_type"] == "webpage": meta["item_type"] = "blogPost"
+                elif item_type_ld in ['Report', 'TechReport']:
+                    if meta["item_type"] == "webpage": meta["item_type"] = "report"
+                elif item_type_ld in ['VideoObject']:
+                    meta["item_type"] = "videoRecording"
+
+                if 'headline' in item and meta["title"] == target_url: meta["title"] = item['headline']
+                if 'datePublished' in item and meta["published_date"] == "UNKNOWN": meta["published_date"] = item['datePublished']
+                if 'publisher' in item and isinstance(item['publisher'], dict):
+                    meta["publisher"] = item['publisher'].get('name', meta['publisher'])
+                if 'description' in item and not meta["abstract"]:
+                    meta["abstract"] = item['description']
+                
+                if 'author' in item and not meta["authors"]:
+                    authors = item['author']
+                    if isinstance(authors, dict): meta["authors"] = [authors.get('name')]
+                    elif isinstance(authors, list): meta["authors"] = [a.get('name') for a in authors if isinstance(a, dict)]
         except Exception:
             continue
+
+    # 4. Domain & URL Overrides
+    lower_url = target_url.lower()
+    if 'youtube.com' in lower_url or 'youtu.be' in lower_url:
+        meta["item_type"] = "videoRecording"
+    elif 'arxiv.org' in lower_url or 'biorxiv.org' in lower_url or 'medrxiv.org' in lower_url:
+        meta["item_type"] = "preprint"
 
     return meta
 
@@ -103,25 +203,131 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
 # AGENT TOOLS (Exposed via tool_dispatcher.py)
 # =====================================================================
 
-def download_url(url: str) -> str:
+def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "") -> str:
     """
-    Agent Tool: Standard Web Ingestion & Fallback Router.
-    Purpose: Executes the Tier 1 (requests) -> Tier 2 (Botasaurus) extraction. 
-    To preserve token economics, it writes the massive text payload to the local disk 
-    and returns a lightweight JSON receipt to the agent.
+    Agent Tool: Remote PDF Ingestion Engine.
+    Purpose: Downloads PDF binary streams from direct URLs, parses text via pypdf,
+    extracts metadata headers, and writes a local disk payload returning a JSON receipt.
     Invoked By: SPYGLASS (The Ingestion Engine).
     """
     target_url = url.strip().replace('"', '').replace("'", "")
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    
+    custom_headers_dict, cookies_dict = _parse_headers_and_cookies(cookies, custom_headers)
+    headers.update(custom_headers_dict)
+
+    try:
+        response = requests.get(target_url, headers=headers, cookies=cookies_dict, timeout=30, stream=True)
+        if response.status_code != 200:
+            return f"[ACCESS BARRIER] HTTP download failed with status code {response.status_code}"
+
+        temp_pdf_path = os.path.join(os.environ.get("TEMP", "."), f"temp_download_{uuid.uuid4().hex[:8]}.pdf")
+        with open(temp_pdf_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk: f.write(chunk)
+
+        text_pages = []
+        pdf_title = ""
+        pdf_author = ""
+        
+        with open(temp_pdf_path, "rb") as f:
+            reader = pypdf.PdfReader(f)
+            if reader.metadata:
+                pdf_title = reader.metadata.get('/Title', '') or ""
+                pdf_author = reader.metadata.get('/Author', '') or ""
+
+            for i, page in enumerate(reader.pages):
+                page_text = page.extract_text()
+                if page_text:
+                    text_pages.append(f"--- PAGE {i+1} ---\n{page_text}")
+
+        try:
+            os.remove(temp_pdf_path)
+        except Exception:
+            pass
+
+        if not text_pages:
+            return f"[ERROR] PDF downloaded successfully from {target_url}, but no extractable text found (Scanned Image PDF suspected)."
+
+        clean_content = "\n\n".join(text_pages)
+        title = pdf_title if pdf_title else target_url.split('/')[-1]
+        authors = [pdf_author] if pdf_author else []
+
+        cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+        os.makedirs(cache_dir, exist_ok=True)
+        temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+        temp_filepath = os.path.join(cache_dir, temp_filename)
+
+        formatted_payload = (
+            f"=== ACQUISITION INDEX ===\n"
+            f"SOURCE: {target_url}\n"
+            f"TITLE: {title}\n"
+            f"AUTHORS: {', '.join(authors) if authors else 'UNKNOWN'}\n"
+            f"PUBLISHED: UNKNOWN\n"
+            f"PUBLISHER: UNKNOWN\n"
+            f"ITEM_TYPE: report\n"
+            f"===========================================================\n\n"
+            f"{clean_content}"
+        )
+
+        with open(temp_filepath, "w", encoding="utf-8") as f:
+            f.write(formatted_payload)
+
+        receipt = {
+            "status": "SUCCESS",
+            "metadata": {
+                "title": title,
+                "authors": authors,
+                "published_date": "UNKNOWN",
+                "publisher": "UNKNOWN",
+                "item_type": "report"
+            },
+            "local_cache_path": temp_filepath,
+            "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
+        }
+        return json.dumps(receipt, indent=2)
+
+    except Exception as e:
+        return f"[ERROR] Execution of download_remote_pdf failed: {str(e)}"
+
+
+def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
+    """
+    Agent Tool: Standard Web Ingestion & Fallback Router.
+    Purpose: Executes Tier 1 (requests) -> Tier 2 (Botasaurus) extraction with auto-routing
+    for arXiv and remote PDFs. Accepts optional cookies and custom headers.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
+    target_url = url.strip().replace('"', '').replace("'", "")
+    lower_target = target_url.lower()
+
+    # 1. STRICT arXiv ROUTING GUARDRAIL
+    if "arxiv.org" in lower_target:
+        print(f"  -> [SPYGLASS ROUTING] arXiv URL detected ({target_url}). Forwarding to acquire_arxiv_document...")
+        return acquire_arxiv_document(target_url)
+
+    # 2. REMOTE PDF AUTO-DETECTION
+    if lower_target.endswith(".pdf"):
+        print(f"  -> [SPYGLASS ROUTING] Direct PDF URL detected ({target_url}). Forwarding to download_remote_pdf...")
+        return download_remote_pdf(target_url, cookies=cookies, custom_headers=custom_headers)
+
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    custom_headers_dict, cookies_dict = _parse_headers_and_cookies(cookies, custom_headers)
+    headers.update(custom_headers_dict)
+
     html_string = None
     
     # TIER 1: Standard Requests
     try:
-        response = requests.get(target_url, headers=headers, timeout=10)
+        response = requests.get(target_url, headers=headers, cookies=cookies_dict, timeout=10)
         if response.status_code == 200:
+            content_type = response.headers.get("Content-Type", "").lower()
+            if "application/pdf" in content_type:
+                print(f"  -> [SPYGLASS ROUTING] Server returned application/pdf for {target_url}. Forwarding to download_remote_pdf...")
+                return download_remote_pdf(target_url, cookies=cookies, custom_headers=custom_headers)
+
             html_string = response.content.decode('utf-8', errors='replace')
             
-            # Semantic Length Check for Paywalls / JS-Skeletons
             import trafilatura
             temp_clean = trafilatura.extract(html_string)
             if not temp_clean or len(temp_clean) < 800:
@@ -130,7 +336,6 @@ def download_url(url: str) -> str:
         else: raise ValueError(f"HTTP {response.status_code}")
         
     except Exception as e1:
-        # TIER 2: Botasaurus Anti-Detect Fallback
         print(f"  -> [SPYGLASS TIER 1 FAILED] Reason: {str(e1)}. Triggering Botasaurus...")
         try:
             bota_result = botasaurus_fetch([{"url": target_url}])
@@ -142,18 +347,14 @@ def download_url(url: str) -> str:
 
     if not html_string: return f"[ERROR] Failed to acquire HTML."
     
-    # Parse Text & Metadata
     clean_content = trafilatura.extract(html_string) or BeautifulSoup(html_string, 'html.parser').get_text(separator='\n', strip=True)[:10000]
     rich_meta = _extract_rich_metadata(html_string, target_url)
     
-    # TOKEN REDUCTION: Write to local disk, do NOT pass to LLM
-    import uuid
     cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
     os.makedirs(cache_dir, exist_ok=True)
     temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
     temp_filepath = os.path.join(cache_dir, temp_filename)
     
-    # Format the raw JSON to sit at the top of the text file
     raw_json_string = json.dumps(rich_meta.get("raw_json_ld", []), indent=2)
     
     formatted_payload = (
@@ -163,6 +364,12 @@ def download_url(url: str) -> str:
         f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta['authors'] else 'UNKNOWN'}\n"
         f"PUBLISHED: {rich_meta['published_date']}\n"
         f"PUBLISHER: {rich_meta['publisher']}\n"
+        f"ITEM_TYPE: {rich_meta['item_type']}\n"
+        f"JOURNAL: {rich_meta['journal_title']}\n"
+        f"DOI: {rich_meta['doi']}\n"
+        f"VOLUME: {rich_meta['volume']}\n"
+        f"ISSUE: {rich_meta['issue']}\n"
+        f"PAGES: {rich_meta['pages']}\n"
         f"=== RAW JSON-LD DUMP (FOR FUTURE ONTOLOGY SPECIALIST) ===\n"
         f"{raw_json_string}\n"
         f"===========================================================\n\n"
@@ -172,14 +379,17 @@ def download_url(url: str) -> str:
     with open(temp_filepath, "w", encoding="utf-8") as f:
         f.write(formatted_payload)
 
-    # Return the lightweight receipt to the Agent
     receipt = {
         "status": "SUCCESS",
         "metadata": {
             "title": rich_meta["title"],
             "authors": rich_meta["authors"],
             "published_date": rich_meta["published_date"],
-            "publisher": rich_meta["publisher"]
+            "publisher": rich_meta["publisher"],
+            "item_type": rich_meta["item_type"],
+            "journal_title": rich_meta["journal_title"],
+            "doi": rich_meta["doi"],
+            "abstract": rich_meta["abstract"]
         },
         "local_cache_path": temp_filepath,
         "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."

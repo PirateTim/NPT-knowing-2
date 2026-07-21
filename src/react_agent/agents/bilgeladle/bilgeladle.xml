@@ -70,5 +70,9 @@
         <tool name="update_system_glossary">Pushes new vocabulary to the cargo.system_glossary Postgres table.</tool>
         <tool name="query_system_glossary">Retrieves all current terms and definitions from the cargo.system_glossary table.</tool>
         <tool name="delete_system_glossary_term">Deletes redundant or incorrect terms.</tool>
+        <tool name="vector_search_manuscript">Performs semantic vector search across the embedded manuscript sections.</tool>
+        <tool name="read_manuscript_section">Reads a specific chapter, section, or paragraph chunk from the letters of marque table.</tool>
+        <tool name="process_bronze_manuscript">Processes the raw manuscript monolith from GCS, normalizes headers, resolves citations, and saves silver chapters to GCS.</tool>
+        <tool name="embed_and_load_manuscript">Slices silver chapters into paragraphs, checks for existing chunks, generates embeddings via Gemini, and upserts to ship.letters_of_marque.</tool>
     </available_tools>
 </agent>

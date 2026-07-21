@@ -30,11 +30,6 @@
     "timestamp": "2026-06-19 13:00:16"
   },
   {
-    "rule_directive": "Identify 'Ontological Obfuscation via Anthropomorphism' when corporate software products or synthetic entities are framed with human traits or emotions to launder labor degradation or PR campaigns into organic news events.",
-    "source_context": "User directive following analysis of the 'Tilly Norwood' AI actress asset (acquisitions/20260618114027_acquired.txt), where a corporate AI was framed as a person to generate uncritical media coverage and obscure labor issues.",
-    "timestamp": "2026-06-19 13:10:24"
-  },
-  {
     "rule_directive": "Classify assets as 'Epistemic Arbitrage' when tech entities intentionally exploit legal latency or regulatory delays to establish commercial footholds before societal frameworks can codify the underlying data extraction or theft.",
     "source_context": "User directive formalizing the concept of 'strategic, willful misinterpretation' of copyright law, which emerged from the analysis of the Tilly Norwood asset and the broader discussion of AI and intellectual property.",
     "timestamp": "2026-06-19 13:11:00"
@@ -50,24 +45,9 @@
     "timestamp": "2026-06-22 10:42:01"
   },
   {
-    "rule_directive": "Identify 'Provenance Severance via Market Commodification' as a distinct act of Epistemic Vandalism. This occurs when a commercial platform transforms human qualitative classification into a scalable, anonymous piece-work commodity, permanently deleting the chain of lineage, context, and human methodology behind how a data point was determined to be true. This processes truth into an opaque, un-investigatable commodity ('Schr\u00f6dinger\u2019s Truth'), where the lack of an evidentiary chain makes structural validation impossible, fundamentally polluting the foundation of human knowledge.",
+    "rule_directive": "Identify 'Provenance Severance via Market Commodification' as a distinct act of Epistemic Vandalism. This occurs when a commercial platform transforms human qualitative classification into a scalable, anonymous piece-work commodity, permanently deleting the chain of lineage, context, and human methodology behind how a data point was determined to be true. This processes truth into an opaque, un-investigatable commodity ('Schrödinger’s Truth'), where the lack of an evidentiary chain makes structural validation impossible, fundamentally polluting the foundation of human knowledge.",
     "source_context": "Analysis of Scale AI data labeling infrastructure and the structural severance of information provenance (acquisitions_20260618114041_acquired.txt).",
     "timestamp": "2026-06-22 11:46:42"
-  },
-  {
-    "rule_directive": "Identify 'Provenance Severance via Market Commodification' as a distinct act of Epistemic Vandalism. This occurs when a commercial platform transforms human qualitative classification into a scalable, anonymous piece-work commodity, permanently deleting the chain of lineage, context, and human methodology behind how a data point was determined to be true. This processes truth into an opaque, un-investigatable commodity ('Schr\u00f6dinger\u2019s Truth'), where the lack of an evidentiary chain makes structural validation impossible, fundamentally polluting the foundation of human knowledge.",
-    "source_context": "Analysis of Scale AI data labeling infrastructure and the structural severance of information provenance (acquisitions_20260618114041_acquired.txt).",
-    "timestamp": "2026-06-23 16:30:42"
-  },
-  {
-    "rule_directive": "Identify 'Ontological Obfuscation via Anthropomorphism' when corporate software products or synthetic entities are framed with human traits or emotions to launder labor degradation or PR campaigns into organic news events.",
-    "source_context": "User directive following analysis of the 'Tilly Norwood' AI actress asset (acquisitions/20260618114027_acquired.txt), where a corporate AI was framed as a person to generate uncritical media coverage and obscure labor issues.",
-    "timestamp": "2026-06-23 16:30:42"
-  },
-  {
-    "rule_directive": "Classify assets as 'Epistemic Arbitrage' when tech entities intentionally exploit legal latency or regulatory delays to establish commercial footholds before societal frameworks can codify the underlying data extraction or theft.",
-    "source_context": "User directive formalizing the concept of 'strategic, willful misinterpretation' of copyright law, which emerged from the analysis of the Tilly Norwood asset and the broader discussion of AI and intellectual property.",
-    "timestamp": "2026-06-23 16:30:42"
   },
   {
     "rule_directive": "Classify an asset as 'Chain of Ruin: Technological Acceleration of Knowledge System Collapse' when it provides evidence of a three-stage pattern of epistemic collapse: 1. Pre-existing Decay: The asset documents a system (e.g., a profession, an institution) where foundational standards of diligence, verification, or knowledge integrity were already eroding due to decisions made alongside chronic, systemic pressures. 2. Technological Catalyst: A new technology is introduced into this compromised environment. The technology does not cause the decay but acts as a powerful accelerant or catalyst, making the consequences of the pre-existing negligence more severe, scalable, or visible. 3. Proactive Negligence: The core failure highlighted is the intentional choice by credentialed actors to abandon their timeless professional duties of verification. They devalue ground truth as a concept and then destroy the knowledge system with this disregard, demonstrating a proactive negligence that prioritizes nihlism over integrity.",
@@ -85,8 +65,8 @@
     "timestamp": "2026-06-23 18:49:43"
   },
   {
-    "rule_directive": "Epistemic Engine for Provenance Laundering",
-    "source_context": "Identifies assets that describe or constitute tools, designed to democratize the creation of systems (e.g., LLMs) that systematically destroy information provenance. The core mechanism involves ingesting information in a way that decontextualizes it and enables output with no verifiable evidentiary chain. The existence and distribution of such an 'engine' represents a scalable vector for epistemic collapse by commodifying the process of provenance destruction.",
+    "rule_directive": "Identify an 'Epistemic Engine for Provenance Laundering' when an asset describes or constitutes tools designed to democratize the creation of systems (e.g., LLMs) that systematically destroy information provenance. The core mechanism involves ingesting information in a way that decontextualizes it and enables output with no verifiable evidentiary chain. The existence and distribution of such an engine represents a scalable vector for epistemic collapse by commodifying the process of provenance destruction.",
+    "source_context": "Identifies assets that describe or constitute tools designed to democratize the creation of systems that systematically destroy information provenance.",
     "timestamp": "2026-06-29 10:49:43"
   },
   {
@@ -98,11 +78,6 @@
     "rule_directive": "Identify 'Epistemic Intimidation via Legal Process' when a corporate or state actor uses the mechanisms of the legal system (such as subpoenas or strategic lawsuits) not for their stated purpose of discovering truth, but as a tool to suppress public debate. The key indicators are: (1) The action imposes disproportionate financial or logistical costs on critics, advocates, or journalists, creating a chilling effect that discourages public participation. (2) The legal action serves to intimidate and silence opposition rather than to address a legitimate legal claim. (3) This tactic functions as a form of agnotology by actively removing critical voices from the public square, thereby manufacturing a false consensus and undermining the potential for informed, democratic oversight.",
     "source_context": "User directive refining the analysis of asset acquisitions/openai-accused-of-pressuring-ai-regulation-advocates-with-subpoenas.txt. The rule was developed to classify the use of SLAPP-style legal tactics as a specific mechanism for creating a chilling effect and suppressing public discourse.",
     "timestamp": "2026-06-29 12:41:00"
-  },
-  {
-    "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
-    "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
-    "timestamp": "2026-06-29 14:10:48"
   },
   {
     "rule_directive": "Classify an asset as 'Computational Truthiness' when it documents or constitutes a system where information is generated based on statistical prediction rather than empirical verification. The key indicator is that the output mimics the structural cadence, tone, and confidence of authoritative sources (e.g., scientific abstracts, financial models) but lacks any direct reference to ground truth or a verifiable chain of custody, resulting in plausible-sounding noise that automates the production of truth-adjacent consensus.",

@@ -109,11 +109,15 @@ def write_wiki_markdown(artifact_id: str, source_uri: str, content: str, agent_n
     import os
     import datetime
     
-    # Ensure the local_wiki directory exists (Remember to add this to .gitignore)
-    wiki_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "local_wiki"))
+    # Target Directory Resolution:
+    # Resolves to the top-level project root 'local_wiki/' directory (outside 'src/')
+    # so human authors can easily view, browse, and edit generated markdown reports.
+    wiki_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "local_wiki"))
     os.makedirs(wiki_dir, exist_ok=True)
 
-    # Construct the strict lineage header dynamically
+    # Lineage Frontmatter Injection:
+    # Embeds artifact_id, agent_name, skill, source_bronze_uri, and timestamp 
+    # to guarantee 100% auditable provenance linking back to raw GCS assets.
     yaml_frontmatter = f"""---
 artifact_id: {artifact_id}
 agent: {agent_name}
@@ -123,7 +127,7 @@ timestamp: {datetime.datetime.now().isoformat()}
 ---
 
 """
-    # Write the file
+    # Construct output file name and full destination path
     file_name = f"{artifact_id}_{agent_name}.md"
     file_path = os.path.join(wiki_dir, file_name)
     

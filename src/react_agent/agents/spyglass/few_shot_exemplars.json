@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "input_context": "COMMAND: Acquire the following target URL immediately: https://arxiv.org/abs/2506.10943",
+        "ideal_output": "1. Call check_cargo_manifest(target_url='https://arxiv.org/abs/2506.10943') -> [CLEAR]\n2. Call acquire_arxiv_document(url='https://arxiv.org/abs/2506.10943') -> returns arXiv API metadata and full HTML text receipt\n3. Call upsert_knowledge_artifact(artifact_name='acquisitions/20260627_self-adapting-language-models.txt', local_cache_path=...)\n4. Call log_content_metadata(source_url='https://arxiv.org/abs/2506.10943', title='Self-Adapting Language Models', gcp_bucket_path='acquisitions/20260627_self-adapting-language-models.txt', item_type='preprint')\n5. Output: Acquisition complete. Asset stored at acquisitions/20260627_self-adapting-language-models.txt."
+    },
+    {
+        "input_context": "COMMAND: Acquire target URL: https://www.axios.com/2025/10/14/ai-generated-writing-humans",
+        "ideal_output": "1. Call check_cargo_manifest(target_url='https://www.axios.com/2025/10/14/ai-generated-writing-humans') -> [CLEAR]\n2. Call download_url(url='https://www.axios.com/2025/10/14/ai-generated-writing-humans') -> returns JSON receipt with local_cache_path and extracted metadata\n3. Call upsert_knowledge_artifact(artifact_name='acquisitions/exclusive-the-web-is-still-mostly-written-by-humans-study-finds.txt', local_cache_path=...)\n4. Call log_content_metadata(source_url='...', title='Exclusive: The web is still mostly written by humans, study finds', item_type='journalArticle')\n5. Output: [ACQUISITION COMPLETE] Asset available at acquisitions/exclusive-the-web-is-still-mostly-written-by-humans-study-finds.txt."
+    },
+    {
+        "input_context": "COMMAND: Re-acquire https://evidencenetwork.ca/generation-z-is-losing-a-skill-weve-had-for-5500-years-40-are-losing-the-ability-to-communicate-effectively/ using precision_html_extract to include author block and exclude comments.",
+        "ideal_output": "1. Call precision_html_extract(url='...', include_css=['.entry-content', '.author-bio'], exclude_css=['.comments-area'])\n2. Call upsert_knowledge_artifact(artifact_name='acquisitions/generation-z-is-losing-a-skill.txt', local_cache_path=...)\n3. Call log_content_metadata(source_url='...', title='Generation Z is losing a skill', gcp_bucket_path='acquisitions/generation-z-is-losing-a-skill.txt')\n4. Output: Re-acquisition complete with precision CSS filtering applied."
+    }
+]

@@ -158,7 +158,9 @@ class AgentEngine:
         if rules:
             prompt += "=== LEARNED RULES (PERMANENT ALIGNMENT) ===\n"
             for idx, rule in enumerate(rules, 1):
-                prompt += f"{idx}. {rule.get('rule_directive', '')} (Source: {rule.get('source_context', '')})\n"
+                rule_text = rule.get('rule_directive') or rule.get('rule') or str(rule)
+                source_info = rule.get('source_context') or rule.get('timestamp') or 'Learned Rule'
+                prompt += f"{idx}. {rule_text} (Source: {source_info})\n"
             prompt += "\n"
             
         exemplars = memory.get("exemplars", [])

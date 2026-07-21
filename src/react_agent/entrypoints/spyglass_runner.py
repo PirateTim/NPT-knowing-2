@@ -1,71 +1,70 @@
 """
-Spyglass Dual-Mode Entrypoint
-Mission: Headless Content Ingestion & Interactive Tuning
+NPT Fleet: Spyglass Ingestion Engine Dual-Mode Entrypoint
+Architecture: SOP-03 Bronze Acquisition Layer
+Description:
+    Provides both headless single-URL execution (Mode A) and an interactive 
+    REPL terminal (Mode B) for tuning and testing the Spyglass ingestion agent.
+
+Prescriptive Agent Protocol:
+    - Spyglass is strictly a Bronze-tier content retriever. She never summarizes 
+      or modifies source content.
+    - All acquired artifacts are stored under the 'acquisitions/' GCS directory 
+      and registered in Postgres 'cargo.content_metadata'.
+    - If access fails due to paywalls, IP blocks, or aggregate URLs (playlists),
+      Spyglass logs failure to 'cargo.failed_metadata' and escalates via GitHub issues.
 """
+
 import os
 import sys
 import uuid
 import argparse
 import datetime
 
-
 # Map the path backward so we can import the core engine cleanly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.agent_engine import AgentEngine
 
+
 def run_spyglass():
-    parser = argparse.ArgumentParser(description="Spyglass Ingestion Engine")
-    parser.add_argument("--url", type=str, help="Target URL for headless ingestion")
-    parser.add_argument("--thread", type=str, help="Optional: Resume an existing thread ID")
+    """
+    Dual-mode entrypoint for Spyglass.
+    CLI Flags:
+        --url: Target URL for immediate headless acquisition (Mode A).
+        --thread: Custom or existing thread ID for conversational state persistence.
+        --model: Model override (defaults to gemini-3.5-flash configured in spyglass.xml).
+    """
+    parser = argparse.ArgumentParser(description="NPT Fleet: Spyglass Ingestion Engine")
+    parser.add_argument("--url", type=str, help="Target URL for headless ingestion (Mode A)")
+    parser.add_argument("--thread", type=str, help="Optional: Resume or specify an explicit thread ID")
+    parser.add_argument("--model", type=str, default=None, help="Optional: Override Gemini model (e.g. gemini-3.5-flash)")
     args = parser.parse_args()
 
     agent_name = "spyglass"
     xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "spyglass", "spyglass.xml"))
     
-    # 1. Instantiate the Engine
-    # engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
-    # 1. Parse optional CLI arguments for model overrides
-    model_override = sys.argv[1] if len(sys.argv) > 1 else None
-    
-    # 2. Instantiate the Engine with the override payload
+    # 1. Instantiate AgentEngine with optional model override from CLI flags
     engine = AgentEngine(
         agent_name=agent_name, 
         xml_profile_path=xml_path, 
-        model_override=model_override
+        model_override=args.model
     )
     
-    # Thread Logic: Use provided, or generate new
+    # 2. Thread ID initialization: Maintain session persistence or generate isolated UUID
     thread_id = args.thread if args.thread else f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"
     chat_session = engine.start_chat_session(thread_id)
 
-    # MODE A: Headless Execution (The Command Line Test)
+    # -----------------------------------------------------------------
+    # MODE A: Headless Single-URL Execution (Pipeline / Automated Test)
+    # -----------------------------------------------------------------
     if args.url:
-        print(f"\n=========================================================")
-        print(f" [SPYGLASS] INGESTION PROTOCOL INITIATED")
+        print("\n=========================================================")
+        print(" [SPYGLASS] INGESTION PROTOCOL INITIATED")
         print(f" TARGET: {args.url}")
-        print(f"=========================================================\n")
-        
-        # Explicit system directive using the new atomic tools
-        #system_command = f"First, use 'check_cargo_manifest' to see if this URL is a duplicate. If it's clear, acquire the content at this URL: {args.url}. Clean the text, prepend basic metadata to the top, use 'upsert_knowledge_artifact' to save it to the GCS bucket, and finally use 'log_content_metadata' to register it in the Postgres database. If any step fails, inform me in the terminal."
-
-        # Ensure Spyglass executes the sequence of tools atomically
-        """ system_command = (
-            f"1. Call 'check_cargo_manifest' with target_url='{args.url}'. "
-            "2. If it returns '[CLEAR]', call 'download_url' with url='{args.url}'. "
-            "3. If successful, call 'upsert_knowledge_artifact' with artifact_name='acquisitions/{slug}_acquired.txt' and content='[...]' (from step 2). "
-            "4. If successful, call 'log_content_metadata' with source_url='{args.url}', title='[...]', and gcp_bucket_path='[...]'. "
-            "Inform me if any step fails."
-        )
-        
-        try:
-            response = engine.execute_turn(chat_session, system_command)
-            print(f"\n[SPYGLASS] -> {response}")
-            engine.save_checkpoint(thread_id, chat_session.get_history())
-        except Exception as e:
-            print(f"\n[FATAL ERROR] Pipeline collapsed: {str(e)}") """
+        print("=========================================================\n")
         
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
+        # Atomic prompt instruction enforcing SOP-03 sequence
         system_command = (
             f"EXECUTE EXACTLY IN THIS ORDER FOR TARGET: {args.url}\n\n"
             "1. Call 'check_cargo_manifest'. If it returns a duplicate, report the existing path to me and STOP.\n"
@@ -83,8 +82,9 @@ def run_spyglass():
         except Exception as e:
             print(f"\n[FATAL ERROR] Pipeline collapsed: {str(e)}")
             
-    # MODE B: Standard Interactive Terminal
-    # MODE B: Standard Interactive Terminal
+    # -----------------------------------------------------------------
+    # MODE B: Interactive REPL Terminal (Human Architect Tuning Session)
+    # -----------------------------------------------------------------
     else:
         print("=========================================================")
         print(" NPT FLEET TERMINAL: SPYGLASS (INGESTION ENGINE) ")
@@ -94,18 +94,21 @@ def run_spyglass():
             try:
                 user_input = input("\n[AUTHOR] -> ")
                 if user_input.lower() in ['exit', 'quit']:
-                    print("\n[SYSTEM] Terminating Spyglass session. State saved to Cloud SQL.")
+                    print("\n[SYSTEM] Terminating Spyglass session. State saved to Cloud SQL / Checkpoint DB.")
                     break
-                if not user_input.strip(): continue
+                if not user_input.strip(): 
+                    continue
 
                 response = engine.execute_turn(chat_session, user_input)
                 print(f"\n[SPYGLASS] -> {response}")
                 engine.save_checkpoint(thread_id, chat_session.get_history())
             except KeyboardInterrupt:
+                print("\n[SYSTEM] Session interrupted by user. State saved.")
                 break
             except Exception as e:
                 print(f"\n[FATAL ERROR] {str(e)}")
                 break
+
 
 if __name__ == "__main__":
     run_spyglass()

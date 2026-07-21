@@ -58,6 +58,16 @@ def mark_queue_status(conn, queue_id: int, status: str):
     conn.commit()
     cursor.close()
 
+def _extract_domain(url: str) -> str:
+    """Extracts the base domain from a URL for domain circuit-breaking."""
+    try:
+        netloc = urlparse(url).netloc.lower()
+        if netloc.startswith("www."): netloc = netloc[4:]
+        if netloc.startswith("m."): netloc = netloc[2:]
+        return netloc
+    except Exception:
+        return url
+
 def run_worker_loop():
     print("=========================================================")
     print(" NPT FLEET: BATCH INGESTION WORKER (HEADLESS MODE)")
@@ -69,7 +79,10 @@ def run_worker_loop():
     # We initialize the engine once to load the DB rules and XML mandate
     engine = AgentEngine("spyglass", xml_path)
     
+    from tools.cargo_db_tools import log_ingestion_failure
+
     items_processed = 0
+    blocked_domains = set()
 
     while True:
         queue_id, target_url = fetch_next_url(conn)
@@ -78,34 +91,52 @@ def run_worker_loop():
             print("[QUEUE EMPTY] No pending URLs found. Shutting down worker.")
             break
             
+        domain = _extract_domain(target_url)
         items_processed += 1
         print(f"\n[{items_processed}] Dequeued ID {queue_id}: {target_url}")
+
+        # DOMAIN CIRCUIT BREAKER: Skip LLM turn if domain is already blocked in this run
+        if domain in blocked_domains:
+            print(f"  -> [CIRCUIT BREAKER ACTIVE] Domain '{domain}' is blocked. Fast-logging to dead-letter queue...")
+            log_ingestion_failure(target_url, f"[SKIPPED: DOMAIN_CIRCUIT_BREAKER] Domain '{domain}' hit an access barrier in this batch run. Issue logged.")
+            mark_queue_status(conn, queue_id, 'FAILED')
+            continue
+
         print("  -> Booting Spyglass thread...")
-        
-        # Generate a unique thread ID for this specific URL task to keep memory isolated
         thread_id = f"batch_worker_{uuid.uuid4().hex[:8]}"
         
         try:
             chat_session = engine.start_chat_session(thread_id)
             prompt = (
-                f"COMMAND: Acquire the following URL immediately. Adhere strictly to your "
-                f"SOP protocols for extraction, structured file slug routing, and metadata logging.\n"
-                f"Target: {target_url}"
+                f"COMMAND: Acquire the following target URL immediately: {target_url}\n\n"
+                f"EXECUTION PROTOCOL:\n"
+                f"1. Run 'check_cargo_manifest'. If it returns [DUPLICATE FOUND], report the GCS path and STOP.\n"
+                f"2. Run the appropriate acquisition tool for the URL domain (download_url, download_remote_pdf, acquire_arxiv_document, extract_youtube_transcript).\n"
+                f"3. FAILURE & ESCALATION PROTOCOL: If acquisition fails due to access barriers (HTTP 403/401, paywall, blocked DOM) or aggregate playlist URLs ([UNSUPPORTED AGGREGATE DOMAIN]), you MUST:\n"
+                f"   a. Call 'log_ingestion_failure' with target_url='{target_url}' and the detailed error payload.\n"
+                f"   b. Call 'create_github_issue' ONLY IF a GitHub issue for domain '{domain}' has NOT already been created. Title format: '[Ingestion Barrier] Access blocked for domain {domain}'.\n"
+                f"   c. Stop execution after logging the failure.\n"
+                f"4. SUCCESS PROTOCOL: If successful, call 'upsert_knowledge_artifact' using 'local_cache_path' and 'log_content_metadata' using the metadata from the receipt. (Do NOT call create_zotero_item; Zotero sync is handled downstream).\n"
             )
             
             # Let Spyglass autonomously execute her tool chain
             response = engine.execute_turn(chat_session, prompt)
             
-            # If the script reached here without raising a hard Python exception, Spyglass finished her loop.
-            # (Note: Spyglass handles logging to failed_metadata internally if she hits an access barrier).
-            mark_queue_status(conn, queue_id, 'COMPLETED')
+            # If failure occurred, activate domain circuit breaker for subsequent URLs in this run
+            if "[ACCESS BARRIER]" in response or "log_ingestion_failure" in response or "IP block" in response or "HTTP 40" in response:
+                blocked_domains.add(domain)
+                print(f"  -> [CIRCUIT BREAKER ENGAGED] Domain '{domain}' marked as blocked for remaining queue.")
+                mark_queue_status(conn, queue_id, 'FAILED')
+            else:
+                mark_queue_status(conn, queue_id, 'COMPLETED')
+
             print(f"  -> [TASK COMPLETE] Thread {thread_id} closed.")
             
         except Exception as e:
             print(f"  -> [SYSTEM PANIC] Hard engine crash on URL {target_url}: {e}")
+            blocked_domains.add(domain)
             mark_queue_status(conn, queue_id, 'FAILED')
             
-        # Optional: A brief sleep to respect Google API quotas
         time.sleep(2)
 
     conn.close()

@@ -12,6 +12,8 @@ permanently bind the Zotero citation to the physical artifact in the GCP bucket
 import os
 from pyzotero import zotero
 
+from dotenv import load_dotenv
+
 # =====================================================================
 # INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
 # =====================================================================
@@ -22,6 +24,7 @@ def _get_zotero_client():
     Purpose: Initializes the authenticated PyZotero instance using the human 
     architect's library ID and API key.
     """
+    load_dotenv()
     library_id = os.getenv("ZOTERO_LIBRARY_ID")
     api_key = os.getenv("ZOTERO_API_KEY")
     if not library_id or not api_key:
@@ -62,28 +65,66 @@ def fetch_zotero_unresolved_items() -> str:
         return f"[ERROR] Execution failed: {str(e)}"
 
 
-def create_zotero_item(title: str, url: str) -> str:
+def create_zotero_item(
+    title: str, 
+    url: str, 
+    item_type: str = "webpage", 
+    authors: str = None, 
+    published_date: str = None, 
+    publisher: str = None, 
+    journal_title: str = None, 
+    doi: str = None, 
+    abstract: str = None
+) -> str:
     """
-    Agent Tool: Reference Initialization.
-    Purpose: Creates a baseline 'webpage' record in Zotero for a newly discovered URL. 
-    Critically, it initializes the 'extra' field with 'capture_status: PENDING' so 
-    the fleet knows this artifact is actively moving through the Bronze ingestion pipeline.
+    Agent Tool: Rich Reference Initialization.
+    Purpose: Creates a structured Zotero record matching the item_type (journalArticle, preprint, report, blogPost, webpage, etc.)
+    and populates full citation metadata (authors, DOI, journal, date, abstract).
     Invoked By: SPYGLASS.
     """
     try:
         zot = _get_zotero_client()
         collection_id = os.getenv("ZOTERO_COLLECTION_ID", "QXC7L2BC")
         
-        template = zot.item_template('webpage')
+        valid_type = item_type if item_type else "webpage"
+        try:
+            template = zot.item_template(valid_type)
+        except Exception:
+            template = zot.item_template('webpage')
+
         template['title'] = title
         template['url'] = url
-        # Initialize the state-tracking ledger
+
+        if 'creators' in template and authors:
+            creator_list = []
+            author_names = authors if isinstance(authors, list) else [a.strip() for a in str(authors).split(',')]
+            for author_name in author_names:
+                parts = author_name.split(' ', 1)
+                if len(parts) == 2:
+                    creator_list.append({'creatorType': 'author', 'firstName': parts[0], 'lastName': parts[1]})
+                else:
+                    creator_list.append({'creatorType': 'author', 'name': author_name})
+            template['creators'] = creator_list
+
+        if 'date' in template and published_date and published_date != "UNKNOWN":
+            template['date'] = published_date
+        if 'DOI' in template and doi:
+            template['DOI'] = doi
+        if 'abstractNote' in template and abstract:
+            template['abstractNote'] = abstract
+        if 'publicationTitle' in template and journal_title:
+            template['publicationTitle'] = journal_title
+        elif 'publisher' in template and publisher and publisher != "UNKNOWN":
+            template['publisher'] = publisher
+        elif 'websiteTitle' in template and publisher and publisher != "UNKNOWN":
+            template['websiteTitle'] = publisher
+
         template['extra'] = "capture_status: PENDING"
         template['collections'] = [collection_id]
         
         response = zot.create_items([template])
         if response and 'success' in response and response['success']:
-            return f"[SUCCESS] Zotero item created. Key: {response['success']['0']}"
+            return f"[SUCCESS] Zotero item created ({valid_type}). Key: {response['success']['0']}"
         return f"[ERROR] Item creation rejected: {response}"
     except Exception as e:
         return f"[ERROR] Execution failed: {str(e)}"
