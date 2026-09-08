@@ -39,39 +39,52 @@ def discover_and_inspect(env_var: str, schema_name: str, output_file):
         )
         cursor = conn.cursor()
         
-        # 2. Dynamic Table Discovery
-        # Instead of hardcoding tables, ask Postgres what tables exist in this schema
+        # 2. Dynamic Table & View Discovery
         cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = %s;",
+            """
+            SELECT table_name, table_type 
+            FROM information_schema.tables 
+            WHERE table_schema = %s 
+            ORDER BY table_type, table_name;
+            """,
             (schema_name,)
         )
-        # Flatten the tuple results into a clean list of table names
-        tables = [row[0] for row in cursor.fetchall()]
+        entities = cursor.fetchall()
         
-        output_file.write(f"\n{'='*50}\n")
+        output_file.write(f"\n{'='*60}\n")
         output_file.write(f"SCHEMA: {schema_name.upper()} (Connection: {env_var})\n")
-        output_file.write(f"{'='*50}\n")
+        output_file.write(f"{'='*60}\n")
         
-        if not tables:
-            output_file.write("  [WARNING] Schema exists, but NO TABLES were found.\n")
+        if not entities:
+            output_file.write("  [WARNING] Schema exists, but NO TABLES OR VIEWS were found.\n")
         
-        # 3. Column Extraction
-        # Loop through the newly discovered tables and map their internal columns
-        for table in tables:
+        # 3. Column & Structure Extraction
+        for ent_name, ent_type in entities:
             cursor.execute(
                 """
-                SELECT column_name, data_type 
+                SELECT column_name, data_type, is_nullable
                 FROM information_schema.columns 
                 WHERE table_schema = %s AND table_name = %s
                 ORDER BY ordinal_position;
                 """,
-                (schema_name, table)
+                (schema_name, ent_name)
             )
             columns = cursor.fetchall()
             
-            output_file.write(f"\n--- TABLE: {schema_name}.{table} ---\n")
+            # Row count for tables
+            row_count_str = ""
+            if ent_type == "BASE TABLE":
+                try:
+                    cursor.execute(f"SELECT COUNT(*) FROM {schema_name}.{ent_name};")
+                    count = cursor.fetchone()[0]
+                    row_count_str = f" [Rows: {count}]"
+                except Exception:
+                    row_count_str = " [Rows: ?]"
+            
+            output_file.write(f"\n--- {ent_type}: {schema_name}.{ent_name}{row_count_str} ---\n")
             for col in columns:
-                output_file.write(f"  --> {col[0]} ({col[1]})\n")
+                nullable = "NULL" if col[2] == "YES" else "NOT NULL"
+                output_file.write(f"  --> {col[0]}: {col[1]} ({nullable})\n")
                 
         cursor.close()
         conn.close()
@@ -80,8 +93,6 @@ def discover_and_inspect(env_var: str, schema_name: str, output_file):
         output_file.write(f"\n[FATAL ERROR] Querying {db_name} on {env_var}: {str(e)}\n")
 
 if __name__ == "__main__":
-    # 4. Target Export Destination
-    # Writes to the current directory. (If moved to a scripts/ folder, it writes there).
     output_path = "database_schema_manifest.txt"
     
     print("========================================")
@@ -89,7 +100,6 @@ if __name__ == "__main__":
     print("========================================")
     print(f"Scanning databases and writing physical map to {output_path}...")
     
-    # 5. Execute and Export
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("NPT FLEET DATABASE SCHEMA MANIFEST\n")
         f.write("Generated dynamically by inspect_schemas.py\n")
@@ -97,5 +107,7 @@ if __name__ == "__main__":
         discover_and_inspect("DATABASE_URL", "agent_state", f)
         discover_and_inspect("CONTENT_DATABASE_URL", "cargo", f)
         discover_and_inspect("CONTENT_DATABASE_URL", "ship", f)
+
+    print("[SUCCESS] Schema inspection completed successfully!")
         
     print(f"[SUCCESS] Schema manifest compiled successfully.")

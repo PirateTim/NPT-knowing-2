@@ -43,12 +43,13 @@ def _get_strict_cargo_connection():
 
 def process_bronze_manuscript(*args, **kwargs) -> str:
     """
-    Streams the raw monolith from GCS, normalizes structural header hierarchies,
-    slices the document by chapter, resolves inline citations against the chapter's
-    Works Cited/Master List of Artifacts cache, and saves clean silver chapters to GCS.
+    Step 1 of Manuscript Ingestion:
+    Streams the raw monolith from GCS (or local file), normalizes header hierarchies,
+    slices document into bronze chapter and reference files in gs://npt-ship/manuscript/bronze/,
+    resolves inline citations against each chapter's localized reference list,
+    and writes clean silver markdown files to gs://npt-ship/manuscript/silver/ch{N:02d}_silver.md.
     """
-    # Safely extract arguments whether passed positionally or as keywords
-    bronze_gcs_path = "gs://npt-ship/2026-02-24AChapters_complete.md"
+    bronze_gcs_path = "gs://npt-ship/manuscript/bronze/2026-02-24AChapters_complete.md"
     target_chapter = None
 
     if len(args) > 0:
@@ -62,88 +63,167 @@ def process_bronze_manuscript(*args, **kwargs) -> str:
         target_chapter = kwargs["target_chapter"]
 
     try:
-        # Parse GCS path
-        if not bronze_gcs_path.startswith("gs://"):
-            return f"[ERROR] Invalid GCS path: {bronze_gcs_path}. Must start with gs://"
-        
-        path_parts = bronze_gcs_path[5:].split("/", 1)
-        bucket_name = path_parts[0]
-        blob_name = path_parts[1] if len(path_parts) > 1 else ""
-        
-        if not blob_name:
-            return f"[ERROR] No blob name specified in GCS path: {bronze_gcs_path}"
+        raw_text = None
+        bucket_name = "npt-ship"
+        storage_client = None
+        bucket = None
 
-        # Stream raw monolith from GCS
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
-        
-        if not blob.exists():
-            return f"[ERROR] Bronze monolith not found at {bronze_gcs_path}"
+        # Attempt to read from GCS or local disk fallback
+        if bronze_gcs_path.startswith("gs://"):
+            path_parts = bronze_gcs_path[5:].split("/", 1)
+            bucket_name = path_parts[0]
+            blob_name = path_parts[1] if len(path_parts) > 1 else ""
             
-        raw_text = blob.download_as_text(encoding="utf-8")
-        
+            try:
+                storage_client = storage.Client()
+                bucket = storage_client.bucket(bucket_name)
+                blob = bucket.blob(blob_name)
+                if blob.exists():
+                    raw_text = blob.download_as_text(encoding="utf-8")
+            except Exception as gcs_err:
+                print(f"[GCS NOTICE] Unable to stream directly from {bronze_gcs_path}: {gcs_err}. Trying local fallback.")
+
+        if not raw_text:
+            local_fallback = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "manuscript", "2026-02-24AChapters_complete.md"))
+            if os.path.exists(local_fallback):
+                with open(local_fallback, "r", encoding="utf-8") as f:
+                    raw_text = f.read()
+            else:
+                return f"[ERROR] Monolith not found at {bronze_gcs_path} or local path {local_fallback}"
+
+        # If GCS bucket client is active, ensure monolith is uploaded to bronze tier if missing
+        if storage_client and bucket:
+            try:
+                bronze_monolith_blob = bucket.blob("manuscript/bronze/2026-02-24AChapters_complete.md")
+                if not bronze_monolith_blob.exists():
+                    bronze_monolith_blob.upload_from_string(raw_text, content_type="text/markdown; charset=utf-8")
+            except Exception as e:
+                print(f"[GCS WARNING] Failed uploading bronze monolith: {e}")
+
         # Normalize structural header hierarchies to strict '#' levels
         normalized_text = re.sub(r'^[ \t]*([#]+)[ \t]*', r'\1 ', raw_text, flags=re.MULTILINE)
-        
-        # Slice the document by chapter
-        chapter_pattern = re.compile(r'^(#+\s+Chapter\s+(\d+).*?)(?=^#+\s+Chapter\s+\d+|\Z)', re.MULTILINE | re.DOTALL)
-        chapters = chapter_pattern.findall(normalized_text)
-        
-        if not chapters:
-            chapter_pattern = re.compile(r'^(#\s+.*?)(?=^#\s+|\Z)', re.MULTILINE | re.DOTALL)
-            chapters = chapter_pattern.findall(normalized_text)
-            
+
+        # Regex pattern for chapter boundaries (e.g., "# Introduction" or "### Chapter 1: ..." or "# **Chapter 3: ...")
+        chapter_regex = re.compile(
+            r'^(#+\s*(?:\*\*|\*)*\s*(?:Chapter\s+\d+|Introduction|Conclusion).*?)(?=(?:^#+\s*(?:\*\*|\*)*\s*(?:Chapter\s+\d+|Introduction|Conclusion)|\Z))',
+            re.MULTILINE | re.DOTALL | re.IGNORECASE
+        )
+
+        chapter_matches = list(chapter_regex.finditer(normalized_text))
+        if not chapter_matches:
+            chapter_regex = re.compile(r'^(#+\s+.*?)(?=(?:^#+\s+|\Z))', re.MULTILINE | re.DOTALL)
+            chapter_matches = list(chapter_regex.finditer(normalized_text))
+
         processed_count = 0
-        
-        for ch_text, ch_num_str in chapters:
-            try:
-                ch_num = int(ch_num_str)
-            except ValueError:
-                ch_num = processed_count + 1
-                
+
+        # Local output directories
+        ship_bronze_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "bronze"))
+        ship_silver_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "silver"))
+        os.makedirs(ship_bronze_dir, exist_ok=True)
+        os.makedirs(ship_silver_dir, exist_ok=True)
+
+        for match_idx, match in enumerate(chapter_matches, 1):
+            ch_raw_text = match.group(1).strip()
+            
+            # Extract Chapter Number
+            ch_num_match = re.search(r'Chapter\s+(\d+)', ch_raw_text, re.IGNORECASE)
+            if ch_num_match:
+                ch_num = int(ch_num_match.group(1))
+            else:
+                ch_num = match_idx - 1 # 0 for Intro if first
+
             if target_chapter is not None and ch_num != int(target_chapter):
                 continue
-                
-            # Extract bibliography references (e.g., "1. Brenndoerfer, M. (2025, October 1)...")
-            # Match lines starting with numbers, capturing the core Author surname and the Year
+
+            # Separate Body Prose from Localized References / Master Index of Artifacts section
+            works_cited_match = re.search(
+                r'^(#+\s+(?:Master\s+Index\s+of\s+Artifacts|Master\s+List\s+of\s+Artifacts|Works\s+Cited|Bibliography|References).*)$',
+                ch_raw_text, re.IGNORECASE | re.MULTILINE | re.DOTALL
+            )
+            
+            if works_cited_match:
+                body_text = ch_raw_text[:works_cited_match.start()].strip()
+                ref_section_text = works_cited_match.group(0).strip()
+            else:
+                body_text = ch_raw_text
+                ref_section_text = f"# Master Index of Artifacts (Chapter {ch_num})\n\n[No localized reference section provided]"
+
+            # Build localized reference expansion map
             citations_cache = {}
             
-            # Find the bibliography section
-            works_cited_match = re.search(r'(?:Works Cited|Master List of Artifacts|Bibliography).*$', ch_text, re.IGNORECASE | re.DOTALL)
-            if works_cited_match:
-                works_cited_text = works_cited_match.group(0)
-                # Match lines like: 1. Brenndoerfer, M. (2025, October 1)...
-                # We capture the surname (Brenndoerfer) and the year (2025)
-                ref_pattern = re.compile(r'^\s*\d+\.\s+([A-Za-z\-]+),\s+[A-Z]\.\s*\(([^)]*)\)', re.MULTILINE)
-                refs = ref_pattern.findall(works_cited_text)
-                for surname, date_str in refs:
-                    # Extract the 4-digit year from the date string (e.g., "2025, October 1" -> "2025")
-                    year_match = re.search(r'\b(\d{4})\b', date_str)
-                    if year_match:
-                        year = year_match.group(1)
-                        # Store both the exact match and a normalized key
-                        citations_cache[f"({surname} {year})"] = f"{surname} ({year})"
-                        citations_cache[f"({surname}, {year})"] = f"{surname} ({year})"
+            ref_lines = [l.strip() for l in ref_section_text.split('\n') if l.strip() and not l.strip().startswith('#') and not l.strip().startswith('---')]
             
-            # Replace inline citations with resolved references if found in cache
-            resolved_text = ch_text
+            for line_idx, line in enumerate(ref_lines, 1):
+                # Check if numbered line e.g. "1. Brenndoerfer, M..."
+                num_match = re.match(r'^\s*(\d+)\.\s*(.*)', line)
+                if num_match:
+                    ref_num = num_match.group(1)
+                    clean_entry = num_match.group(2)
+                else:
+                    ref_num = str(line_idx)
+                    clean_entry = line
+
+                # Extract Author / Org and Date e.g. "Brenndoerfer, M. (2025, October 1). Title..."
+                m_author_date = re.search(r'^([^(\n]+?)\s*(?:,\s*[A-Z]\.|\s+et\s+al\.)?\s*\(([^)]+)\)', clean_entry)
+                if m_author_date:
+                    raw_author_part = m_author_date.group(1).strip()
+                    raw_date_part = m_author_date.group(2).strip()
+                    
+                    # Author surname or org name
+                    surname = raw_author_part.split(',')[0].strip().rstrip('.')
+                    
+                    # Extract 4-digit year or n.d. or BC/AD
+                    y_match = re.search(r'\b(\d{4}|\d{3}\s*BC|\d{3}\s*AD|n\.d\.)\b', raw_date_part)
+                    year = y_match.group(1) if y_match else raw_date_part
+                    
+                    expanded_ref = f"[{surname} ({year}) — {clean_entry[:80]}...]"
+
+                    # Add key variations to citations cache
+                    citations_cache[f"({surname}, {year})"] = expanded_ref
+                    citations_cache[f"({surname} {year})"] = expanded_ref
+                    citations_cache[f"({surname} et al., {year})"] = expanded_ref
+                    citations_cache[f"({surname} et al. {year})"] = expanded_ref
+                    citations_cache[f"[{ref_num}]"] = expanded_ref
+
+            # Expand inline citations in the body prose
+            resolved_text = body_text
             for inline_cite, resolved_ref in citations_cache.items():
-                resolved_text = resolved_text.replace(inline_cite, f"[{resolved_ref}]")
-                
-            # Save the clean chapter as a silver markdown file to GCS
-            silver_blob_name = f"manuscript/silver/ch{ch_num:02d}_silver.md"
-            silver_blob = bucket.blob(silver_blob_name)
-            silver_blob.upload_from_string(resolved_text, content_type="text/markdown; charset=utf-8")
-            
+                resolved_text = resolved_text.replace(inline_cite, resolved_ref)
+
+            # Pure body prose with inline expanded references for Silver tier (no trailing reference list)
+            silver_text = resolved_text
+
+            # Local per-chapter folder paths under ./ship/bronze/chapters/chXX/
+            ch_folder = f"ch{ch_num:02d}"
+            local_ch_bronze_dir = os.path.join(ship_bronze_dir, "chapters", ch_folder)
+            local_ch_silver_dir = os.path.join(ship_silver_dir, "chapters", ch_folder)
+            os.makedirs(local_ch_bronze_dir, exist_ok=True)
+            os.makedirs(local_ch_silver_dir, exist_ok=True)
+
+            # Save Bronze Files locally (no GCS bronze upload)
+            local_ch_file = os.path.join(local_ch_bronze_dir, f"ch{ch_num:02d}_bronze.md")
+            local_ref_file = os.path.join(local_ch_bronze_dir, f"ch{ch_num:02d}_bronze_references.md")
+            with open(local_ch_file, "w", encoding="utf-8") as f:
+                f.write(body_text)
+            with open(local_ref_file, "w", encoding="utf-8") as f:
+                f.write(ref_section_text)
+
+            # Save Silver File locally and to GCS
+            local_silver_file = os.path.join(local_ch_silver_dir, f"ch{ch_num:02d}_silver.md")
+            with open(local_silver_file, "w", encoding="utf-8") as f:
+                f.write(silver_text)
+
+            silver_blob_name = f"silver/chapters/ch{ch_num:02d}/ch{ch_num:02d}_silver.md"
+            if storage_client and bucket:
+                try:
+                    bucket.blob(silver_blob_name).upload_from_string(silver_text, content_type="text/markdown; charset=utf-8")
+                except Exception as e:
+                    print(f"[GCS WARNING] Failed uploading silver chapter {ch_num}: {e}")
+
             processed_count += 1
-            
-            # If target_chapter is specified, halt processing after that chapter for a cheap dry run
-            if target_chapter is not None:
-                return f"[SUCCESS] Dry run completed. Processed and saved Chapter {ch_num} to gs://{bucket_name}/{silver_blob_name}"
-                
-        return f"[SUCCESS] Processed {processed_count} chapters and saved to gs://{bucket_name}/manuscript/silver/"
-        
+
+        return f"[SUCCESS] Processed {processed_count} chapters into ./ship/bronze/chapters/ & ./ship/silver/chapters/ and GCS gs://{bucket_name}/silver/."
+
     except Exception as e:
         return f"[ERROR] process_bronze_manuscript failed: {str(e)}"
 
@@ -153,79 +233,104 @@ def process_bronze_manuscript(*args, **kwargs) -> str:
 
 def embed_and_load_manuscript(silver_gcs_dir: str = "gs://npt-ship/manuscript/silver/", target_chapter: int = None) -> str:
     """
-    Reads silver chapter files from GCS, slices them into sequential paragraph chunks,
-    checks the existing 'ship.letters_of_marque' table to see if the chunk already exists
-    (skipping embedding if text matches), generates a 1536-dimension embedding via Gemini,
-    and UPSERTs the record into 'ship.letters_of_marque' using the existing UUID key system.
+    Step 2 of Manuscript Ingestion:
+    Reads silver chapter files from GCS (or local manuscript/silver/), slices them into sequential
+    paragraph chunks, checks existing 'ship.letters_of_marque' table to prevent redundant embeddings,
+    generates 1536-dimension embeddings via Gemini, and UPSERTs records with strict provenance.
     """
     try:
-        if not silver_gcs_dir.startswith("gs://"):
-            return f"[ERROR] Invalid GCS directory: {silver_gcs_dir}. Must start with gs://"
-            
-        path_parts = silver_gcs_dir[5:].split("/", 1)
-        bucket_name = path_parts[0]
-        prefix = path_parts[1] if len(path_parts) > 1 else ""
+        bucket_name = "npt-ship"
+        prefix = "manuscript/silver/"
         
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blobs = bucket.list_blobs(prefix=prefix)
-        
-        # Initialize Gemini Client safely using the environment API key
+        if silver_gcs_dir.startswith("gs://"):
+            path_parts = silver_gcs_dir[5:].split("/", 1)
+            bucket_name = path_parts[0]
+            prefix = path_parts[1] if len(path_parts) > 1 else ""
+
+        storage_client = None
+        bucket = None
+        blobs = []
+
+        try:
+            storage_client = storage.Client()
+            bucket = storage_client.bucket(bucket_name)
+            blobs = list(bucket.list_blobs(prefix=prefix))
+        except Exception as gcs_err:
+            print(f"[GCS NOTICE] Could not list blobs from GCS: {gcs_err}. Utilizing local silver fallback.")
+
+        # Local fallback files if GCS listing is empty or fails
+        chapter_files = []
+        if blobs:
+            for b in blobs:
+                if b.name.endswith("_silver.md"):
+                    chapter_files.append(("gcs", b.name, b))
+        else:
+            local_silver_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "manuscript", "silver"))
+            if os.path.exists(local_silver_dir):
+                for f_name in sorted(os.listdir(local_silver_dir)):
+                    if f_name.endswith("_silver.md"):
+                        chapter_files.append(("local", f_name, os.path.join(local_silver_dir, f_name)))
+
+        if not chapter_files:
+            return "[ERROR] No silver chapter files found to embed."
+
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             return "[ERROR] Gemini API key not found in environment variables."
         gemini_client = Client(api_key=api_key)
-        
+
         conn = _get_strict_cargo_connection()
+        if not conn:
+            return "[ERROR] Unable to connect to Cargo/Ship database."
         cursor = conn.cursor()
-        
+
         upserted_count = 0
         skipped_count = 0
-        
-        for blob in blobs:
-            if not blob.name.endswith("_silver.md"):
-                continue
-                
-            # Extract chapter number from filename (e.g., ch01_silver.md)
-            ch_match = re.search(r'ch(\d+)_silver\.md', blob.name)
+
+        for source_type, file_identifier, handle in chapter_files:
+            ch_match = re.search(r'ch(\d+)_silver\.md', file_identifier)
             if not ch_match:
                 continue
-                
+
             ch_num = int(ch_match.group(1))
             if target_chapter is not None and ch_num != int(target_chapter):
                 continue
-                
-            chapter_text = blob.download_as_text(encoding="utf-8")
-            
-            # Split the chapter text using a regex that breaks on markdown headers while capturing them
-            # This ensures headers cleanly update current_section and header_title but DO NOT skip the loop
-            # if there is prose associated with them.
+
+            # Purge existing vectors for this chapter to ensure a clean, exact paragraph load
+            cursor.execute("DELETE FROM ship.letters_of_marque WHERE chapter_number = %s;", (ch_num,))
+            conn.commit()
+
+            if source_type == "gcs":
+                chapter_text = handle.download_as_text(encoding="utf-8")
+                gcs_pointer = f"gs://{bucket_name}/{handle.name}"
+            else:
+                with open(handle, "r", encoding="utf-8") as f:
+                    chapter_text = f.read()
+                gcs_pointer = f"gs://{bucket_name}/manuscript/silver/{file_identifier}"
+
+            # Split text on markdown headers while preserving header state
             chunks = re.split(r'(^#+\s+.*$)', chapter_text, flags=re.MULTILINE)
-            
+
             current_section = "1"
-            header_title = "Chapter Introduction"
+            header_title = f"Chapter {ch_num} Introduction"
             paragraph_index = 0
-            
+
             for chunk in chunks:
                 chunk_clean = chunk.strip()
                 if not chunk_clean:
                     continue
-                
-                # If chunk is a header, update current_section and header_title
+
                 if chunk_clean.startswith("#"):
                     header_title = chunk_clean.lstrip("#").strip()
-                    current_section = header_title[:50] # Keep it short
-                    # We also want to process the header itself as a chunk if it has text,
-                    # or we can just let it update the state. Let's treat the header as a chunk
-                    # so it gets indexed, but we don't skip it.
-                
-                # Split the chunk further into paragraphs if it contains multiple paragraphs
+                    sec_match = re.match(r'(\d+\.\d+)', header_title)
+                    current_section = sec_match.group(1) if sec_match else header_title[:10]
+                    current_section = current_section[:10]
+
                 paragraphs = [p.strip() for p in chunk_clean.split("\n\n") if p.strip()]
-                
+
                 for p_text in paragraphs:
                     paragraph_index += 1
-                    
-                    # Check existing 'ship.letters_of_marque' table using chapter_number, section_number, and paragraph_index
+
                     cursor.execute(
                         """
                         SELECT chunk_id, chunk_text 
@@ -235,29 +340,24 @@ def embed_and_load_manuscript(silver_gcs_dir: str = "gs://npt-ship/manuscript/si
                         (ch_num, current_section, paragraph_index)
                     )
                     existing_record = cursor.fetchone()
-                    
+
                     if existing_record:
                         existing_id, existing_text = existing_record
                         if existing_text == p_text:
-                            # Text matches, skip embedding API to save costs
                             skipped_count += 1
                             continue
                         else:
-                            # Text modified, we will update it
                             chunk_id = existing_id
                     else:
-                        # Missing, generate a new UUID chunk_id
                         chunk_id = str(uuid.uuid4())
-                    
-                    # Generate 1536-dimension embedding via Gemini
+
                     response = gemini_client.models.embed_content(
-                        model="text-embedding-004",
+                        model="gemini-embedding-001",
                         contents=p_text,
                         config=types.EmbedContentConfig(output_dimensionality=1536)
                     )
                     embedding = response.embeddings[0].values
-                    
-                    # UPSERT the record into 'ship.letters_of_marque'
+
                     cursor.execute(
                         """
                         INSERT INTO ship.letters_of_marque (
@@ -272,17 +372,18 @@ def embed_and_load_manuscript(silver_gcs_dir: str = "gs://npt-ship/manuscript/si
                         """,
                         (
                             chunk_id, ch_num, current_section, header_title,
-                            ch_num, paragraph_index, p_text, embedding,
-                            f"gs://{bucket_name}/{blob.name}"
+                            ch_num, paragraph_index, p_text, str(list(embedding)),
+                            gcs_pointer
                         )
                     )
                     upserted_count += 1
-                
+
         conn.commit()
         cursor.close()
         conn.close()
-        
+
         return f"[SUCCESS] Embed and load completed. Upserted: {upserted_count}, Skipped (Deduplicated): {skipped_count}"
-        
+
     except Exception as e:
         return f"[ERROR] embed_and_load_manuscript failed: {str(e)}"
+

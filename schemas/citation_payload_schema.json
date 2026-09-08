@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CitationStagingPayload",
+  "type": "object",
+  "required": [
+    "cite_key",
+    "raw_bronze",
+    "exhaustive_silver",
+    "metadata",
+    "zotero_staging",
+    "ontology_staging"
+  ],
+  "properties": {
+    "cite_key": {
+      "type": "string",
+      "description": "Unique normalized reference identifier e.g. brenndoerfer_2025_ibm"
+    },
+    "raw_bronze": {
+      "type": "string",
+      "description": "Unmodified citation string from raw bronze manuscript"
+    },
+    "exhaustive_silver": {
+      "type": "string",
+      "description": "Un-truncated expanded Silver vector node string"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "creators",
+        "date",
+        "title"
+      ],
+      "properties": {
+        "creators": {
+          "type": "array",
+          "description": "Zotero creators array e.g. [{'creatorType': 'author', 'firstName': 'Daniel', 'lastName': 'Boorstin'}]",
+          "items": {
+            "type": "object"
+          }
+        },
+        "authors": {
+          "type": "array",
+          "description": "Legacy fallback string array e.g. ['Boorstin, Daniel']",
+          "items": {
+            "type": "string"
+          }
+        },
+        "date": {
+          "type": "string",
+          "description": "Zotero publication date string e.g. '1961' or '2026-02-20'"
+        },
+        "year": {
+          "type": "string",
+          "description": "Four digit publication year"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of article, chapter, report, or webpage"
+        },
+        "publication_title": {
+          "type": "string",
+          "description": "Zotero publicationTitle (journal, newspaper, or book container title)"
+        },
+        "item_type": {
+          "type": "string",
+          "description": "Zotero itemType (journalArticle, book, bookSection, newspaperArticle, webpage, preprint, report, case, statute, patent)"
+        },
+        "doi": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "isbn": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "string",
+          "description": "Zotero extra field mini-ledger string (gcs_path, capture_status, cite_key)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "zotero_staging": {
+      "type": "object",
+      "required": [
+        "synced"
+      ],
+      "properties": {
+        "item_type": {
+          "type": "string"
+        },
+        "synced": {
+          "type": "boolean"
+        },
+        "zotero_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "ontology_staging": {
+      "type": "object",
+      "required": [
+        "entity_type",
+        "nodes",
+        "edges"
+      ],
+      "properties": {
+        "entity_type": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

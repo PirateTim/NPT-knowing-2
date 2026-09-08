@@ -1,0 +1,4 @@
+### 6.8 The Uranium of the Age (The Value Pivot)
+In the "Hard 2025" reality, **Statistical Decoupling** is the epistemological state where the Volume of Probability is mistaken for the Depth of Truth. The "Toxic Sludge" identified in Chapter 2 was suddenly transmuted into the "Uranium" of the AI age. 
+
+Datasets like "Books3" contained 196,640 pirated books—the stolen labor of thousands of authors [Dhruv Mehrotra and Tim Marchman (2024), "Perplexity Is a Bullshit Machine: The AI Startup Is Scraping Websites Without Permission", WIRED, URL: https://www.wired.com/story/perplexity-is-a-bullshit-machine/]. The "Intelligence" of the machine is actually the "shadow" of the human labor it ingested without consent. This technical breach creates a **Poisoned Archive**. As models consume this context-free rubble, they train on their own "Plausible Slop," leading to **Model Collapse**.

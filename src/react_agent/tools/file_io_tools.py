@@ -46,6 +46,29 @@ def read_local_file(file_path: str) -> str:
     except Exception as e:
         return f"[ERROR] Execution failed: {str(e)}"
 
+def read_skill_protocol(skill_name: str) -> str:
+    """
+    Agent Tool: Progressive Skill Protocol Loader.
+    Purpose: Reads and returns the full step-by-step SKILL.md protocol text for a specific skill on-demand.
+    Invoked By: All fleet agents when executing a specific skill.
+    """
+    slug = skill_name.strip().replace("_", "-").lower()
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    skill_path = os.path.join(base_dir, "skills", slug, "SKILL.md")
+    
+    if not os.path.exists(skill_path):
+        available = []
+        central_skills_dir = os.path.join(base_dir, "skills")
+        if os.path.exists(central_skills_dir):
+            available = [d for d in os.listdir(central_skills_dir) if os.path.isfile(os.path.join(central_skills_dir, d, "SKILL.md"))]
+        return f"[ERROR] Skill '{skill_name}' not found. Available modular skills: {available}"
+
+    try:
+        with open(skill_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return f"[ERROR] Unable to read skill protocol for '{skill_name}': {str(e)}"
+
 def write_local_file(file_path: str, content: str) -> str:
     """
     Agent Tool: Local File Writer.
@@ -95,45 +118,3 @@ def list_local_directory(directory_path: str) -> str:
         return f"Contents of {directory_path}:\n" + "\n".join([f"- {item}" for item in items])
     except Exception as e:
         return f"[ERROR] Execution failed: {str(e)}"
-
-#=================================================================================
-
-def write_wiki_markdown(artifact_id: str, source_uri: str, content: str, agent_name: str, skill: str, **kwargs) -> str:
-    """
-    Agent Tool: The Cryptographic Lineage Writer.
-    Purpose: Writes a localized Markdown file for the downstream synthesis Wiki. 
-    Crucially, it forces the injection of strict YAML frontmatter to maintain an 
-    unbreakable provenance link back to the original Bronze GCS artifact.
-    Invoked By: CUTLASS, GROG, PLANK, and BILGELADLE (The entire analytical Silver/Gold fleet).
-    """
-    import os
-    import datetime
-    
-    # Target Directory Resolution:
-    # Resolves to the top-level project root 'local_wiki/' directory (outside 'src/')
-    # so human authors can easily view, browse, and edit generated markdown reports.
-    wiki_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "local_wiki"))
-    os.makedirs(wiki_dir, exist_ok=True)
-
-    # Lineage Frontmatter Injection:
-    # Embeds artifact_id, agent_name, skill, source_bronze_uri, and timestamp 
-    # to guarantee 100% auditable provenance linking back to raw GCS assets.
-    yaml_frontmatter = f"""---
-artifact_id: {artifact_id}
-agent: {agent_name}
-skill: {skill}
-source_bronze_uri: {source_uri}
-timestamp: {datetime.datetime.now().isoformat()}
----
-
-"""
-    # Construct output file name and full destination path
-    file_name = f"{artifact_id}_{agent_name}.md"
-    file_path = os.path.join(wiki_dir, file_name)
-    
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(yaml_frontmatter + content)
-        return f"[SUCCESS] Provenance-locked Wiki Markdown written to {file_name}"
-    except Exception as e:
-        return f"[ERROR] Wiki generation failed: {str(e)}"

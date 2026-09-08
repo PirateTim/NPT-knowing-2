@@ -1,0 +1,17 @@
+# Master Index of Artifacts & References (Chapter 11)
+
+* [Arkin, W. M. (2026), "Pentagon Laser Test Mistaken for Cartel Drone", Newsweek, https://www.newsweek.com/pentagon-laser-test-mistaken-cartel-drone-border-1901234]
+* [Bipartisan Policy Center (2023), "The Pros and Cons of Social Media Algorithms", Bipartisan Policy Center Technology Project, https://bipartisanpolicy.org/wp-content/uploads/2023/10/BPC_Tech-Algorithm-Tradeoffs_R01.pdf]
+* [Bondi, P. (2026), "Remarks on the Epstein Files and Systemic Stability", Department of Justice / IFEG Information Briefing, https://www.justice.gov/opa/pr/remarks-attorney-general-pam-bondi-epstein-records-systemic-integrity]
+* [Canter, L., & Siegel, M. (1994), "Green Card Lottery 1994: Final One", Usenet Newsgroup Announcement, https://www.eff.org/pages/green-card-lottery-usenet-spam-archive]
+* [Doctorow, C. (2024), "Hypothetical AI election disinformation risks vs real AI harms", Medium / Pluralistic, https://pluralistic.net/2024/02/27/hypothetical-ai-election-disinformation-risks-vs-real-ai-harms/]
+* [Hon, A. (2022), "You've Been Played: How Corporations, Governments, and Schools Use Games to Control Us All", Basic Books, https://www.basicbooks.com/titles/adrian-hon/youve-been-played/9781541600188/]
+* [Invisible Children (2012), "Kony 2012", YouTube, https://www.youtube.com/watch?v=Y4MnpzG5Sqc]
+* [Klippenstein, K. (2026), "Exclusive: ICE Masks Up in More Ways Than One", Ken Klippenstein Substack, https://www.kenklippenstein.com/p/exclusive-ice-masks-up-in-more-ways-than-one]
+* [Mastrangelo, D. (2026), "Gallup stops presidential approval ratings polls", The Hill, https://thehill.com/homenews/media/5135154-gallup-stops-presidential-approval-ratings-polls/]
+* [O'Rourke, P. J. (1994), "All the Trouble in the World: The Lighter Side of Overpopulation, Famine, Ecological Disaster, Ethnic Hatred, Plague, and Poverty", Atlantic Monthly Press, https://archive.org/details/alltroubleinworl00orou]
+* [Oreskes, N., & Conway, E. M. (2010), "Merchants of Doubt: How a Handful of Scientists Obscured the Truth on Issues from Tobacco Smoke to Global Warming", Bloomsbury Press, https://www.bloomsbury.com/us/merchants-of-doubt-9781608193943/]
+* [Rini, R. (2017), "Fake News and Partisan Epistemology", Kennedy Institute of Ethics Journal 27(2): E-43–E-64, https://doi.org/10.1353/ken.2017.0025]
+* [Senate Select Committee on Intelligence (2019), "Report of the Select Committee on Intelligence, United States Senate, on Russian Active Measures Campaigns and Interference in the 2016 U.S. Election: Volume 2: Russia's Use of Social Media, with Additional Views", 116th Congress, S. Rpt. 116-290, U.S. Senate, https://www.intelligence.senate.gov/sites/default/files/documents/Report_Volume2.pdf]
+* [Shroff, K. (2026), "Does DHS Flack Tricia McLaughlin Believe Her Own Lies?", The Bulwark, https://www.thebulwark.com/p/does-dhs-flack-tricia-mclaughlin-believe-her-own-lies]
+* [Ullman, H. K., & Wade, J. P. (1996), "Shock and Awe: Achieving Rapid Dominance", National Defense University Press / Command and Control Research Program, https://archive.org/details/shockaweachievin0000ullm]

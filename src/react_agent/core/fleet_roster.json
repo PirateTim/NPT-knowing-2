@@ -1,0 +1,40 @@
+{
+  "fleet_agents": {
+    "plank": {
+      "name": "Plank",
+      "role": "Citation Specialist & Reference Resolution Agent",
+      "xml_path": "src/react_agent/agents/plank/plank.xml",
+      "capabilities": ["Bibliographic Parsing", "CrossRef Resolution", "Landlubber Ground-Truth Search", "Silver Vector Node Construction"]
+    },
+    "spyglass": {
+      "name": "Spyglass",
+      "role": "Ingestion Engine & Web Content Seizure Agent",
+      "xml_path": "src/react_agent/agents/spyglass/spyglass.xml",
+      "capabilities": ["Web Scraping", "PDF Text Extraction", "Botasaurus Headless Bypassing", "Cargo Hold Ingestion"]
+    },
+    "bilgeladle": {
+      "name": "Bilgeladle",
+      "role": "Thesis Alignment & Silver Chapter Assembly Engine",
+      "xml_path": "src/react_agent/agents/bilgeladle/bilgeladle.xml",
+      "capabilities": ["Manuscript Thesis Alignment", "In-Text Citation Expansion", "Map-Expand-Reduce Routing", "System Glossary Management"]
+    },
+    "cutlass": {
+      "name": "Cutlass",
+      "role": "Epistemic Auditor & Rejection Gate Specialist",
+      "xml_path": "src/react_agent/agents/cutlass/cutlass.xml",
+      "capabilities": ["Epistemic Alignment Auditing", "Ground-Truth Metadata Verification", "Chain of Ruin Triage", "Scorecard Generation"]
+    },
+    "scallywag": {
+      "name": "Scallywag",
+      "role": "Opinion & Satirical Synthesis Engine",
+      "xml_path": "src/react_agent/agents/scallywag/scallywag.xml",
+      "capabilities": ["Cynical Dissection", "Satirical Essay Generation", "Toulmin Warrant Synthesis"]
+    },
+    "grog": {
+      "name": "Grog",
+      "role": "Content Summarizer & Core Extraction Agent",
+      "xml_path": "src/react_agent/agents/grog/grog.xml",
+      "capabilities": ["Dead Reckoning", "Fact Plumbing", "Strict Summarization", "Making a Sighting"]
+    }
+  }
+}

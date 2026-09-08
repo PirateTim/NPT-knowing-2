@@ -1,0 +1,19 @@
+{
+  "chase_id": "chase_20260811_155658_ch04",
+  "chapter": 4,
+  "title": "The News As Professionalized Lie",
+  "status": "APPROVED",
+  "timestamp_utc": "2026-08-11 15:56:58 UTC",
+  "artifacts": {
+    "bronze_prose": "ship/bronze/chapters/ch04/ch04_bronze.md",
+    "bronze_references": "ship/bronze/chapters/ch04/ch04_bronze_references.md",
+    "silver_prose": "ship/silver/chapters/ch04/ch04_silver.md",
+    "cutlass_audit": "ship/silver/chapters/ch04/ch04_citation_audit.md",
+    "gcs_cloud_path": "gs://npt-ship/silver/chapters/ch04/ch04_silver.md"
+  },
+  "epistemic_metrics": {
+    "total_references": 60,
+    "staged_database_payloads": 60,
+    "silver_file_lines": 282
+  }
+}

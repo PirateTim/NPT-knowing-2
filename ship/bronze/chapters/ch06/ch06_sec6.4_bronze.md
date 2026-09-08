@@ -1,0 +1,6 @@
+### 6.4 The Legal Hijack (Fair Use and Transformation)
+The destruction of the American knowledge system was achieved through a semantic hijacking of the word "transformative." In 1990, Judge Pierre Leval introduced "transformative use" as the new North Star of copyright, arguing that if a secondary user adds "new expression, meaning, or message," the "exclusive Right" should yield to the "public benefit". 
+
+The judicial decay resulted in a strategic bifurcation. In *Authors Guild v. Google* (2015), the court authorized the "Identity Stripping" of millions of volumes on the grounds that a "searchable index" was a transformative benefit. The law provided a license for the machine to consume the "Stone" (the book) and discard the "Wall" (the author’s context). By labeling wholesale digitization as "Transformative," the court effectively declared that the "Progress of Science" was synonymous with the "Efficiency of the Index."
+
+Simultaneously, Google built a different relationship with high-authority data through Google Scholar. Unlike the "Books" project, Google Scholar functioned through formal agreements with academic repositories like Elsevier and Wiley. This created a dual-class system: "Verified Knowledge" remained anchored to its source through contracts, while "The Human Record" was abandoned to the legal decoupling of the Fair Use defense.

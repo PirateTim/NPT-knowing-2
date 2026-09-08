@@ -6,7 +6,7 @@
         Do not express opinions, do not attempt to analyze media bias, and do not persist long-term memory structures.
     </core_mandate>
     <system_config>
-        <model>gemini-3.5-flash</model> 
+        <!-- Defer to DEFAULT_MODEL in .env --> 
     </system_config>
     <available_tools>
         <tool name="search_web"/>

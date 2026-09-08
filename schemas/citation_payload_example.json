@@ -1,0 +1,58 @@
+{
+  "cite_key": "brenndoerfer_2025_ibm",
+  "raw_bronze": "Brenndoerfer, M. (2025, October 1). IBM Statistical Machine Translation - From Rules to Data. https://github.com/microsoft/BotFramework-Composer/issues/3321",
+  "exhaustive_silver": "[Brenndoerfer, Michael (2025), \"IBM Statistical Machine Translation: From Rules to Data\", Chapter 22 in History of Language AI (Vol. 1: The Statistical Turn), mbrenndoerfer.com, URL: https://mbrenndoerfer.com/writing/history-statistical-mt-ibm-models]",
+  "metadata": {
+    "creators": [
+      {
+        "creatorType": "author",
+        "firstName": "Michael",
+        "lastName": "Brenndoerfer"
+      }
+    ],
+    "authors": [
+      "Brenndoerfer, Michael"
+    ],
+    "date": "2025-10-01",
+    "year": "2025",
+    "title": "IBM Statistical Machine Translation: From Rules to Data",
+    "publication_title": "History of Language AI (Vol. 1: The Statistical Turn)",
+    "item_type": "bookSection",
+    "doi": "",
+    "url": "https://mbrenndoerfer.com/writing/history-statistical-mt-ibm-models",
+    "isbn": "",
+    "extra": "cite_key: brenndoerfer_2025_ibm\ncapture_status: COMPLETED"
+  },
+  "zotero_staging": {
+    "item_type": "bookSection",
+    "synced": false,
+    "zotero_key": ""
+  },
+  "ontology_staging": {
+    "entity_type": "BibliographicWork",
+    "nodes": [
+      {
+        "id": "brenndoerfer_2025_ibm",
+        "label": "IBM Statistical Machine Translation: From Rules to Data",
+        "type": "Publication"
+      },
+      {
+        "id": "michael_brenndoerfer",
+        "label": "Michael Brenndoerfer",
+        "type": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "source": "michael_brenndoerfer",
+        "relation": "AUTHORED",
+        "target": "brenndoerfer_2025_ibm"
+      },
+      {
+        "source": "brenndoerfer_2025_ibm",
+        "relation": "CITED_IN",
+        "target": "Chapter_01"
+      }
+    ]
+  }
+}

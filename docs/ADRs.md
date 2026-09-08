@@ -46,4 +46,83 @@
 * **Context:** Downstream synthesis agents (Scallywag) cannot reliably parse or query unstructured text files dumped by mid-tier analytical agents (Cutlass).
 * **Decision:** We mandate that all Silver-tier epistemic triage and enrichments must be formatted as strictly typed JSON objects and inserted into a PostgreSQL ledger (`cargo.fleet_enrichments`) via the `log_fleet_enrichment` tool.
 * **Consequences:** The system gains a highly structured, mathematically queryable database of epistemic failures, drastically improving the reliability of the Gold-tier synthesis phase.
+**ADR-009: Standardizing Agent XML Schema and Rules Ingestion Engine**
 
+* **Context:** Legacy agent profiles used non-standard `<heuristics>` tags which were silently ignored by `AgentEngine`, truncating rules into single-line summaries and leaving orchestrators like Pegleg without full rule visibility. Furthermore, multi-step workflows were mislabeled as passive `<core_mandate>` text rather than executable `<skills>`.
+* **Decision:** 
+  1. Deprecate legacy `<heuristics>` XML tags across all agent definitions in favor of standard `<rules>` (operational boundaries) and `<guardrails>` (anti-hallucination/sycophancy controls).
+  2. Refactor `AgentEngine._build_dynamic_system_prompt()` to load and format the full rule directive, rationale, and context without character truncation.
+  3. Reclassify multi-stage workflows as executable `<skills>` with explicit protocols.
+  4. Ensure orchestrators run true `AgentEngine` ReAct sessions rather than hardcoded Python prompt strings.
+* **Consequences:** Agents operate with 100% prompt visibility into their full rule directives and guardrails. System instructions become completely observable, consistent across agents, and aligned with modern AI agent engineering standards.
+
+**ADR-010: Dual Progenitor Convergence (Hook-Antigravity Cognitive Parity & Human Backlog Governance)**
+
+* **Context:** The system maintained two separate meta-architectural execution environments: Antigravity (the IDE pair-programmer governed by `GEMINI.md`) and Hook (the autonomous CLI progenitor governed by `Hook_constitutiuon.md` and `hook.xml`). Over time, this caused Split-Brain Drift: Hook operated on stale, hardcoded agent rosters and legacy tool paths, while Antigravity operated on live project reality. Furthermore, GitHub Issues was being misused as an automated error dump by content scrapers (e.g. Spyglass opening issues for 403 HTTP paywalls), drowning human architectural ideas in backlog noise.
+* **Decision:**
+  1. *Dual-Harness Coexistence:* Both Hook (terminal/CLI runner) and Antigravity (IDE pair-programmer) remain fully active and supported.
+  2. *Cognitive & Mandate Parity:* Hook and Antigravity share an identical engineering personality and operational mandate. `GEMINI.md` absorbs Hook's core engineering virtues: Structural Finality (complete implementations; zero conversational fluff), Strict Spatial Verification & PIP Compliance (mandatory physical tool calls to read disk before asserting facts), and Leading with Decisions before rationale.
+  3. *Single Source of Truth Bootstrapping:* `hook_runner.py` and `hook.xml` dynamically ingest `GEMINI.md` and `fleet_roster.json` on startup via `AgentEngine`. Hook will no longer maintain a divergent, hardcoded roster.
+  4. *GitHub Issues Namespace Boundary:* GitHub Issues is designated exclusively as the Human Architect & Meta-Architect Backlog (Timothy, Hook, and Antigravity). Domain content agents (Spyglass, Cutlass, Grog, Plank, Bilgeladle, Scallywag) are strictly stripped of GitHub issue-creation tools. Content acquisition failures must be logged exclusively to `cargo.failed_metadata` (per ADR-003), preventing scraper noise from polluting the backlog.
+* **Consequences:** Perfect alignment between IDE and terminal sessions. Zero drift between Antigravity and Hook. Clean, high-signal GitHub backlog dedicated entirely to deliberate human feature requests and architectural changes.
+
+**ADR-011: Unified Developer Action Logging & Interaction Provenance**
+
+* **Context:** To maintain system integrity and auditability across rapid multi-agent evolution, the human architect requires an unbroken, offline forensic log of all user requests, agent decisions, tool invocations, and parameter mutations executed by both Hook (in terminal) and Antigravity (in IDE).
+* **Decision:**
+  1. *Antigravity Native Telemetry Integration:* Formally leverage Antigravity's built-in session transcript engine located at `<appDataDir>/brain/<conversation_id>/.system_generated/logs/transcript.jsonl` (and `transcript_full.jsonl`). These append-only JSONL ledgers record every user prompt, model reasoning step, tool call, and stdout response with microsecond timestamps.
+  2. *Standardized Hook Turn Logging:* Standardize Hook's local file logging to mirror this depth: Every user request and turn prompt is committed to `logs/hook_requests.log`; every tool call, raw stdout response, and error payload is streamed to `logs/hook_interactions.log`; system prompt compilation states are dumped to `logs/hook_system_prompt.txt` upon engine boot (per ADR-004).
+  3. *Log Directory Governance:* All local log dumps remain strictly localized in `logs/` and permanently excluded from version control via `.gitignore`.
+* **Consequences:** 100% forensic replayability of all architectural modifications regardless of whether they were performed via Antigravity in the IDE or Hook in the terminal.
+
+**ADR-012: Cross-Harness Bi-Directional Learning (Shared Rule Vaults)**
+
+* **Context:** When a developer corrects a behavior or discovers a new heuristic in Antigravity (e.g. using `/learn` or refining an architectural pattern), that learning historically remained trapped in IDE memory or `GEMINI.md`. Conversely, rules recorded by Hook via `record_learned_rule` went into local agent JSON files that Antigravity might not immediately index.
+* **Decision:**
+  1. *Shared Knowledge Vaults as Single Source of Truth:* All operational heuristics, behavioral corrections, and architectural rules are standardized into two shared, version-controlled JSON vaults: `src/react_agent/core_knowledge_vault/shared_fleet_rules.json` (Fleet-universal rules) and `src/react_agent/agents/{agent_name}/learned_rules.json` (Agent-specific local rules).
+  2. *Bi-Directional Learning Protocol:*
+     - *Antigravity -> Hook:* When Antigravity learns or refines an engineering directive during pair programming, the rule is committed directly to `shared_fleet_rules.json` (or `GEMINI.md`). On the next terminal invocation of `hook_runner.py`, Hook immediately boots with that new learned rule in her system prompt.
+     - *Hook -> Antigravity:* When Hook generates a rule during terminal execution via `record_learned_rule`, it is written to the shared JSON vaults and referenced in `GEMINI.md`, instantly making it visible to Antigravity.
+  3. *Deprecation of Isolated Learning Sinks:* Deprecate separate, one-off XML rule staging directories (`src/react_agent/agents/hook/rules/*.xml`) and legacy ledgers (`learning_ledger.json`) in favor of direct commits to the shared JSON vaults.
+* **Consequences:** Continuous, cross-pollinating intelligence. A lesson taught once to Antigravity in the IDE is permanently learned by Hook in the terminal, and vice-versa. Strict JSON schema adherence required for rule formatting.
+
+**ADR-013: Hybrid Memory & Pointer Architecture (Full Manuscript System Prompt Injection with On-Demand Section Expansions and Receipt-Based Cargo Handoffs)**
+
+* **Context:** Large language models historically suffered from small context windows, prompting Map-Reduce section slicing. However, modern models (Gemini 3.7 Flash) offer 1M+ token context with high recall at $0.07/1M input tokens. Loading the complete 374 KB manuscript into Bilgeladle's system prompt costs ~$0.007 per turn while providing complete, un-fragmented thesis memory. Meanwhile, multi-agent cargo handoffs (Spyglass -> Cutlass -> Grog -> Bilgeladle -> Scallywag) exploded in cost when raw article texts and full section expansions were concatenated directly into prompt strings.
+* **Decision:**
+  1. *Full Manuscript Corpus Injection for Bilgeladle:* `AgentEngine` will continue injecting `ship/bronze_plus/End-of-Knowing-latest.md` directly into Bilgeladle's system prompt, giving her complete, unbroken thesis vision for <$0.01 per turn.
+  2. *Receipt-Based File Pointers for Incoming Cargo (ADR-007 Enforcement):* Inter-agent multi-stage pipelines must pass lightweight file pointers / GCS paths (`acquisitions/[slug].txt`) and database IDs rather than concatenating raw text strings into prompts. Downstream agents stream or inspect files on demand via `read_knowledge_artifact` / `read_local_file`.
+  3. *On-Demand Section Expansions (`ship/expansions/`):* Deep section expansions (e.g. `ch01_sec1.4_expansion.md`) are preserved as specialized reference deep-dives, loaded on-demand via tool calls (`read_local_file`) when a specific section requires forensic audit.
+* **Consequences:** Bilgeladle maintains total, un-fragmented manuscript awareness at negligible cost (~$0.007/turn), while multi-agent chases reduce prompt context payload size by ~99% per turn across the fleet.
+
+**ADR-014: Serverless Zotero Translation Engine on Google Cloud Run**
+
+* **Context:** External academic publishers (Nature, ScienceDirect/Elsevier, IEEE Xplore, JSTOR, Springer, Wiley) enforce severe scraping countermeasures (Cloudflare Turnstile, browser fingerprinting, and paywall authentication gates). Standard HTTP requests return HTTP 403, and headless browsers like Botasaurus frequently hang on heavy CAPTCHA challenges or fail to capture the underlying citation graph. Meanwhile, Zotero's open-source Translation Server maintains thousands of specialized, community-curated web scrapers ("translators") engineered specifically to extract rich bibliographic metadata and article text from scholarly databases. However, running a persistent Kubernetes (GKE) cluster or compute instance for translation services incurs an unacceptable idle overhead ($70+/month for GKE control planes alone).
+* **Decision:**
+  1. *Serverless Microservice Architecture:* Deploy the Zotero Translation Server to Google Cloud Run as a managed, stateless service (`zotero-translator`) in region `us-central1`.
+  2. *Scale-to-Zero Guardrail:* Enforce `--min-instances=0` and `--max-instances=2`. When no ingestion or reference resolution tasks are running, Cloud Run scales to zero instances, ensuring a **$0.00 idle operating cost**. Cold-start latency on Cloud Run is under 2 seconds.
+  3. *Cloud Build Recursive Container Assembly:* Package the container using Node 20 LTS via Google Cloud Build, cloning the repository with `--recurse-submodules` to incorporate all required Zotero submodules (`modules/translators`, `modules/utilities`, `modules/zotero-schema`, `modules/translate`). Bind Node natively to `0.0.0.0:8080` to eliminate shell script execution format errors.
+  4. *Multi-Agent Fleet Tool Dispatch:* Expose `call_zotero_translator(target_url)` across `acquisition_tools.py` and `tool_dispatcher.py`. Grant access to **Spyglass** (for bypassing academic paywalls during external cargo acquisition) and **Plank** (for expanding and verifying un-truncated vector node citations in manuscript chapters).
+* **System Flow & Sequence:**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Agent as Fleet Agent (Spyglass / Plank)
+    participant Dispatcher as Tool Dispatcher
+    participant CloudRun as Cloud Run (zotero-translator)
+    participant Publisher as Academic Publisher / Web
+    participant Cargo as GCS Cargo Hold / Postgres
+
+    Agent->>Dispatcher: call_zotero_translator(target_url)
+    Dispatcher->>CloudRun: POST /web (Payload: URL)
+    Note over CloudRun: Scale from 0 to 1 instance on-demand
+    CloudRun->>Publisher: Execute Site-Specific Zotero Translator
+    Publisher-->>CloudRun: Return Structured Metadata, DOI, Abstract & Text
+    CloudRun-->>Dispatcher: Return JSON Items Array (Status 200 OK)
+    Note over CloudRun: Scale back to 0 instances after idle timeout
+    Dispatcher-->>Agent: JSON Citation & Extraction Payload
+    Agent->>Cargo: Log to cargo.content_metadata & upsert to acquisitions/
+```
+
+* **Consequences:** Eliminates scraping barriers on protected scholarly domains. Yields bit-for-bit extraction of complex citation structures (authors, DOIs, volume, issue, publication dates, and abstracts) directly matching Zotero's data contract. Incurs zero compute expense when idle.

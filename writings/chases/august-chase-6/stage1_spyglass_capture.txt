@@ -1,0 +1,14 @@
+---
+title: "Why AI Leaders Publish Manifestos | AiToolsObserver"
+source_url: "https://aitoolsobserver.com/hub/why-ai-leaders-keep-publishing-manifestos-zuckerberg-altman-and-the-battle-for-ai-narrative/"
+authors:
+  - "MaríaF Gómez"
+published_date: "2026-08-15"
+publisher: "AiToolsObserver"
+item_type: "journalArticle"
+gcp_bucket_path: "acquisitions/why-ai-leaders-keep-publishing-manifestos-zuckerberg-altman-and-the-battle-for-ai-narrative.txt"
+abstract: "How Zuckerberg, Altman and others use AI manifestos to shape public perception, regulation, and the open-source narrative."
+---
+
+[FULL CONTENT CACHED AT: C:\Users\timot\NPT-knowing-2\cargo_cache\temp_acquire_429fc12c.txt]
+[GCP BUCKET PATH: acquisitions/why-ai-leaders-keep-publishing-manifestos-zuckerberg-altman-and-the-battle-for-ai-narrative.txt]

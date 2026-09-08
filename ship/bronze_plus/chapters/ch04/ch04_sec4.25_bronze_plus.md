@@ -1,0 +1,2 @@
+#### 4.25 The Epigraph: The Resignation
+"And you know what they said? / Well, some of it was true!" — The Clash, London Calling (1979) [The Clash (1979), "London Calling", track 1 on *London Calling*, CBS Records / Epic Records, URL: https://www.discogs.com/master/19382-The-Clash-London-Calling]

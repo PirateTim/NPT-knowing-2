@@ -1,0 +1,2 @@
+PROMPT INGESTION:
+PEGLEG COMMAND: Execute Checkpoint 2 for Chapter 3. Plank must parse all 22 references in ship/bronze/chapters/ch03/ch03_bronze_references.md, check cargo.fleet_enrichments DB and CrossRef cache first, resolve remaining items, and auto-stage clean vector payloads to cargo.fleet_enrichments.

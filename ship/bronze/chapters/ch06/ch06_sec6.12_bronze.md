@@ -1,0 +1,2 @@
+### 6.12 The Great Vanishing: Platform Purges
+The terminal state is the **Vaporization Event**, where Metadata remains but Data vanishes. The state performed a mass vaporization when the Secret Service deleted text messages surrounding the January 6 Capitol breach under the guise of "device migration". In the private sector, Joe Ricketts shuttered *DNAinfo* and *Gothamist* in 2017, vaporizing a decade of investigative journalism in a single afternoon because the utility of breaking a union outweighed the science of the public record.

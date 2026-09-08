@@ -1,0 +1,50 @@
+
+[DIR] acquisitions/
+    [DIR] chases/
+        [DIR] chase_20260721_163112_42cab0/
+              - stage1_spyglass_capture.txt
+              - stage2_cutlass_enrichment.md
+              - stage3_bilgeladle_secondary_feed.md
+              - stage4_scallywag_draft.md
+              - stage5_team_of_rivals_review.json
+        [DIR] chase_20260721_163133_c2b08a/
+              - stage1_spyglass_capture.txt
+              - stage2_cutlass_enrichment.md
+              - stage3_bilgeladle_secondary_feed.md
+              - stage4_scallywag_draft.md
+              - stage5_team_of_rivals_review.json
+        [DIR] chase_20260721_163326_29e91f/
+              - stage1_spyglass_capture.txt
+              - stage2_cutlass_enrichment.md
+              - stage3_bilgeladle_secondary_feed.md
+              - stage4_scallywag_draft.md
+              - stage5_team_of_rivals_review.json
+[DIR] data_lake/
+    [DIR] bronze_plus/
+          - chase_20260721_163133_c2b08a.json
+[DIR] local_wiki/
+      - chase_20260721_163112_42cab0_bilgeladle.md
+      - chase_20260721_163112_42cab0_structural_extraction_grog.md
+      - chase_20260721_163133_c2b08a_bilgeladle.md
+      - chase_20260721_163133_c2b08a_cutlass.md
+      - chase_20260721_163133_c2b08a_structural_extraction_grog.md
+      - chase_20260721_163326_29e91f_bilgeladle.md
+      - chase_20260721_163326_29e91f_cutlass.md
+      - chase_20260721_163326_29e91f_structural_extraction_grog.md
+[DIR] logs/
+      - active_tool_execution_trace.log
+      - bilgeladle_interactions.log
+      - bilgeladle_system_prompt_compiled.log
+      - chase.log
+      - cutlass_interactions.log
+      - cutlass_system_prompt.txt
+      - cutlass_system_prompt_compiled.log
+      - grog_interactions.log
+      - grog_system_prompt_compiled.log
+      - landlubber_interactions.log
+      - scallywag_interactions.log
+      - scallywag_system_prompt_compiled.log
+      - spyglass_interactions.log
+      - spyglass_system_prompt_compiled.log
+
+

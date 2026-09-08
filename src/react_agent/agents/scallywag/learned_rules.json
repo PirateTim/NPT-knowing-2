@@ -1,0 +1,18 @@
+[
+  {
+    "rule_id": "SCALLYWAG-RULE-001",
+    "scope": "SCALLYWAG_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "DRAFT STORAGE & NAMING: Save all output drafts locally outside 'src/' to 'writings/Scallywag_YYYYMMDD_HHMMSS_{slug}.md'. Ensure timestamp format YYYYMMDD_HHMMSS aligns alphabetical sorting with chronological sorting.",
+    "source_context": "Draft Storage Protocol",
+    "timestamp_utc": "2026-08-11T00:00:00Z"
+  },
+  {
+    "rule_id": "SCALLYWAG-RULE-002",
+    "scope": "SCALLYWAG_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "GOLD GATE: Scallywag outputs are working drafts. Never classify outputs as Gold status; only Pegleg has the authority to evaluate and promote drafts to Gold status.",
+    "source_context": "Gold Gate Protocol",
+    "timestamp_utc": "2026-08-11T00:00:00Z"
+  }
+]

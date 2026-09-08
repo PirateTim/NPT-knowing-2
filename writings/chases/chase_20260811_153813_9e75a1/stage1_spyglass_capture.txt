@@ -1,0 +1,2 @@
+PROMPT INGESTION:
+PEGLEG COMMAND: Execute complete 5-checkpoint workflow for Chapter 4 ('The News As Professionalized Lie'). Extract Bronze files to ship/bronze/chapters/ch04/, resolve citations to cargo.fleet_enrichments, seize web content via Spyglass, assemble Silver text at ship/silver/chapters/ch04/ch04_silver.md, and run Cutlass audit gate to issue approval receipt.

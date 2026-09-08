@@ -1,0 +1,21 @@
+{
+  "chase_id": "chase_20260811_152835_ch03",
+  "chapter": 3,
+  "title": "The Bucket Isn't Empty",
+  "status": "APPROVED",
+  "timestamp_utc": "2026-08-11 15:28:35 UTC",
+  "artifacts": {
+    "bronze_prose": "ship/bronze/chapters/ch03/ch03_bronze.md",
+    "bronze_references": "ship/bronze/chapters/ch03/ch03_bronze_references.md",
+    "silver_prose": "ship/silver/chapters/ch03/ch03_silver.md",
+    "cutlass_audit": "ship/silver/chapters/ch03/ch03_citation_audit.md",
+    "gcs_cloud_path": "gs://npt-ship/silver/chapters/ch03/ch03_silver.md"
+  },
+  "epistemic_metrics": {
+    "total_references": 22,
+    "verified_ground_truth_passes": 17,
+    "staged_database_payloads": 22,
+    "silver_file_lines": 269,
+    "cutlass_audit_lines": 123
+  }
+}

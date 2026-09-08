@@ -24,18 +24,23 @@ from mcp.client.stdio import stdio_client
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # SOP-04, Step 1: Import all external tool modules here.
-from tools.file_io_tools import read_local_file, write_local_file, delete_local_file, list_local_directory, write_wiki_markdown
+from tools.file_io_tools import read_local_file, write_local_file, delete_local_file, list_local_directory, read_skill_protocol
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
+from tools.subagent_tools import dispatch_subagent_turn
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document
+from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator
 from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
-from tools.memory_tools import record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens
+from tools.memory_tools import record_learned_rule, record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens, conduct_learned_rules_audit, compile_rules_to_turtle_ontology
 from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, reseed_failed_cargo_queue
 from tools.extraction_tools import run_langextract_mapping
 from tools.agent_logger import log_agent_action
 from tools.youtube_tools import extract_youtube_transcript
+from tools.chapter_analysis_tools import perform_chapter_structural_analysis, generate_chapter_expansion_document, generate_chapter_synthesis_essay, evaluate_asset_alignment, generate_chapter_reduce_v1_forensic_matrix, generate_chapter_reduce_v2_argumentative_arc, generate_chapter_reduce_v3_operational_map
+from tools.reference_resolution_tools import triage_and_expand_chapter_references, fetch_crossref_metadata
+from tools.manuscript_slicing_tools import slice_monolith_to_bronze_sections, assemble_bronze_plus_sections
+from tools.cutlass_audit_tools import audit_chapter_silver_citations
 
 
 # =====================================================================
@@ -115,14 +120,15 @@ class ToolDispatcher:
             if call.name in ["read_file", "write_file", "list_directory", "get_file_info", "directory_search"]:
                 return execute_mcp_tool(call.name, args)
 
-            # --- Workspace & File I/O (Legacy Python Fallbacks) ---
-            # We keep these for Bilgeladle/Cutlass until they are upgraded
+            # --- Subagent Orchestration ---
+            if call.name == "dispatch_subagent_turn": return dispatch_subagent_turn(**args)
+
             # --- Workspace & File I/O ---
             if call.name == "read_local_file": return read_local_file(**args)
+            elif call.name == "read_skill_protocol": return read_skill_protocol(**args)
             elif call.name == "write_local_file": return write_local_file(**args)
             elif call.name == "delete_local_file": return delete_local_file(**args)
             elif call.name == "list_local_directory": return list_local_directory(**args)
-            elif call.name == "write_wiki_markdown": return write_wiki_markdown(**args)
             
             # --- GitHub SDLC ---
             elif call.name == "create_github_issue": return create_github_issue(**args)
@@ -150,6 +156,7 @@ class ToolDispatcher:
             elif call.name == "precision_html_extract": return precision_html_extract(**args)
             elif call.name == "extract_local_pdf": return extract_local_pdf(**args)
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
+            elif call.name == "call_zotero_translator": return call_zotero_translator(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
@@ -159,7 +166,24 @@ class ToolDispatcher:
             elif call.name == "create_zotero_item": return create_zotero_item(**args)
             elif call.name == "update_zotero_ledger": return update_zotero_ledger(**args)
             
+            # --- Chapter Structural Analysis & Thesis Alignment ---
+            elif call.name == "perform_chapter_structural_analysis": return perform_chapter_structural_analysis(**args)
+            elif call.name == "generate_chapter_expansion_document": return generate_chapter_expansion_document(**args)
+            elif call.name == "generate_chapter_synthesis_essay": return generate_chapter_synthesis_essay(**args)
+            elif call.name == "evaluate_asset_alignment": return evaluate_asset_alignment(**args)
+            elif call.name == "generate_chapter_reduce_v1_forensic_matrix": return generate_chapter_reduce_v1_forensic_matrix(**args)
+            elif call.name == "generate_chapter_reduce_v2_argumentative_arc": return generate_chapter_reduce_v2_argumentative_arc(**args)
+            elif call.name == "generate_chapter_reduce_v3_operational_map": return generate_chapter_reduce_v3_operational_map(**args)
+            elif call.name == "slice_monolith_to_bronze_sections": return slice_monolith_to_bronze_sections(**args)
+            elif call.name == "triage_and_expand_chapter_references": return triage_and_expand_chapter_references(**args)
+            elif call.name == "assemble_bronze_plus_sections": return assemble_bronze_plus_sections(**args)
+            elif call.name == "fetch_crossref_metadata": return fetch_crossref_metadata(**args)
+            elif call.name == "audit_chapter_silver_citations": return audit_chapter_silver_citations(**args)
+
             # --- Memory & Glossary ---
+            elif call.name == "conduct_learned_rules_audit": return conduct_learned_rules_audit()
+            elif call.name == "compile_rules_to_turtle_ontology": return compile_rules_to_turtle_ontology(**args)
+            elif call.name == "record_learned_rule": return record_learned_rule(**args)
             elif call.name == "record_learned_ontology_rule": return record_learned_ontology_rule(**args)
             elif call.name == "record_few_shot_exemplar": return record_few_shot_exemplar(**args)
             elif call.name == "reload_agent_memory_vault": return reload_agent_memory_vault(**args)
@@ -214,23 +238,35 @@ class ToolDispatcher:
             types.FunctionDeclaration(name="write_local_file", description="Writes local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}, "content": {"type": "STRING"}}, "required": ["file_path", "content"]}),
             types.FunctionDeclaration(name="delete_local_file", description="Deletes local file.", parameters={"type": "OBJECT", "properties": {"file_path": {"type": "STRING"}}, "required": ["file_path"]}),
             types.FunctionDeclaration(name="list_local_directory", description="Lists local directory.", parameters={"type": "OBJECT", "properties": {"directory_path": {"type": "STRING"}}, "required": ["directory_path"]}),
+            
+            # Subagent Orchestration
             types.FunctionDeclaration(
-                name="write_wiki_markdown", 
-                description="Writes a summary to the local_wiki directory, automatically generating strict YAML lineage frontmatter.", 
+                name="dispatch_subagent_turn",
+                description="Dispatches an operational turn to a named fleet subagent (plank, spyglass, bilgeladle, cutlass, scallywag, grog) using deterministic chase-tied thread tracking.",
                 parameters={
-                    "type": "OBJECT", 
+                    "type": "OBJECT",
                     "properties": {
-                        "artifact_id": {"type": "STRING", "description": "Unique identifier for the artifact."},
-                        "source_uri": {"type": "STRING", "description": "The GS bucket URI of the source artifact."},
-                        "content": {"type": "STRING", "description": "The summary markdown content."},
-                        "agent_name": {"type": "STRING", "description": "Your agent name (e.g., grog, cutlass, bilgeladle)."},
-                        "skill": {"type": "STRING", "description": "The specific skill you executed (e.g., structural_extraction, epistemic_summary)."}
-                    }, 
-                    "required": ["artifact_id", "source_uri", "content", "agent_name", "skill"]
+                        "agent_name": {"type": "STRING", "description": "The target subagent name (e.g. 'plank', 'spyglass', 'bilgeladle', 'cutlass')."},
+                        "prompt": {"type": "STRING", "description": "The explicit operational prompt/instruction for the subagent."},
+                        "chase_id": {"type": "STRING", "description": "Optional Chase execution run ID (e.g. 'ch04_silver_v1')."},
+                        "thread_id": {"type": "STRING", "description": "Optional thread ID override. If omitted, defaults to 'thread_{agent_name}_{chase_id}'."}
+                    },
+                    "required": ["agent_name", "prompt"]
                 }
             ),
-            
-            # GitHub Tools
+
+            # File & Skill I/O Tools
+            types.FunctionDeclaration(
+                name="read_skill_protocol",
+                description="Reads and loads the full step-by-step SKILL.md protocol instructions for a specific modular skill on-demand.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "skill_name": {"type": "STRING", "description": "The target skill name (e.g. 'chapter-silver-pipeline', 'conduct-learned-rules-audit')."}
+                    },
+                    "required": ["skill_name"]
+                }
+            ),
             types.FunctionDeclaration(name="create_github_issue", description="Creates issue.", parameters={"type": "OBJECT", "properties": {"title": {"type": "STRING"}, "body": {"type": "STRING"}}, "required": ["title"]}),
             types.FunctionDeclaration(name="list_github_issues", description="Lists issues.", parameters={"type": "OBJECT", "properties": {"state": {"type": "STRING"}}, "required": ["state"]}),
             types.FunctionDeclaration(name="close_github_issue", description="Closes issue.", parameters={"type": "OBJECT", "properties": {"issue_number": {"type": "INTEGER"}, "closing_comment": {"type": "STRING"}}, "required": ["issue_number"]}),
@@ -319,6 +355,11 @@ class ToolDispatcher:
                 description="Bypasses standard scraping to extract canonical arXiv IDs and hit the official API for metadata and HTML text.", 
                 parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING"}}, "required": ["url"]}
             ),
+            types.FunctionDeclaration(
+                name="call_zotero_translator",
+                description="Invokes the Google Cloud Run Zotero Translation Server to extract rich metadata and bypass paywalls for academic articles, journals, and complex web pages.",
+                parameters={"type": "OBJECT", "properties": {"target_url": {"type": "STRING", "description": "The URL of the academic or web article to translate."}}, "required": ["target_url"]}
+            ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
             types.FunctionDeclaration(
                 name="call_landlubber", 
@@ -382,8 +423,57 @@ class ToolDispatcher:
                 }
             ),
 
+            # Chapter Analysis & Thesis Alignment Tools
+            types.FunctionDeclaration(
+                name="perform_chapter_structural_analysis",
+                description="Analyzes chapter vignette, anchor quotes and intellectual lineage (e.g. Rand, Chomsky), Chain of Ruin vectors, and Heroes vs. Villains ledger.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "chapter_number": {"type": "INTEGER", "description": "Chapter number to analyze (e.g. 1)"}
+                    },
+                    "required": ["chapter_number"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="generate_chapter_expansion_document",
+                description="Generates a deep Bronze+/Silver Chapter or Section Expansion Document saved to local disk at manuscript/chapter_expansions/.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "chapter_number": {"type": "INTEGER", "description": "Chapter number to expand (e.g. 1)"},
+                        "section_filter": {"type": "STRING", "description": "Optional section filter (e.g. '1.3' or 'Section 1.3')"}
+                    },
+                    "required": ["chapter_number"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="generate_chapter_synthesis_essay",
+                description="Generates an author-editable Chapter Synthesis Essay saved to local disk at manuscript/chapter_essays/ch{num:02d}_synthesis_essay.md.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "chapter_number": {"type": "INTEGER", "description": "Chapter number to synthesize (e.g. 1)"}
+                    },
+                    "required": ["chapter_number"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="evaluate_asset_alignment",
+                description="Executes Map-Expand-Reduce pattern to evaluate an asset, query pgVector, cross-reference chapter essays, and emit chapter placement decision.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "asset_text": {"type": "STRING", "description": "The raw text of the asset/document to evaluate."}
+                    },
+                    "required": ["asset_text"]
+                }
+            ),
+
             # Cognitive Memory & System State
-            types.FunctionDeclaration(name="record_learned_ontology_rule", description="Saves rule.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule": {"type": "STRING"}}, "required": ["agent_name", "rule"]}),
+            types.FunctionDeclaration(name="conduct_learned_rules_audit", description="Dispatches a multi-agent survey asking all subagents to defend their local learned rules, generates ship/learned_rules_audit_decision.md, and promotes approved rules.", parameters={"type": "OBJECT", "properties": {}}),
+            types.FunctionDeclaration(name="record_learned_rule", description="Saves a permanent behavioral rule to the agent's local learned_rules.json file.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule": {"type": "STRING"}}, "required": ["agent_name", "rule"]}),
+            types.FunctionDeclaration(name="record_learned_ontology_rule", description="Saves rule (legacy alias).", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "rule": {"type": "STRING"}}, "required": ["agent_name", "rule"]}),
             types.FunctionDeclaration(name="record_few_shot_exemplar", description="Saves exemplar.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}, "user_input": {"type": "STRING"}, "model_response": {"type": "STRING"}}, "required": ["agent_name", "user_input", "model_response"]}),
             types.FunctionDeclaration(name="reload_agent_memory_vault", description="Reloads memory.", parameters={"type": "OBJECT", "properties": {"agent_name": {"type": "STRING"}}, "required": ["agent_name"]}),
             types.FunctionDeclaration(name="query_system_glossary", description="Queries glossary.", parameters={"type": "OBJECT", "properties": {}}),

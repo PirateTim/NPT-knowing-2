@@ -30,7 +30,7 @@
                 - Bucket C (Noise/Gossip - Distraction)
                 - Bucket D (The Author's Junk Drawer - Unclear relevance; needs re-evaluation)
                 
-                4. Use `write_wiki_markdown` to save this scan to the local_wiki directory (if applicable), and report success to the Author.
+                4. Use `log_fleet_enrichment` to commit this scan to the database and report findings to the Author.
             </execution_protocol>
         </skill>
 

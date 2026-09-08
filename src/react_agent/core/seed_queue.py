@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 import pg8000.dbapi
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 def build_queue_table():
     """

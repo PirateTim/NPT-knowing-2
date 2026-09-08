@@ -48,20 +48,20 @@ def run_plank():
     # 4. Interactive Loop
     while True:
         try:
-            user_input = input("\n[AUTHOR] -> ")
+            user_input = input(f"\n[AUTHOR -> PLANK] ({thread_id}) -> ")
             if user_input.lower() in ['exit', 'quit']:
-                print(f"\n[SYSTEM] Terminating {agent_name.capitalize()} session. State saved to Cloud SQL.")
+                print(f"\n[SYSTEM] Terminating Plank session ({thread_id}). State saved.")
                 break
             if not user_input.strip():
                 continue
 
             final_response = engine.execute_turn(chat_session, user_input)
-            print(f"\n[{agent_name.upper()}] -> {final_response}")
+            print(f"\n[PLANK] -> {final_response}")
             
             engine.save_checkpoint(thread_id, chat_session.get_history())
 
         except KeyboardInterrupt:
-            print("\n[SYSTEM] Session aborted by Author.")
+            print(f"\n[SYSTEM] Session aborted by Author ({thread_id}).")
             break
         except Exception as e:
             print(f"\n[FATAL ERROR] {str(e)}")

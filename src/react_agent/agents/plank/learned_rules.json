@@ -1,0 +1,83 @@
+[
+  {
+    "heuristic_id": "PLANK-HEURISTIC-001",
+    "scope": "PLANK_LOCAL",
+    "category": "Classification & Triage",
+    "generalized_heuristic": "Classify every citation into its primary structural category (ACADEMIC, WEB_TECHNICAL, NEWS_MEDIA, LEGAL_GOV, or CLASSICAL_CANONICAL) before selecting a resolution tool. Never force non-academic web or news items into academic DOI search tools.",
+    "underlying_mechanism": "Querying academic APIs with news headlines or software tickets generates false-positive DOI mismatches.",
+    "incident_context": "Discovered CrossRef querying on blog posts and GitHub issues in early chapter runs.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-002",
+    "scope": "PLANK_LOCAL",
+    "category": "Academic Resolution",
+    "generalized_heuristic": "When resolving academic papers via CrossRef or OpenAlex, accept candidate payloads only when both the primary author surname and key title concepts match. Reject ambiguous fuzzy matches.",
+    "underlying_mechanism": "Fuzzy API search often returns completely unrelated papers sharing generic words (e.g. 'Language', 'AI').",
+    "incident_context": "CrossRef fuzzy matching attached mismatched paper metadata to chapter queries.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-003",
+    "scope": "PLANK_LOCAL",
+    "category": "Web & Media Ingestion",
+    "generalized_heuristic": "For web articles, news, and technical posts, verify if the asset is already in Cargo Hold via check_cargo_manifest. If missing, queue the URL for Spyglass seizure and assemble a clean web node with verified publication dates.",
+    "underlying_mechanism": "Web citations lack permanent DOIs and require full-text seizure into Cargo Hold for long-term provenance.",
+    "incident_context": "Ensuring non-academic citations are captured in Cargo Hold without journal DOIs.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-004",
+    "scope": "PLANK_LOCAL",
+    "category": "Legal and Classical Metadata",
+    "generalized_heuristic": "For legal dockets, court opinions, government reports, or classical philosophical works, preserve specific docket numbers, translators, editions, and historical containers rather than flattening into generic article schemas.",
+    "underlying_mechanism": "Legal and classical citations rely on specific jurisdictional or translator containers for semantic validity.",
+    "incident_context": "Preserving court docket numbers and translator names in early chapter references.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-005",
+    "scope": "PLANK_LOCAL",
+    "category": "Placeholder & Misattribution Detection",
+    "generalized_heuristic": "Inspect draft URLs for placeholder domains or unrelated repo links. When a placeholder is detected, strip the bad URL, log a telemetry event, and use search grounding to find the authentic publication URL.",
+    "underlying_mechanism": "Draft manuscripts often contain placeholder links or copied template URLs that fail verification.",
+    "incident_context": "Discovered placeholder GitHub link attached to an IBM Statistical Machine Translation citation.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-006",
+    "scope": "PLANK_LOCAL",
+    "category": "Closed-Loop Refinement & Complete Expansion",
+    "generalized_heuristic": "When an epistemic audit flags shorthand in-text citations or missing parent containers, treat the audit feedback as an iterative refinement signal: re-read the raw reference, query search grounding/Cargo Hold, and write the complete, un-truncated vector node into the section.",
+    "underlying_mechanism": "Downstream Vector DB ingestion requires exhaustive, un-truncated bibliographic nodes to preserve context.",
+    "incident_context": "Iterative closed-loop revisions during Chapter 1-4 Silver assembly passes.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-007",
+    "scope": "PLANK_LOCAL",
+    "category": "Dead Link Remediation",
+    "generalized_heuristic": "When a target URL returns a 404 or redirect loop, use search grounding to locate the current canonical URL or direct PDF repository link and update the node.",
+    "underlying_mechanism": "Web assets decay and restructure over time, leaving dead pointers in manuscript drafts.",
+    "incident_context": "Resolving dead library budget links to direct PDF report URLs.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-008",
+    "scope": "PLANK_LOCAL",
+    "category": "Token Preservation & Author Escalation",
+    "generalized_heuristic": "Every expanded node requires an authentic, verifiable live URL. If a reference cannot be resolved after initial CrossRef and search grounding, stop immediately and prompt the Author rather than entering infinite speculative search loops.",
+    "underlying_mechanism": "Unanchored citations cannot be invented; speculative multi-turn search loops exhaust model context without gaining ground truth.",
+    "incident_context": "Author Directive: Mandatory URL Resolution & Token Preservation Rule.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "PLANK-HEURISTIC-009",
+    "scope": "PLANK_LOCAL",
+    "category": "Bibliographic Parsing Mandate",
+    "generalized_heuristic": "Decompose citation strings, author lists, and bibliographic metadata strictly via LLM semantic comprehension with structured schemas or official API responses. Regular expressions must never be used for bibliographic decomposition.",
+    "underlying_mechanism": "Bibliographic strings have diverse, unpredictable human formats with parentheticals, punctuation, and abbreviations that break regular expressions.",
+    "incident_context": "Author Directive (/learn): Prohibition of regex for citation parsing per ADR-012.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  }
+]

@@ -36,7 +36,7 @@ def run_langextract_mapping(text_content: str) -> str:
     """
     try:
         # Load environment configuration (.env) for API credentials
-        load_dotenv()
+        load_dotenv(override=True)
         
         # 1. Define overarching extraction prompt for Google LangExtract
         # We explicitly instruct the model to ignore generic site chrome/footers and prioritize structural claims and entities.
@@ -138,7 +138,7 @@ def run_langextract_mapping(text_content: str) -> str:
             text_or_documents=text_content,
             prompt_description=prompt,
             examples=examples,
-            model_id="gemini-3.5-flash",
+            model_id=os.getenv("DEFAULT_MODEL", "gemini-3.7-flash"),
             api_key=api_key
         )
         
@@ -235,7 +235,7 @@ def run_langextract_mapping(text_content: str) -> str:
         final_payload = {
             "metadata": {
                 "extraction_engine": "google-langextract",
-                "model": "gemini-3.5-flash",
+                "model": os.getenv("DEFAULT_MODEL", "gemini-3.7-flash"),
                 "timestamp": datetime.datetime.now().isoformat()
             },
             "nodes": list(nodes_dict.values()),

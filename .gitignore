@@ -33,11 +33,13 @@ src/react_agent/local_wiki
 manuscript/
 *.obsidian/
 docs-2026-07-14-ended/
+agent_audits/
 
 # 5. Runtime Caches & Local Scrap Output
 cargo_cache/
+cargo_ontology/
 data_lake/
 output/
 scratch_graph_response.txt
 *.log
-src/react_agent/core/content_lists/
+src/react_agent/core/content_lists/

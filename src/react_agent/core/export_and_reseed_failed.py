@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import pg8000.dbapi
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 def get_cargo_connection():
     conn_string = os.getenv("CONTENT_DATABASE_URL")

@@ -14,7 +14,7 @@ import pg8000.dbapi
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.agent_engine import AgentEngine
 
-load_dotenv()
+load_dotenv(override=True)
 
 def get_cargo_connection():
     conn_string = os.getenv("CONTENT_DATABASE_URL")
@@ -68,9 +68,9 @@ def _extract_domain(url: str) -> str:
     except Exception:
         return url
 
-def run_worker_loop():
+def run_worker_loop(max_items: int = 5):
     print("=========================================================")
-    print(" NPT FLEET: BATCH INGESTION WORKER (HEADLESS MODE)")
+    print(f" NPT FLEET: BATCH INGESTION WORKER (BATCH SIZE: {max_items})")
     print("=========================================================\n")
     
     conn = get_cargo_connection()
@@ -84,7 +84,7 @@ def run_worker_loop():
     items_processed = 0
     blocked_domains = set()
 
-    while True:
+    while items_processed < max_items:
         queue_id, target_url = fetch_next_url(conn)
         
         if not target_url:
@@ -94,6 +94,17 @@ def run_worker_loop():
         domain = _extract_domain(target_url)
         items_processed += 1
         print(f"\n[{items_processed}] Dequeued ID {queue_id}: {target_url}")
+
+        # THREADS.NET BYPASS logic: Threads blocks Gemini tools. Append to list file and skip.
+        if "threads.net" in target_url.lower():
+            print(f"  -> [THREADS BYPASS] Threads.net URL encountered. Appending to acquisitions/threads_links.txt and skipping...")
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+            acq_dir = os.path.join(base_dir, "acquisitions")
+            os.makedirs(acq_dir, exist_ok=True)
+            with open(os.path.join(acq_dir, "threads_links.txt"), "a", encoding="utf-8") as f:
+                f.write(target_url + "\n")
+            mark_queue_status(conn, queue_id, 'COMPLETED')
+            continue
 
         # DOMAIN CIRCUIT BREAKER: Skip LLM turn if domain is already blocked in this run
         if domain in blocked_domains:
@@ -143,4 +154,13 @@ def run_worker_loop():
     print(f"\n[WORKER SHUTDOWN] Processed {items_processed} items from the queue.")
 
 if __name__ == "__main__":
-    run_worker_loop()
+    import argparse
+    parser = argparse.ArgumentParser(description="NPT Fleet: Batch Ingestion Worker")
+    parser.add_argument(
+        "--limit", "--max-items", 
+        type=int, 
+        default=5, 
+        help="Maximum number of queue items to process in this run (default: 5)"
+    )
+    args = parser.parse_args()
+    run_worker_loop(max_items=args.limit)

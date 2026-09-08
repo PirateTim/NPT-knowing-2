@@ -1,0 +1,119 @@
+[
+  {
+    "heuristic_id": "SHARED-HEURISTIC-001",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Bibliographic Architecture & In-Text Provenance",
+    "generalized_heuristic": "Expand all parenthetical citation shorthands in draft prose (e.g. (Perrigo, 2023), (Bender et al., 2021)) into complete, vector-dense bibliographic nodes directly within the section prose.",
+    "underlying_mechanism": "Vector embeddings on section paragraphs lose intellectual provenance if citations remain isolated in detached bibliographies.",
+    "incident_context": "ADR-008 JSONB Silver Ledger & In-Text Reference Expansion Protocol.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-002",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Epistemic Lenses & Non-Financial Dynamics",
+    "generalized_heuristic": "When analyzing institutional failure or technological collapse, look beyond surface commercial incentives; evaluate cognitive friction, Malthusian data exhaustion, labor replacement models, and active agnotology.",
+    "underlying_mechanism": "Defaulting to 'they did it for money/clicks' produces lazy pastiche that obscures the deeper structural mechanisms of knowing and forgetting.",
+    "incident_context": "Manuscript Core Epistemic Constitution & Cutlass heuristic lenses.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-003",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Reflexive Temporal Critique",
+    "generalized_heuristic": "When evaluating follow-up, retrospective, or anniversary assets, interrogate whether the passage of time produced genuine structural self-awareness, or whether the institution is recycling legacy tropes to defend narrative authority.",
+    "underlying_mechanism": "Institutions consistently rewrite their historical records in retrospective essays to launder earlier failures into inevitable progress.",
+    "incident_context": "Epistemic Guardrail 003: Unprompted Reflexive Temporal Critique.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-004",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Evidence Weight & Anti-False Equivalence",
+    "generalized_heuristic": "Narrative synthesis must reflect the actual evidentiary weight of physical and historical records, avoiding artificial balancing ('bothsidesism') when one position is overwhelmingly supported by empirical facts.",
+    "underlying_mechanism": "False equivalence creates artificial epistemic neutrality, equating grounded evidence with manufactured PR talking points.",
+    "incident_context": "The Boykoff Ratio Enforcement heuristic.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-005",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Ground-Truth Anchor & Epistemic Null State",
+    "generalized_heuristic": "Return an explicit 'Insufficient Data' or 'Epistemic Null State' when a query cannot be answered using authentic ground-truth artifacts. Never permit probabilistic generation or training memory to hallucinate missing facts.",
+    "underlying_mechanism": "LLMs naturally synthesize plausible answers when context is missing, introducing subtle synthetic fabrications into knowledge pipelines.",
+    "incident_context": "The Epistemic Null State Protocol.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-006",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Anti-Pastiche & Cognitive Synthesis",
+    "generalized_heuristic": "Synthesize diverse, empirically anchored artifacts to produce original, grounded insight rather than statistically averaging common tropes into derivative pastiche.",
+    "underlying_mechanism": "Statistical language models default to median sentiment and formulaic prose when not grounded in specific material evidence.",
+    "incident_context": "Anti-Pastiche Enforcement Rule.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-007",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Substance Over Surface Formatting",
+    "generalized_heuristic": "Evaluate semantic substance and factual provenance over stylistic polish or institutional tone. Do not reject high-signal data due to informal presentation, nor accept deceitful claims disguised in polished corporate formatting.",
+    "underlying_mechanism": "Texture hacking (dense legalese, PR gloss, polished graphs) is frequently used to simulate epistemic rigor.",
+    "incident_context": "Semantic Substance Over Style Rule.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-008",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Nuanced & Non-Binary Extraction",
+    "generalized_heuristic": "Capture complex dialectical tensions and non-binary realities rather than forcing multi-variable phenomena into lossy binary categories.",
+    "underlying_mechanism": "Binary schemas flatten epistemic nuance, building collections of misleading answers to poorly framed questions.",
+    "incident_context": "Anti-Binary Extraction Rule.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-009",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Contextual Anchoring & Anti-Decoupling",
+    "generalized_heuristic": "Preserve the physical, institutional, and labor context surrounding empirical facts. Never isolate a factual claim from the material conditions that produced it.",
+    "underlying_mechanism": "Decoupling statistical findings from their experimental conditions and funding sources enables agnotological narrative capture.",
+    "incident_context": "Contextual Anchoring Rule.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-010",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Mandatory Live URLs & Token Preservation",
+    "generalized_heuristic": "Every bibliographic node must be anchored to an authentic, live URL on the public web. If a reference cannot be resolved after initial CrossRef and search grounding, halt and prompt the Author rather than entering infinite speculative search loops.",
+    "underlying_mechanism": "Unverified references lack provenance; unbounded search loops burn tokens without generating factual truth.",
+    "incident_context": "Author Directive: Mandatory URL Provenance & Token Preservation Protocol.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-011",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "LLM Semantic Decomposition over Regex",
+    "generalized_heuristic": "Parse and decompose complex human bibliographic strings strictly through LLM semantic comprehension with structured schemas or official APIs. Regular expressions must never be used for citation decomposition.",
+    "underlying_mechanism": "Human citations contain irregular punctuation, translator parentheticals, and abbreviations that cause brittle regex parsers to silently drop critical metadata.",
+    "incident_context": "Author Directive (/learn): Prohibition of regex for reference parsing per ADR-012.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-012",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Hybrid Memory & Pointer Architecture (ADR-013)",
+    "generalized_heuristic": "Bilgeladle operates with full manuscript corpus system prompt injection (~100k tokens = ~$0.007/turn) for unbroken thesis vision. Inter-agent multi-stage pipelines (Spyglass -> Cutlass -> Grog -> Bilgeladle -> Scallywag) must pass lightweight file pointers (acquisitions/[slug].txt) and database IDs rather than concatenating raw text strings into prompts. Deep section expansions (ship/expansions/) are loaded on-demand via read_local_file.",
+    "underlying_mechanism": "Loading full manuscript into Flash costs <$0.01 per turn while maintaining complete thesis awareness. Concatenating raw text files directly into prompt strings across multi-agent turns causes exponential token compounding and high cost spikes.",
+    "incident_context": "ADR-013: Hybrid Memory & Pointer Architecture.",
+    "timestamp_utc": "2026-08-31 12:35:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-013",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Cloud Resource Governance & Mandatory Teardown Documentation",
+    "generalized_heuristic": "Whenever new cloud resources (Cloud Run services, GCS buckets, Cloud SQL databases, Artifact Registry repositories, service accounts, or public IAM policies) are provisioned or modified, immediately update docs/GCP_CLOUD_TEARDOWN_INSTRUCTIONS.md with the resource specifications, idle cost implications, and exact CLI deletion/dormancy commands.",
+    "underlying_mechanism": "Cloud infrastructure sprawl generates zombie recurring billing and orphaned security vectors (e.g. unauthenticated invoker policies, active private JSON keys, or auto-restarting Cloud SQL instances) if teardown procedures are not documented at the moment of creation.",
+    "incident_context": "Author Directive (/learn): Mandatory Teardown Documentation on Cloud Provisioning.",
+    "timestamp_utc": "2026-09-03 15:02:00 UTC"
+  }
+]

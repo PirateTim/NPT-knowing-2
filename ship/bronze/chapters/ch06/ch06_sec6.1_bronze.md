@@ -1,0 +1,6 @@
+### 6.1 The Copy Shop Logic
+Before the knowledge system was subjected to the **Optimization-Driven Liquidation** of the 2020s, the integrity of the record relied on physical friction. In 1991, the battle for context was fought in a strip mall. The case was *Basic Books, Inc. v. Kinko's Graphics Corp.*, and it serves as the forensic baseline for the collapse.
+
+Kinko’s had industrialized the "Course Packet." They stripped chapters from textbooks, rebound them into custom anthologies, and sold them to students under the guise of an "Educational Exemption." The court rejected this, ruling that Kinko’s was not an educator, but a commercial repacker. The theft was visible because it had mass; you could weigh the stolen chapters on a scale. The law was enforceable because the "Friction" of paper created a traceable chain of custody.
+
+Generative AI is simply Kinko’s at infinite scale. It is a "Universal Course Packet" that has stripped the friction away. It seeks the specific, isolated answer to a user’s prompt—the "rabbit"—and to extract it, it knocks the stones of the original context aside. This constitutes the **Active Fraud of Context**: the reduction of a carefully balanced architecture into a pile of convenient rubble.

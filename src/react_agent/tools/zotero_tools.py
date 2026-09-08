@@ -24,7 +24,7 @@ def _get_zotero_client():
     Purpose: Initializes the authenticated PyZotero instance using the human 
     architect's library ID and API key.
     """
-    load_dotenv()
+    load_dotenv(override=True)
     library_id = os.getenv("ZOTERO_LIBRARY_ID")
     api_key = os.getenv("ZOTERO_API_KEY")
     if not library_id or not api_key:

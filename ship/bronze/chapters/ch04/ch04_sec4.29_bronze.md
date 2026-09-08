@@ -1,0 +1,6 @@
+#### 4.29 Preemptive Obedience
+The final crack in the mirror appeared in October 2024. Faced with the prospect of a second Trump administration, the Washington Post—owned by Jeff Bezos—refused to endorse a candidate, breaking decades of precedent. This was not "neutrality." It was, as historian Timothy Snyder warned in On Tyranny, "Preemptive Obedience" (Snyder, 2017). It was the sound of a billion-dollar institution folding its spine in advance of the pressure.
+
+The audience reaction was immediate and devastating. In a single week, the Post lost over 250,000 digital subscribers—roughly 10% of its paid circulation (Folkenflik, 2024). This was the "Suicide of the Scribe." The audience shattered the mirror because they realized the product was useless. They had paid for a "Watchdog," but the "Celebrity Journalists" and the "Billionaire Owners" had delivered a "Lapdog."
+
+Maria Ressa, the Nobel Prize-winning journalist, had warned us that "The algorithm does not want what is true. It wants what is sticky" (Ressa, 2022). For twenty years, the American press chased the sticky. They built a Hall of Mirrors to capture the engagement of the Discourse. But when the crisis arrived, and the public needed the "Ground Truth" to survive, they looked into the mirror and saw only the terrified reflection of a profession that had forgotten how to fight.

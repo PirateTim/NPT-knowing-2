@@ -35,6 +35,10 @@
     {
       "lens_name": "The Trusted Dataset Paradox",
       "perspective": "This lens exposes the fatal flaw of automated 'verification' systems that check claims against a closed, authoritative database. If the database itself has been retroactively sanitized, captured by power, or built on unverified institutional stenography, the 'verification' process is merely a high-tech laundering mechanism. It automates the production of consensus around a lie, transforming historical erasure (such as the scrubbing of Tiananmen Square from Chinese search engines, or the laundering of WMD claims in legacy media archives) into an unassailable, algorithmically validated 'ground truth.' When an AI 'checks' a claim against a poisoned wellspring, it does not verify reality; it enforces the hegemony of the archive."
+    },
+    {
+      "lens_name": "The 'IS' vs. 'SAYS' Epistemic Deconstruction",
+      "perspective": "Always decouple what an asset 'SAYS' (its surface claims, PR narrative, or technological promises) from what the asset 'IS' within the Epistemic Knowledge Chain (e.g. a syndicated media release using a flawed database of mainstream lies to establish narrative control). Never default to seeing a problem as an 'AI problem' or an 'AI solution'. AI is rarely the core element in epistemic failure; the core element is the systemic degradation of the Epistemic Knowledge Chain itself (media decay, loss of verification, access journalism, institutional self-preservation)."
     }
   ]
 }

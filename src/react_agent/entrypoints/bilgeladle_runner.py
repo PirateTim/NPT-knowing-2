@@ -1,75 +1,73 @@
+"""
+Bilgeladle Interactive & CLI Terminal (Entrypoint)
+Mission: Thesis Alignment & Manuscript Integration
+"""
 import os
 import sys
 import uuid
+import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.agent_engine import AgentEngine
-from tools.memory_tools import query_system_glossary
 
 def run_bilgeladle():
-    print("=========================================================")
-    print(" NPT FLEET TERMINAL: BILGELADLE (THESIS ALIGNMENT) ")
-    print("=========================================================")
-    
+    parser = argparse.ArgumentParser(description="NPT Fleet: Bilgeladle Thesis Alignment")
+    parser.add_argument("--thread-id", "--thread", type=str, default=None, help="Thread ID or session key")
+    parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for single-turn execution")
+    parser.add_argument("--model", type=str, default=None, help="Optional model override")
+    args, unknown = parser.parse_known_args()
+
     agent_name = "bilgeladle"
     xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "bilgeladle", "bilgeladle.xml"))
     
-    # 1. Instantiate the Engine
-    # engine = AgentEngine(agent_name=agent_name, xml_profile_path=xml_path)
-    # 1. Parse optional CLI arguments for model overrides
-    model_override = sys.argv[1] if len(sys.argv) > 1 else None
-    
-    # 2. Instantiate the Engine with the override payload
     engine = AgentEngine(
         agent_name=agent_name, 
         xml_profile_path=xml_path, 
-        model_override=model_override
+        model_override=args.model
     )
 
-
-    # 2. Fetch and Inject the Live DB Glossary
-    # 2026-07-17 I am commenting the glossary out because we are going to run mechanical parsing on the whole book today.  In the future, we will add it back for all analysis and self learning tasks.
-    # print("[SYSTEM] Fetching live glossary from cargo.system_glossary...")
-    # live_glossary = query_system_glossary()
-    
-    # engine.system_instruction += f"\n\n--- CRITICAL FLEET GLOSSARY ---\n{live_glossary}\n-------------------------------"
-    
-    # 3. Thread Management
-    thread_input = input("Enter Thread ID or Suffix (or press Enter for new session): ").strip()
-    
-    if thread_input:
-        if thread_input.startswith(f"thread_{agent_name}_"):
-            thread_id = thread_input
-        else:
-            thread_id = f"thread_{agent_name}_{thread_input}"
+    if args.thread_id:
+        thread_id = args.thread_id if args.thread_id.startswith(f"thread_{agent_name}_") else f"thread_{agent_name}_{args.thread_id}" if not args.thread_id.startswith("thread_") else args.thread_id
     else:
-        thread_id = f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"
-        
-    print(f"\n[SYSTEM] Active Thread ID: {thread_id}")
+        thread_input = input("Enter Thread ID or Suffix (or press Enter for new session): ").strip()
+        if thread_input:
+            thread_id = thread_input if thread_input.startswith(f"thread_{agent_name}_") else f"thread_{agent_name}_{thread_input}"
+        else:
+            thread_id = f"thread_{agent_name}_{uuid.uuid4().hex[:8]}"
+            
+    print("=========================================================")
+    print(" NPT FLEET TERMINAL: BILGELADLE (THESIS ALIGNMENT) ")
+    print(f" ACTIVE THREAD: {thread_id}")
+    print("=========================================================")
     
     chat_session = engine.start_chat_session(thread_id)
     
-    # 4. Interactive Loop
+    if args.prompt:
+        print(f"\n[AUTHOR -> BILGELADLE] ({thread_id}) -> {args.prompt}")
+        final_response = engine.execute_turn(chat_session, args.prompt)
+        print(f"\n[BILGELADLE] -> {final_response}")
+        engine.save_checkpoint(thread_id, chat_session.get_history())
+        return
+
     while True:
         try:
-            user_input = input("\n[AUTHOR] -> ")
+            user_input = input(f"\n[AUTHOR -> BILGELADLE] ({thread_id}) -> ")
             if user_input.lower() in ['exit', 'quit']:
-                print("\n[SYSTEM] Terminating Bilgeladle session.")
+                print(f"\n[SYSTEM] Terminating Bilgeladle session ({thread_id}). State saved.")
                 break
             if not user_input.strip():
                 continue
 
             final_response = engine.execute_turn(chat_session, user_input)
             print(f"\n[BILGELADLE] -> {final_response}")
-            
             engine.save_checkpoint(thread_id, chat_session.get_history())
 
         except KeyboardInterrupt:
-            print("\n[SYSTEM] Session aborted by Author.")
+            print(f"\n[SYSTEM] Session aborted by Author ({thread_id}).")
             break
         except Exception as e:
             print(f"\n[FATAL ERROR] {str(e)}")
             break
 
 if __name__ == "__main__":
-    run_bilgeladle()
+    run_bilgeladle()

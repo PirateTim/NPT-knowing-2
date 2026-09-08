@@ -1,0 +1,5 @@
+PROMPT: would this really make a difference?:  https://gizmodo.com/major-publishers-are-reportedly-considering-a-drastic-step-to-get-their-content-out-of-googles-ai-answers-2000788873
+REFERENCED CONTENT ID: 148
+TITLE: Major Publishers Are Reportedly Considering a Drastic Step to Get Their Content Out of Google's AI Answers
+SOURCE URL: https://gizmodo.com/major-publishers-are-reportedly-considering-a-drastic-step-to-get-their-content-out-of-googles-ai-answers-2000788873
+GCS PATH: acquisitions/major-publishers-are-reportedly-considering-a-drastic-step-to-get-their-content-out-of-googles-ai-answers.txt

@@ -4,6 +4,7 @@ Architecture: Strict Cargo Database Isolation (ADR-003)
 """
 import os
 import json 
+from typing import Optional
 from urllib.parse import urlparse
 import pg8000.dbapi
 
@@ -21,7 +22,7 @@ def _get_strict_cargo_connection():
     into the agent_state cognitive schema.
     Invoked By: Called internally by all tools in this file.
     """
-    load_dotenv()
+    load_dotenv(override=True)
     conn_string = os.getenv("CONTENT_DATABASE_URL")
     if not conn_string:
         return None
@@ -41,9 +42,10 @@ def _get_strict_cargo_connection():
 
 def check_cargo_manifest(target_url: str) -> str:
     """
-    Agent Tool: Pre-Flight Deduplication.
-    Purpose: Checks the Postgres metadata table to see if a URL has already 
-    been ingested and exists in the GCS bucket to prevent redundant processing.
+    Agent Tool: Pre-Flight Deduplication & Dead-Letter Check.
+    Purpose: Checks both the ingested cargo metadata (cargo.content_metadata) and 
+    the dead-letter queue (cargo.failed_metadata) to prevent redundant processing 
+    for already acquired or known failed/blocked URLs.
     Invoked By: SPYGLASS (The Ingestion Engine).
     """
     conn = _get_strict_cargo_connection()
@@ -51,13 +53,25 @@ def check_cargo_manifest(target_url: str) -> str:
         return "[ERROR] Cargo database unavailable for deduplication check."
     try:
         cursor = conn.cursor()
-        cursor.execute('SELECT gcp_bucket_path FROM cargo.content_metadata WHERE source_url = %s;', (target_url,))
+        # 1. Check successful acquisitions
+        cursor.execute('SELECT gcp_bucket_path, title FROM cargo.content_metadata WHERE source_url = %s;', (target_url,))
         record = cursor.fetchone()
+        if record:
+            cursor.close()
+            title_str = f" ('{record[1]}')" if record[1] else ""
+            return f"[DUPLICATE FOUND] URL already exists in cargo hold at path: {record[0]}{title_str}."
+            
+        # 2. Check dead-letter queue for previous failures
+        cursor.execute('SELECT error_message, error_state, failed_at FROM cargo.failed_metadata WHERE source_url = %s;', (target_url,))
+        failed_record = cursor.fetchone()
         cursor.close()
         
-        if record:
-            return f"[DUPLICATE FOUND] URL already exists in cargo hold at path: {record[0]}"
-        return "[CLEAR] URL is not in the content database. Safe to proceed with acquisition."
+        if failed_record:
+            err_msg = failed_record[0] or failed_record[1] or "Unknown failure"
+            fail_time = failed_record[2] or "previously"
+            return f"[KNOWN DEAD-LETTER] URL previously failed acquisition and is logged in dead-letter queue. Reason: {err_msg} (failed at: {fail_time}). Skip re-scraping unless explicitly forced."
+            
+        return "[CLEAR] URL is not in the content database or dead-letter queue. Safe to proceed with acquisition."
     except Exception as e:
         return f"[ERROR] Deduplication query failed: {str(e)}"
     finally:
@@ -207,6 +221,35 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
     finally:
         conn.close()
 
+def add_to_ingestion_queue(target_url: str, chapter_context: str = "") -> str:
+    """
+    Agent Tool: Queue Ingestion Target.
+    Purpose: Pushes an unresolved URL target into the cargo.ingestion_queue Postgres table 
+    for Spyglass to process asynchronously.
+    Invoked By: PLANK (during reference resolution).
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database connection failed."
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            '''
+            INSERT INTO cargo.ingestion_queue (target_url, status, added_at, attempt_count)
+            VALUES (%s, 'PENDING', NOW(), 0)
+            ON CONFLICT (target_url) DO UPDATE SET status = 'PENDING';
+            ''',
+            (target_url,)
+        )
+        conn.commit()
+        cursor.close()
+        return f"[QUEUED] URL {target_url} added to cargo.ingestion_queue for Spyglass."
+    except Exception as e:
+        return f"[ERROR] Failed to insert URL into cargo.ingestion_queue: {str(e)}"
+    finally:
+        conn.close()
+
+
 def log_fleet_enrichment(agent_name: str, enrichment_type: str, gcp_bucket_path: str, payload: str) -> str:
     """
     Agent Tool: The Silver Ledger DB Injector.
@@ -308,5 +351,122 @@ def reseed_failed_cargo_queue() -> str:
         return f"[SUCCESS] Reseeded {count} URLs into cargo.ingestion_queue with status='PENDING'."
     except Exception as e:
         return f"[ERROR] Reseeding failed: {str(e)}"
+    finally:
+        conn.close()
+
+def record_chase_event(chase_id: str, inquiry_prompt: str = "", status: str = "IN_PROGRESS", metadata_payload: Optional[str] = None) -> str:
+    """
+    Agent Tool: Chase Lifecycle Recorder.
+    Purpose: Registers or updates a Chase mission in cargo.chases.
+    Invoked By: PEGLEG (DAG Orchestrator).
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database unavailable."
+    try:
+        cursor = conn.cursor()
+        payload_dict = {}
+        if metadata_payload:
+            try:
+                payload_dict = json.loads(metadata_payload)
+            except Exception:
+                payload_dict = {"raw_payload": metadata_payload}
+                
+        completed_clause = ", completed_at = NOW()" if status.upper() in ["COMPLETED", "APPROVED"] else ""
+        
+        cursor.execute(
+            f"""
+            INSERT INTO cargo.chases (chase_id, inquiry_prompt, status, metadata_payload, created_at)
+            VALUES (%s, %s, %s, %s, NOW())
+            ON CONFLICT (chase_id) DO UPDATE SET
+                inquiry_prompt = CASE WHEN EXCLUDED.inquiry_prompt != '' THEN EXCLUDED.inquiry_prompt ELSE cargo.chases.inquiry_prompt END,
+                status = EXCLUDED.status,
+                metadata_payload = cargo.chases.metadata_payload || EXCLUDED.metadata_payload
+                {completed_clause};
+            """,
+            (chase_id, inquiry_prompt, status, json.dumps(payload_dict))
+        )
+        conn.commit()
+        cursor.close()
+        return f"[SUCCESS] Recorded chase '{chase_id}' with status '{status}' in cargo.chases."
+    except Exception as e:
+        return f"[ERROR] Failed to record chase event: {str(e)}"
+    finally:
+        conn.close()
+
+def link_chase_asset(chase_id: str, source_url: str) -> str:
+    """
+    Agent Tool: Chase Asset Linker.
+    Purpose: Binds an acquired cargo asset (via source_url) to a Chase in cargo.chase_assets.
+    Invoked By: PEGLEG, SPYGLASS.
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database unavailable."
+    try:
+        cursor = conn.cursor()
+        # Resolve metadata_id
+        cursor.execute("SELECT id FROM cargo.content_metadata WHERE source_url = %s LIMIT 1;", (source_url,))
+        row = cursor.fetchone()
+        if not row:
+            return f"[WARNING] Asset with source_url '{source_url}' not found in cargo.content_metadata yet."
+            
+        metadata_id = row[0]
+        cursor.execute(
+            """
+            INSERT INTO cargo.chase_assets (chase_id, metadata_id, added_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (chase_id, metadata_id) DO NOTHING;
+            """,
+            (chase_id, metadata_id)
+        )
+        conn.commit()
+        cursor.close()
+        return f"[SUCCESS] Linked asset id={metadata_id} to chase '{chase_id}'."
+    except Exception as e:
+        return f"[ERROR] Failed to link asset to chase: {str(e)}"
+    finally:
+        conn.close()
+
+def query_chapter_assets(chapter_number: int) -> str:
+    """
+    Agent Tool: Chapter Asset Discovery.
+    Purpose: Queries cargo.v_chapter_assets to retrieve all external assets indexed to a specific chapter (0–12).
+    Invoked By: BILGELADLE, PEGLEG, SCALLYWAG.
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database unavailable."
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT metadata_id, title, source_url, item_type, gcp_bucket_path, placement_rationale, indexed_at
+            FROM cargo.v_chapter_assets
+            WHERE primary_chapter = %s OR secondary_chapters @> %s
+            ORDER BY indexed_at DESC;
+            """,
+            (chapter_number, json.dumps([chapter_number]))
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        if not rows:
+            return f"[NOTICE] No assets currently indexed to Chapter {chapter_number} in cargo.v_chapter_assets."
+            
+        results = []
+        for r in rows:
+            results.append({
+                "metadata_id": r[0],
+                "title": r[1],
+                "source_url": r[2],
+                "item_type": r[3],
+                "gcp_bucket_path": r[4],
+                "rationale": r[5],
+                "indexed_at": str(r[6])
+            })
+        return json.dumps(results, indent=2)
+    except Exception as e:
+        return f"[ERROR] Failed to query chapter assets: {str(e)}"
     finally:
         conn.close()

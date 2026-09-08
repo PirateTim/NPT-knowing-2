@@ -19,17 +19,36 @@ from botasaurus.browser import browser, Driver
 # INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
 # =====================================================================
 
-@browser(headless=True)
+# ---------------------------------------------------------------------
+# BOTASAURUS BROWSER CONFIGURATION & DEBUG MODE TOGGLING:
+# - Automated Batch Runs (Default): headless=True, close_on_crash=True, block_images=True
+#   This ensures the browser runs invisibly and terminates immediately on timeout/crash
+#   without halting batch execution or pausing for user input ("Press 'Enter' to close").
+#
+# - How to Turn Visible Browser Debug Mode ON:
+#   Option A (Environment Variable): Set BOTASAURUS_HEADLESS=false and BOTASAURUS_CLOSE_ON_CRASH=false in .env
+#   Option B (Code Toggle): Change defaults below to headless=False, close_on_crash=False
+#   When visible mode is ON, Botasaurus will render the Chrome UI on your desktop and pause
+#   on captcha/DOM crashes so you can inspect Cloudflare challenges interactively.
+# ---------------------------------------------------------------------
+_BOTASAURUS_HEADLESS = os.getenv("BOTASAURUS_HEADLESS", "true").lower() in ("true", "1", "yes")
+_BOTASAURUS_CLOSE_ON_CRASH = os.getenv("BOTASAURUS_CLOSE_ON_CRASH", "true").lower() in ("true", "1", "yes")
+
+@browser(headless=_BOTASAURUS_HEADLESS, close_on_crash=_BOTASAURUS_CLOSE_ON_CRASH, block_images=True)
 def botasaurus_fetch(driver: Driver, data: dict):
     """
-    Internal Helper: Botasaurus Anti-Detect Engine.
+    Internal Helper: Anti-Detect Engine.
     Purpose: Acts as the heavy Tier 2 fallback to bypass Cloudflare/PerimeterX 
     barriers when standard requests fail. Returns the fully rendered DOM.
     Invoked By: Called internally by download_url.
     """
     url = data.get("url")
-    driver.get(url)
-    return driver.page_html
+    try:
+        driver.get(url)
+        return driver.page_html
+    except Exception as e:
+        print(f"  -> [BOTASAURUS INNER EXCEPTION] Timeout or freeze on URL: {url}. Error: {str(e)}")
+        return f"[BOTASAURUS_TIMEOUT] {str(e)}"
 
 def _clean_string_metadata(text_str: str) -> str:
     """
@@ -246,8 +265,8 @@ def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "") -
         except Exception:
             pass
 
-        if not text_pages:
-            return f"[ERROR] PDF downloaded successfully from {target_url}, but no extractable text found (Scanned Image PDF suspected)."
+        if not text_pages or len("\n\n".join(text_pages).strip()) < 200:
+            return f"[ERROR] PDF downloaded successfully from {target_url}, but no extractable text found (Scanned Image PDF suspected or content too short)."
 
         clean_content = "\n\n".join(text_pages)
         title = pdf_title if pdf_title else target_url.split('/')[-1]
@@ -316,6 +335,10 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
     headers.update(custom_headers_dict)
 
     html_string = None
+    clean_content = None
+    jina_meta = None
+    
+    import trafilatura
     
     # TIER 1: Standard Requests
     try:
@@ -327,28 +350,84 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 return download_remote_pdf(target_url, cookies=cookies, custom_headers=custom_headers)
 
             html_string = response.content.decode('utf-8', errors='replace')
-            
-            import trafilatura
             temp_clean = trafilatura.extract(html_string)
             if not temp_clean or len(temp_clean) < 800:
                 raise ValueError("Extracted text is suspiciously short (Paywall or JS-Wall suspected).")
-                
-        else: raise ValueError(f"HTTP {response.status_code}")
-        
+            clean_content = temp_clean
+        else:
+            raise ValueError(f"HTTP {response.status_code}")
+            
     except Exception as e1:
         print(f"  -> [SPYGLASS TIER 1 FAILED] Reason: {str(e1)}. Triggering Botasaurus...")
+        # TIER 2: Botasaurus
         try:
             bota_result = botasaurus_fetch([{"url": target_url}])
             if bota_result and bota_result[0]:
+                if bota_result[0].startswith("[BOTASAURUS_TIMEOUT]"):
+                    raise ValueError(bota_result[0])
                 html_string = bota_result[0]
-            else: raise ValueError("Botasaurus returned empty DOM.")
+                temp_clean = trafilatura.extract(html_string) or BeautifulSoup(html_string, 'html.parser').get_text(separator='\n', strip=True)[:10000]
+                if not temp_clean or len(temp_clean.strip()) < 200:
+                    raise ValueError("Extracted Botasaurus content is suspiciously short.")
+                clean_content = temp_clean
+            else:
+                raise ValueError("Botasaurus returned empty DOM.")
         except Exception as e2:
-            return f"[ACCESS BARRIER] Both extraction tiers failed. Tier 2 Error: {str(e2)}"
+            print(f"  -> [SPYGLASS TIER 2 FAILED] Reason: {str(e2)}. Triggering Tier 3 (Jina Reader)...")
+            # TIER 3: Jina Reader
+            try:
+                jina_url = f"https://r.jina.ai/{target_url}"
+                jina_headers = {"User-Agent": "Mozilla/5.0"}
+                jina_key = os.getenv("JINA_API_KEY")
+                if jina_key:
+                    jina_headers["Authorization"] = f"Bearer {jina_key}"
+                
+                jina_response = requests.get(jina_url, headers=jina_headers, timeout=20)
+                if jina_response.status_code == 200:
+                    jina_text = jina_response.text
+                    if jina_text and len(jina_text.strip()) >= 200:
+                        clean_content = jina_text
+                        html_string = f"<html><body>{jina_text}</body></html>" # mock HTML payload
+                        
+                        # Parse Jina markdown header for metadata
+                        jina_title = None
+                        jina_pub = "UNKNOWN"
+                        for line in jina_text.split("\n")[:15]:
+                            if line.lower().startswith("title:"):
+                                jina_title = line[6:].strip()
+                            elif line.lower().startswith("published time:") or line.lower().startswith("published:"):
+                                jina_pub = line.split(":", 1)[1].strip()
+                                
+                        if not jina_title:
+                            jina_title = target_url.split('/')[-1] or "acquired_article"
+                            
+                        jina_meta = {
+                            "title": jina_title,
+                            "published_date": jina_pub
+                        }
+                        print(f"  -> [SPYGLASS TIER 3 SUCCESS] Ingested URL via Jina Reader. Title: '{jina_title}'")
+                    else:
+                        raise ValueError("Jina returned empty/short content.")
+                else:
+                    raise ValueError(f"Jina returned HTTP {jina_response.status_code}")
+            except Exception as e3:
+                receipt = {
+                    "status": "FAILED",
+                    "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}"
+                }
+                return json.dumps(receipt, indent=2)
 
-    if not html_string: return f"[ERROR] Failed to acquire HTML."
-    
-    clean_content = trafilatura.extract(html_string) or BeautifulSoup(html_string, 'html.parser').get_text(separator='\n', strip=True)[:10000]
+    # Secondary check to guarantee content safety
+    if not clean_content or len(clean_content.strip()) < 200:
+        receipt = {
+            "status": "FAILED",
+            "reason": f"[ACCESS BARRIER] Ingestion succeeded but extracted content density was too low ({len(clean_content.strip()) if clean_content else 0} chars)."
+        }
+        return json.dumps(receipt, indent=2)
+
     rich_meta = _extract_rich_metadata(html_string, target_url)
+    if jina_meta:
+        rich_meta.update(jina_meta)
     
     cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
     os.makedirs(cache_dir, exist_ok=True)
@@ -525,7 +604,36 @@ def acquire_arxiv_document(url: str) -> str:
                 
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            body_text = "[CONTENT WARNING] Full HTML text is not yet available for this paper. The author has not compiled the LaTeX to HTML, or it is a legacy paper. Only the Abstract is provided above."
+            print(f"  -> [ARXIV HTML 404] HTML version not available for ID {arxiv_id}. Falling back to PDF extraction...")
+            pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+            try:
+                pdf_req = urllib.request.Request(pdf_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(pdf_req, timeout=30) as pdf_response:
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+                        temp_file.write(pdf_response.read())
+                        temp_path = temp_file.name
+                    
+                    try:
+                        text_pages = []
+                        with open(temp_path, "rb") as f:
+                            reader = pypdf.PdfReader(f)
+                            for i, page in enumerate(reader.pages):
+                                page_text = page.extract_text()
+                                if page_text:
+                                    text_pages.append(f"--- PAGE {i+1} ---\n{page_text}")
+                        
+                        if text_pages:
+                            body_text = "\n\n".join(text_pages)
+                        else:
+                            body_text = "[CONTENT WARNING] PDF extracted successfully, but yielded 0 text characters."
+                    finally:
+                        try:
+                            os.remove(temp_path)
+                        except Exception:
+                            pass
+            except Exception as pdf_error:
+                body_text = f"[CONTENT WARNING] Both HTML and PDF fallbacks failed for arXiv ID {arxiv_id}. PDF error: {str(pdf_error)}"
         else:
             body_text = f"[ACCESS BARRIER] HTML fetch failed: HTTP {e.code}"
     except Exception as e:
@@ -562,3 +670,42 @@ def extract_local_pdf(zotero_storage_key: str) -> str:
         return f"=== BINARY EXTRACTION SUCCESS: {target_pdf.name} ===\n\n" + "\n".join(text_accumulator)
     except Exception as e:
         return f"[ERROR] Local binary parsing failed: {str(e)}"
+
+
+def call_zotero_translator(target_url: str) -> str:
+    """
+    Agent Tool: Cloud Run Zotero Translation Server.
+    Purpose: Resolves paywalled academic papers, journals, and complex metadata 
+    by invoking official Zotero translators deployed to Google Cloud Run (Serverless).
+    Bypasses paywalls for Nature, ScienceDirect, IEEE, JSTOR, Springer, Wiley, etc.
+    Invoked By: SPYGLASS (The Ingestion Engine), PLANK (Zotero Specialist).
+    """
+    endpoint = os.getenv("ZOTERO_TRANSLATOR_URL", "https://zotero-translator-809652732702.us-central1.run.app/web")
+    try:
+        headers = {"Content-Type": "text/plain"}
+        response = requests.post(endpoint, data=target_url, headers=headers, timeout=45)
+        if response.status_code == 200:
+            import json
+            items = response.json()
+            if items:
+                return json.dumps({
+                    "status": "SUCCESS",
+                    "url": target_url,
+                    "item_count": len(items),
+                    "items": items
+                }, indent=2)
+            else:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": "Zotero translation server returned 0 items for this URL."
+                }, indent=2)
+        else:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"Zotero translation server returned HTTP {response.status_code}: {response.text[:200]}"
+            }, indent=2)
+    except Exception as e:
+        return json.dumps({
+            "status": "ERROR",
+            "reason": f"Failed to connect to Zotero translation server: {str(e)}"
+        }, indent=2)

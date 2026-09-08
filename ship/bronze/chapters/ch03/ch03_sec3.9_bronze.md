@@ -1,0 +1,13 @@
+### **3.9 The Pile: "We Are Just Reading"**
+
+To understand the sheer velocity of the moral reversal, we must look at the bodies left behind by the previous regime. If we were to stack the victims of the Copyright Wars into a single pile, the diversity of the casualties would be disorienting.
+
+At the bottom of the pile, we find Sarah Seabury Ward, a 66-year-old grandmother from Massachusetts. In 2003, the Recording Industry Association of America (RIAA) sued her for being a "digital gangster," alleging she had shared thousands of rap songs on Kazaa. It didn't matter that she owned a Macintosh (which couldn't run Kazaa) or that she had never heard of the songs. The industry needed to make an example of a civilian to protect the sanctity of the file.
+
+In the middle of the pile, we find Aaron Swartz. A child prodigy and co-founder of Reddit, Swartz believed that scientific knowledge should be a public good. In 2011, he connected a laptop to the MIT network and downloaded millions of academic articles from JSTOR—the very "Hoard" we discussed earlier. He didn't sell them. He didn't profit. He intended to liberate them. For this act of "theft," federal prosecutors threatened him with 35 years in prison. Crushed by the weight of the state, he took his own life at the age of 26\.
+
+Near the top, we find Kim Dotcom. A flamboyant pirate who ran Megaupload, Dotcom provided the locker for the same copyrighted reality that Swartz tried to liberate. In 2012, the FBI raided his New Zealand mansion with helicopters and counter-terrorism units. His assets were frozen, his servers seized, and his life dismantled for hosting the very movie files and textbooks that are now standard training data.
+
+Now, look at 2026\. The leaders of the AI industry have done exactly what Aaron Swartz did, but on a scale that defies comprehension. Swartz downloaded a few million articles; OpenAI and Google have downloaded everything. They have scraped the JSTOR archives, the New York Times, the code repositories, and the personal blogs of billions of Sarah Seabury Wards.
+
+Yet, there are no helicopters. There are no federal indictments. Instead, there are keynote speeches and trillion-dollar valuations. The act that was a felony for Swartz is a business model for Altman. The difference is not the crime; the difference is that the new thieves are too big to raid. We have moved from a world where copyright was a weapon used against grandmothers to a world where it is a minor line item on a server bill. The "Pile" is a monument to the moment the law stopped pretending to be about justice and admitted it was only about power.

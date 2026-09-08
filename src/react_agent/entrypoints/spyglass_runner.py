@@ -70,7 +70,7 @@ def run_spyglass():
             "1. Call 'check_cargo_manifest'. If it returns a duplicate, report the existing path to me and STOP.\n"
             "2. If clear, call 'download_url'. (This tool automatically tries a Tier 1 fetch, and falls back to a Tier 2 fetch if blocked).\n"
             "3. FAILURE FORK: If 'download_url' returns an [ACCESS BARRIER] or [ERROR], you MUST immediately call 'log_ingestion_failure' with the URL and error message, report the failure to me, and STOP.\n"
-            f"4. SUCCESS FORK: If 'download_url' returns text, call 'upsert_knowledge_artifact' using artifact_name='acquisitions/{timestamp}_acquired.txt'.\n"
+            "4. SUCCESS FORK: If 'download_url' returns text, call 'upsert_knowledge_artifact' using a deterministic kebab-case filename derived from the title under the acquisitions/ folder (e.g. acquisitions/slug-name.txt).\n"
             "5. Call 'log_content_metadata' using that same GCS path.\n"
             "6. FINAL REPORT: Print the final GCS path and the Title retrieved to the terminal."
         )
@@ -92,9 +92,9 @@ def run_spyglass():
         print("=========================================================")
         while True:
             try:
-                user_input = input("\n[AUTHOR] -> ")
+                user_input = input(f"\n[AUTHOR -> SPYGLASS] ({thread_id}) -> ")
                 if user_input.lower() in ['exit', 'quit']:
-                    print("\n[SYSTEM] Terminating Spyglass session. State saved to Cloud SQL / Checkpoint DB.")
+                    print(f"\n[SYSTEM] Terminating Spyglass session ({thread_id}). State saved.")
                     break
                 if not user_input.strip(): 
                     continue
@@ -103,7 +103,7 @@ def run_spyglass():
                 print(f"\n[SPYGLASS] -> {response}")
                 engine.save_checkpoint(thread_id, chat_session.get_history())
             except KeyboardInterrupt:
-                print("\n[SYSTEM] Session interrupted by user. State saved.")
+                print(f"\n[SYSTEM] Session interrupted by user ({thread_id}). State saved.")
                 break
             except Exception as e:
                 print(f"\n[FATAL ERROR] {str(e)}")

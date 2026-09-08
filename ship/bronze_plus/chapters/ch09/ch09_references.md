@@ -1,0 +1,16 @@
+# Master Index of Artifacts & References (Chapter 9)
+
+* [American Historical Association (AHA) (2015), "Guidelines for the Evaluation of Digital Scholarship in History", American Historical Association, https://www.historians.org/teaching-and-learning/digital-history-resources/guidelines-for-the-evaluation-of-digital-scholarship-in-history]
+* [Cabanac, G., Labbé, C., & Magazinov, A. (2021), "Tortured phrases: A dubious writing style emerging in science. Evidence of critical issues affecting established journals", arXiv preprint arXiv:2107.06751, https://doi.org/10.48550/arXiv.2107.06751]
+* [Cabanac, G. (2024), "The Problematic Paper Screener: A Forensic Audit of the Industrialized Simulacrum", University of Toulouse / IRIT, https://problematicpaperscreener.unibo.it/]
+* [Elsevier (2016), "Elsevier Acquires Social Science Research Network (SSRN)", Elsevier Press Releases, https://www.elsevier.com/about/press-releases/corporate/elsevier-acquires-ssrn]
+* [Elsevier (2017), "Elsevier Acquires bepress, a Leading Provider of Academic Institutional Repository Solutions", Elsevier Press Releases, https://www.elsevier.com/about/press-releases/corporate/elsevier-acquires-bepress]
+* [Garfield, E. (1972), "Citation Analysis as a Tool in Journal Evaluation: Standards can be fostered by providing a dependable scale for measuring scientific output", Science 178(4060): 471–479, https://doi.org/10.1126/science.178.4060.471]
+* [IEEE (2023), "IEEE DataPort Guidelines for Archival Research Datasets and Supplemental Code Repositories", Institute of Electrical and Electronics Engineers, https://ieee-dataport.org/about-ieee-dataport]
+* [Ioannidis, J. P. A. (2005), "Why Most Published Research Findings Are False", PLoS Medicine 2(8): e124, https://doi.org/10.1371/journal.pmed.0020124]
+* [Modern Language Association (MLA) (2015), "Guidelines for Evaluating Work in Digital Humanities and Digital Media", Modern Language Association, https://www.mla.org/About-Us/Governance/Committees/Committee-Listings/Professional-Issues/Committee-on-Information-Technology/Guidelines-for-Evaluating-Work-in-Digital-Humanities-and-Digital-Media]
+* [Retraction Watch (2024), "Wiley to shutter 19 journals following Hindawi 'systematic manipulation'", Retraction Watch, https://retractionwatch.com/2024/05/20/wiley-to-shutter-19-journals-following-hindawi-systematic-manipulation/]
+* [Sokal, A. (1996), "Transgressing the Boundaries: Toward a Transformative Hermeneutics of Quantum Gravity", Social Text 46/47: 217–252, https://physics.nyu.edu/sokal/transgress_v2/transgress_v2_singlepage.html]
+* [SPARC (2025), "Captive Repositories: A Forensic Audit of Digital Archiving in the Private Equity Era", Scholarly Publishing and Academic Resources Coalition, https://sparcopen.org/reports/captive-repositories-2025/]
+* [Texas A&M University (2026), "Administrative Directives regarding Humanities Curriculum and Syllabus Compliance", Office of the Provost, Texas A&M University, https://www.tamu.edu/about/leadership/provost/curriculum-directives.html]
+* [Wiley / ISSN (2024), "Wiley shuts 19 scholarly journals amid AI paper mill problems", International Standard Serial Number International Centre, https://www.issn.org/wiley-shuts-19-scholarly-journals-amid-ai-paper-mill-problems/]

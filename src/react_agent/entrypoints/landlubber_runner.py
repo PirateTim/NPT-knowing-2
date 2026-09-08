@@ -7,7 +7,7 @@ from google.genai import types
 from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-load_dotenv()
+load_dotenv(override=True)
 
 def log_landlubber_audit(query, result):
     log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs"))
@@ -36,7 +36,7 @@ def run_isolated_search(query: str):
         )
         
         response = client.models.generate_content(
-            model="gemini-3.5-flash",
+            model=os.getenv("DEFAULT_MODEL", "gemini-3.7-flash"),
             contents=query,
             config=config
         )

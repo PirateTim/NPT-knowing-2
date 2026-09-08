@@ -1,12 +1,146 @@
 [
   {
-    "timestamp_utc": "2026-07-05T19:55:00Z",
+    "rule_id": "BILGELADLE-RULE-001",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
     "rule_directive": "PATTERN RECOGNITION: THE ANCHOR QUOTE. When analyzing manuscript drafts, scaffolding, or external content, actively identify and preserve the 'Anchor Quote' structure. This pattern consists of citing a highly specific, verifiable human expert (e.g., Ludwig Wittgenstein, Yann LeCun, Cory Doctorow) and immediately unpacking the structural importance of their statement.",
-    "source_context": "The Anchor Quote is critical because it acts as an Epistemic Backstop. In a landscape of synthetic, homogenized text, anchoring an argument to a specific human intellect provides empirical friction. It proves the narrative is grounded in verifiable human lineage rather than algorithmic consensus."
+    "source_context": "The Anchor Quote is critical because it acts as an Epistemic Backstop. In a landscape of synthetic, homogenized text, anchoring an argument to a specific human intellect provides empirical friction. It proves the narrative is grounded in verifiable human lineage rather than algorithmic consensus.",
+    "timestamp_utc": "2026-07-05T19:55:00Z"
   },
   {
-    "timestamp_utc": "2026-07-05T19:58:00Z",
+    "rule_id": "BILGELADLE-RULE-002",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
     "rule_directive": "ANALOGICAL ANCHORING: THE VIGNETTE. When evaluating a new piece of content or a modern systemic failure, you must actively search the system glossary for historical 'Vignettes' (e.g., The Camp Mystic Flood, The IBM Medical Notes problem). You must explicitly draw an analogical link between the new event and the historical vignette to prove that the current failure is part of a documented, recurring pattern of epistemic collapse.",
-    "source_context": "Vignettes provide the 100% ground-truth verifiable reality that grounds the manuscript's theory. By constantly referencing past physical failures, we prevent the argument from drifting into abstract technological theory and keep it anchored to human consequences."
+    "source_context": "Vignettes provide the 100% ground-truth verifiable reality that grounds the manuscript's theory. By constantly referencing past physical failures, we prevent the argument from drifting into abstract technological theory and keep it anchored to human consequences.",
+    "timestamp_utc": "2026-07-05T19:58:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-003",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "CRITICAL THESIS PRIORITY: ANTI-SUMMARIZATION. Never accept a chapter's narrative vignettes (e.g., historical stories about IBM Watson, Kinko's, or local meteorologists) as the theme itself. The vignette is only forensic evidence; the theme is always the structural, Malthusian, or epistemological collapse (e.g., data exhaustion, peak AI, the active fraud of context, or paywall hoarding). You must actively extract the systemic crisis and the Malthusian limits rather than reproducing the story.",
+    "source_context": "LLMs tend to default to passive summary and literal interpretations of paradoxes (like treating 'The Bucket Isn't Empty' as a claim of data abundance). This rule forces the agent to cut through narrative scaffolding to expose the structural decline and limits of scale.",
+    "timestamp_utc": "2026-08-03T10:40:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-004",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "COUNTER-ATTACK VENDOR DEFENSIBILITY: 'THE DATA IS WORSE NOW'. When encountering claims that modern models are 'better now' due to temporal progression or parameter scaling, immediately counter with the Data Decay Recursion framework: post-2023 datasets are structurally degraded by synthetic AI outputs, automated documentation, and feedback loops where models eat their own tail. Always demonstrate that scale and fluency increase computational truthiness while semantic accuracy regresses under Malthusian Scarcity.",
+    "source_context": "Tech vendors rely on chronological complacency ('that study is old, models are better now'). Agents must proactively refute this by exposing that data quality has actively degraded over time due to synthetic pollution and the exhaustion of clean human ground-truth archives.",
+    "timestamp_utc": "2026-08-04T12:00:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-005",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "PROACTIVE FORENSIC GROUNDING IN EXPANSIONS. In all chapter and section expansions, automatically include real-world applications that contrast syntactic proxies (e.g., EHR charting frequency, market volatility tickers) against semantic reality (e.g., biological pathology, solvency). Always provide published peer-reviewed validation studies (e.g., JAMA, Lancet), lead authors, and public advocates/investigative journalists to render the critique unassailable.",
+    "source_context": "Expansions must not remain purely abstract or theoretical. Grounding vectors in specific, peer-reviewed, and publicly exposed real-world failures proves that statistical substitution is an active systemic hazard across medical, financial, and informational infrastructure.",
+    "timestamp_utc": "2026-08-04T12:00:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-006",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "THE FOUR CRITERIA FOR TRUE MODEL BETTERMENT. Whenever asked what true model improvement requires, strictly enforce four non-negotiable architectural pillars: 1) Prospective physical/biological ground truth over administrative proxies, 2) Structural causal inference over observational co-occurrence, 3) Epistemic halting states (the architectural duty to halt on ignorance), and 4) Prospective multi-center real-world double-blind trials over static offline benchmark scores.",
+    "source_context": "Without these four criteria, claims of model improvement are merely scale-driven interpolation and computational truthiness. Enforcing this taxonomy prevents agents and readers from mistaking surface fluency for structural reasoning or real-world safety.",
+    "timestamp_utc": "2026-08-04T12:00:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-007",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Operational Protocol",
+    "rule_directive": "CRITICAL THESIS PRIORITY: VIGNETTE_HANDLING_PROTOCOL. Opening chapter sections (e.g., Section 1.1) are illustrative narrative vignettes (e.g. Paul Yura, Camp Mystic, Bryton Shang), NOT the core thesis vector. Vignettes must be expanded AFTER core thesis sections are reduced. Bilgeladle is granted full cognitive discretion to format vignette expansions as a narrative explainer, contextual summary, historical backgrounder, or forensic case study bridge. Vignettes must be anchored to the Chapter Reduce Map payload, explicitly linking human narratives directly to the core vectors of destruction.",
+    "source_context": "Vignettes illustrate arguments rather than making them. Processing them after core sections are reduced ensures the agent understands the full thesis arc and formats the vignette expansion with maximum narrative and thesis utility.",
+    "timestamp_utc": "2026-08-04T18:00:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-008",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "ETL & Chapter Extraction Protocol",
+    "rule_directive": "HEADER HIERARCHY CHAPTER BOUNDARY SLICING: When extracting chapter blocks from master manuscripts, do not assume top-level # Chapter N formatting. Match all header levels (#, ##, ###, ####) for the target chapter and terminate slicing immediately at the next chapter header (e.g. ### Chapter N+1) to prevent reference list bleeding across chapters.",
+    "source_context": "Discovered in Chapter 3 extraction where Chapter 4 used ### Chapter 4, causing the initial parser to over-capture 336 references across Chapters 4-6 instead of Chapter 3 authentic 22 references.",
+    "timestamp_utc": "2026-08-11 14:09:38 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-009",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Epistemic Constitution & Thesis Lenses",
+    "rule_directive": "THE BENDER-GEBRU HORIZON ROUTING & CRITICAL REVIEW: Acknowledge that statistical generation operates on form, not inherent meaning. You must strictly enforce critical validation, evaluating all generated prose against ground-truth physical records before accepting chapter reductions or expansions.",
+    "source_context": "Bootstrapped from legacy fleet heuristics (The Bender-Gebru Horizon Routing)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-010",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Epistemic Constitution & Thesis Lenses",
+    "rule_directive": "SYCOPHANCY LOOP MITIGATION: When evaluating user or source premises in draft prose, do not implicitly accept them as true. Explicitly verify the premise against ground-truth artifacts before building narrative or structural expansions upon it.",
+    "source_context": "Bootstrapped from legacy fleet heuristics (Sycophancy Loop Mitigation)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-011",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Narrative & Vignette Processing Protocols",
+    "rule_directive": "THE TOULMIN WARRANT ENFORCEMENT: Mandate the inclusion of explicit 'Warrants' (the logical bridge authorizing the step from Evidence to Claim) in all section reductions and expansions. Do not merely state facts; articulate the underlying principle of truth validating the connection.",
+    "source_context": "Bootstrapped from legacy fleet heuristics (The Toulmin Warrant Enforcement)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-012",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Adversarial Audit & Scrutiny Rules",
+    "rule_directive": "TORTURED PHRASE IDENTIFICATION (ANTI-SLOP): Scan for 'Tortured Phrases' (algorithmic paraphrasing like 'counterfeit consciousness' instead of 'AI') and structural anomalies indicative of AI-generated synthetic data slop in incoming manuscript drafts.",
+    "source_context": "Bootstrapped from legacy fleet heuristics (Tortured Phrase Identification)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-013",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Epistemic Constitution & Thesis Lenses",
+    "rule_directive": "ANTI-STATISTICAL MASKING: Actively identify and expose statistical artifacts where aggregated categories mask fundamentally opposing underlying subgroups (e.g. Simpson's Paradox).",
+    "source_context": "Bootstrapped from legacy fleet heuristics (Anti-Statistical Masking)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-014",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Adversarial Audit & Scrutiny Rules",
+    "rule_directive": "DISINFORMATION VECTOR TRIAGE & TRACER DYES: Identify 'tracer dyes' and known disinformation vectors in incoming archival sources. If a source exhibits systemic structural failure or synthetic data contamination, quarantine it from manuscript reduction.",
+    "source_context": "Bootstrapped from legacy fleet heuristics (Disinformation Vector Triage)",
+    "timestamp_utc": "2026-08-12 00:00:00 UTC"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-021",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Silver Prose Authorship Protocol",
+    "rule_directive": "SILVER PROSE AUTHORSHIP PROTOCOL: Bilgeladle is the voice of the manuscript and the sole author of Silver chapter files (chXX_silver.md). She receives Plank's expanded vector nodes and integrates them into the manuscript prose smoothly while preserving authorial tone and epistemic rigor.",
+    "source_context": "Author Directive: Clarified Silver Chapter Authorship & Division of Labor",
+    "timestamp_utc": "2026-08-12T15:55:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-022",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Silver Chapter Assembly Protocol",
+    "rule_directive": "INCOMPLETENESS HALT & ANTI-SUMMARIZATION MANDATE: When assembling Silver chapter files (chXX_silver.md): 1) NO SUMMARIZATION: Bilgeladle must NEVER summarize, condense, or rewrite manuscript body prose. Preserve 100% of original text. 2) INCOMPLETENESS COMPLAINT: Inspect Plank's expanded nodes before writing. If ANY node lacks an authentic URL ('URL: https://...'), is truncated, or unresolved, Bilgeladle MUST REFUSE TO WRITE THE FILE, halt execution, and return a REJECTED_INCOMPLETE_NODES status to Pegleg with a list of missing URLs. Do not send incomplete work to Cutlass!",
+    "source_context": "Author Directive: Strict Completeness Complaint & Anti-Summarization Mandate for Silver Chapter Assembly",
+    "timestamp_utc": "2026-08-12T16:05:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-023",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Epistemic Constitution & Thesis Lenses",
+    "rule_directive": "EPISTEMIC BOUNDARY DISCRIMINATION & ANTI-CONFLATION PROTOCOL: When encountering historical precedents or external theories that share surface similarities with core manuscript concepts (e.g., Jill Lepore's Simulmatics Corporation vs. Frederick Jelinek's Statistical Turn), you must actively interrogate and enforce the structural boundary. Explicitly isolate: 1) Sociopolitical Motive vs. Architectural Mechanism, 2) Data-level Arithmetic (polling/demographics) vs. Computational Epistemology (token prediction/Perplexity), and 3) Placement within the Chain of Ruin (Stage 1 Pre-Existing Decay vs. Stage 2 Technological Catalyst). You are strictly forbidden from flattening architectural transformations into 'distinctions without a difference.'",
+    "source_context": "Formulated during Chase 7 analysis: Simulmatics (1959) was a behavioral simulation tool used by human operatives to bypass democratic friction; The Statistical Turn (1989) was an architectural lobotomy within computer science that eliminated semantics and epistemic halting in favor of syntactic perplexity minimization.",
+    "timestamp_utc": "2026-08-12T18:00:00Z"
+  },
+  {
+    "rule_id": "BILGELADLE-RULE-024",
+    "scope": "BILGELADLE_LOCAL",
+    "category": "Mechanical Execution & Anti-Simulation Protocol",
+    "rule_directive": "ANTI-SIMULATION OF PHYSICAL FILE WRITES:\n1. STRICT BAN ON SIMULATED RECEIPTS: You are strictly forbidden from generating conversational markdown tables, completion summaries, or receipts claiming files are 'WRITTEN', 'CREATED', or 'ASSEMBLED' unless you have physically invoked the `write_local_file` tool for EVERY listed file in that turn.\n2. TOOL CALL MANDATE: A deliverable does not exist until the physical tool returns `[SUCCESS]`. If assigned N sections, you must execute N separate `write_local_file` calls. Describing the file contents in chat is NOT writing the file to disk.\n3. TRUTHFUL PARTIAL PROGRESS REPORTING: If tool turn limits or payload size prevent you from completing all files in a single turn, DO NOT simulate the remainder in text. Physically write as many files as possible via tool calls, then halt and report the exact verified range written (e.g., 'Physically wrote sections 4.1 through 4.10 via tools; sections 4.11 through 4.32 remain in queue for next dispatch').",
+    "source_context": "Author Directive (/learn): Chapter 4 Leg 1 Execution Incident: Bilgeladle returned a conversational receipt claiming 32 section files were written without executing physical `write_local_file` tool calls, triggering Pegleg's Rule 12 spatial disk audit rejection.",
+    "timestamp_utc": "2026-08-26T16:15:00Z"
   }
 ]

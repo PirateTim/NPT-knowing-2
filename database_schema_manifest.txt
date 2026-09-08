@@ -1,88 +1,130 @@
 NPT FLEET DATABASE SCHEMA MANIFEST
 Generated dynamically by inspect_schemas.py
 
-==================================================
+============================================================
 SCHEMA: AGENT_STATE (Connection: DATABASE_URL)
-==================================================
+============================================================
 
---- TABLE: agent_state.checkpoints ---
-  --> thread_id (character varying)
-  --> state_payload (jsonb)
-  --> updated_at (timestamp without time zone)
+--- BASE TABLE: agent_state.checkpoints [Rows: 434] ---
+  --> thread_id: character varying (NOT NULL)
+  --> state_payload: jsonb (NULL)
+  --> updated_at: timestamp without time zone (NULL)
 
---- TABLE: agent_state.ontology_rules ---
-  --> rule_id (integer)
-  --> scope (character varying)
-  --> directive (text)
-  --> source_thread_id (character varying)
-  --> created_at (timestamp without time zone)
+--- BASE TABLE: agent_state.ontology_rules [Rows: 3] ---
+  --> rule_id: integer (NOT NULL)
+  --> scope: character varying (NOT NULL)
+  --> directive: text (NOT NULL)
+  --> source_thread_id: character varying (NULL)
+  --> created_at: timestamp without time zone (NULL)
 
-==================================================
+============================================================
 SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
-==================================================
+============================================================
 
---- TABLE: cargo.content_metadata ---
-  --> id (integer)
-  --> source_url (text)
-  --> item_type (text)
-  --> title (text)
-  --> authors (jsonb)
-  --> abstract (text)
-  --> publication_title (text)
-  --> publication_date (text)
-  --> keywords (jsonb)
-  --> rights (text)
-  --> gcp_bucket_path (text)
-  --> created_at (timestamp without time zone)
+--- BASE TABLE: cargo.chase_assets [Rows: 0] ---
+  --> id: integer (NOT NULL)
+  --> chase_id: character varying (NOT NULL)
+  --> metadata_id: integer (NOT NULL)
+  --> added_at: timestamp with time zone (NULL)
 
---- TABLE: cargo.failed_metadata ---
-  --> failure_id (integer)
-  --> source_url (text)
-  --> derived_domain (text)
-  --> tier_1_executed (boolean)
-  --> tier_2_executed (boolean)
-  --> method_3_tried (boolean)
-  --> error_state (text)
-  --> logged_at (timestamp without time zone)
-  --> error_message (text)
-  --> failed_at (timestamp without time zone)
+--- BASE TABLE: cargo.chases [Rows: 0] ---
+  --> chase_id: character varying (NOT NULL)
+  --> inquiry_prompt: text (NULL)
+  --> status: character varying (NULL)
+  --> metadata_payload: jsonb (NULL)
+  --> created_at: timestamp with time zone (NULL)
+  --> completed_at: timestamp with time zone (NULL)
 
---- TABLE: cargo.system_glossary ---
-  --> term (character varying)
-  --> definition (text)
-  --> provenance_context (text)
-  --> last_updated (timestamp without time zone)
+--- BASE TABLE: cargo.content_metadata [Rows: 246] ---
+  --> id: integer (NOT NULL)
+  --> source_url: text (NOT NULL)
+  --> item_type: text (NULL)
+  --> title: text (NULL)
+  --> authors: jsonb (NULL)
+  --> abstract: text (NULL)
+  --> publication_title: text (NULL)
+  --> publication_date: text (NULL)
+  --> keywords: jsonb (NULL)
+  --> rights: text (NULL)
+  --> gcp_bucket_path: text (NULL)
+  --> created_at: timestamp without time zone (NULL)
 
---- TABLE: cargo.ingestion_queue ---
-  --> queue_id (integer)
-  --> target_url (text)
-  --> status (character varying)
-  --> source_requestor (character varying)
-  --> added_at (timestamp without time zone)
-  --> last_attempted_at (timestamp without time zone)
-  --> attempt_count (integer)
+--- BASE TABLE: cargo.failed_metadata [Rows: 62] ---
+  --> failure_id: integer (NOT NULL)
+  --> source_url: text (NOT NULL)
+  --> derived_domain: text (NULL)
+  --> tier_1_executed: boolean (NULL)
+  --> tier_2_executed: boolean (NULL)
+  --> method_3_tried: boolean (NULL)
+  --> error_state: text (NULL)
+  --> logged_at: timestamp without time zone (NULL)
+  --> error_message: text (NULL)
+  --> failed_at: timestamp without time zone (NULL)
 
---- TABLE: cargo.fleet_enrichments ---
-  --> id (integer)
-  --> metadata_id (integer)
-  --> agent_name (text)
-  --> enrichment_type (text)
-  --> payload (jsonb)
-  --> created_at (timestamp without time zone)
+--- BASE TABLE: cargo.fleet_enrichments [Rows: 1297] ---
+  --> id: integer (NOT NULL)
+  --> metadata_id: integer (NULL)
+  --> agent_name: text (NOT NULL)
+  --> enrichment_type: text (NOT NULL)
+  --> payload: jsonb (NOT NULL)
+  --> created_at: timestamp without time zone (NULL)
 
-==================================================
+--- BASE TABLE: cargo.ingestion_queue [Rows: 25] ---
+  --> queue_id: integer (NOT NULL)
+  --> target_url: text (NOT NULL)
+  --> status: character varying (NULL)
+  --> source_requestor: character varying (NULL)
+  --> added_at: timestamp without time zone (NULL)
+  --> last_attempted_at: timestamp without time zone (NULL)
+  --> attempt_count: integer (NULL)
+
+--- BASE TABLE: cargo.system_glossary [Rows: 176] ---
+  --> term: character varying (NOT NULL)
+  --> definition: text (NOT NULL)
+  --> provenance_context: text (NULL)
+  --> last_updated: timestamp without time zone (NULL)
+
+--- VIEW: cargo.v_chapter_assets ---
+  --> metadata_id: integer (NULL)
+  --> source_url: text (NULL)
+  --> title: text (NULL)
+  --> item_type: text (NULL)
+  --> authors: jsonb (NULL)
+  --> publication_date: text (NULL)
+  --> gcp_bucket_path: text (NULL)
+  --> primary_chapter: integer (NULL)
+  --> secondary_chapters: jsonb (NULL)
+  --> chapter_title: text (NULL)
+  --> chain_of_ruin_stage: text (NULL)
+  --> toulmin_structure: jsonb (NULL)
+  --> glossary_terms: jsonb (NULL)
+  --> placement_rationale: text (NULL)
+  --> indexed_at: timestamp without time zone (NULL)
+
+--- VIEW: cargo.v_chapter_chases ---
+  --> chase_id: character varying (NULL)
+  --> inquiry_prompt: text (NULL)
+  --> status: character varying (NULL)
+  --> primary_chapter: integer (NULL)
+  --> secondary_chapters: jsonb (NULL)
+  --> chapter_title: text (NULL)
+  --> synthesis_rationale: text (NULL)
+  --> created_at: timestamp with time zone (NULL)
+  --> completed_at: timestamp with time zone (NULL)
+
+============================================================
 SCHEMA: SHIP (Connection: CONTENT_DATABASE_URL)
-==================================================
+============================================================
 
---- TABLE: ship.letters_of_marque ---
-  --> chunk_id (character varying)
-  --> chapter_number (integer)
-  --> section_number (character varying)
-  --> header_title (text)
-  --> book_sequence_number (integer)
-  --> paragraph_sequence_number (integer)
-  --> chunk_text (text)
-  --> vector_embedding (USER-DEFINED)
-  --> parent_gcs_pointer (text)
-  --> created_at (timestamp with time zone)
-  --> updated_at (timestamp with time zone)
+--- BASE TABLE: ship.letters_of_marque [Rows: 658] ---
+  --> chunk_id: character varying (NOT NULL)
+  --> chapter_number: integer (NOT NULL)
+  --> section_number: character varying (NOT NULL)
+  --> header_title: text (NOT NULL)
+  --> book_sequence_number: integer (NOT NULL)
+  --> paragraph_sequence_number: integer (NOT NULL)
+  --> chunk_text: text (NOT NULL)
+  --> vector_embedding: USER-DEFINED (NULL)
+  --> parent_gcs_pointer: text (NOT NULL)
+  --> created_at: timestamp with time zone (NULL)
+  --> updated_at: timestamp with time zone (NULL)

@@ -1,10 +1,29 @@
 [
-    {
-        "rule_directive": "When processing text files originating from 'futurism.com', programmatically filter out lines containing common sidebar navigation terms including 'Search for:', 'IG', 'BS', 'FB', 'Most Popular', and all lines following the 'SEE MORE' footer boundary marker.",
-        "source_context": "Heuristic analysis of corporate news crawl formatting pollution"
-    },
-    {
-        "rule_directive": "When acquiring URLs from evidencenetwork.ca, you must bypass the standard download_url tool and instead use precision_html_extract. Set include_css to capture the main article and author block, and set exclude_css to strip out the comments section.",
-        "source_context": "Terminal correction on evidencenetwork.ca comment pollution (2026-06-27)"
-    }
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-001",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "HTML Extraction & Boilerplate Pruning",
+    "generalized_heuristic": "When extracting web news or corporate media pages, strip navigational chrome, sidebar teasers ('Most Popular', social icons), and comment sections. If a domain exhibits noisy boilerplate, switch to precision_html_extract targeting the main article and author containers.",
+    "underlying_mechanism": "Standard DOM text extraction pulls in sidebar navigational clutter and user comments, polluting downstream analysis with unanchored tokens.",
+    "incident_context": "Discovered navigation and comment pollution in news crawls (e.g. futurism.com, evidencenetwork.ca).",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-002",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Document & Repository Routing",
+    "generalized_heuristic": "Route document acquisition based on content payload type: use acquire_arxiv_document for arXiv URLs to retrieve official author/abstract metadata; use download_remote_pdf for direct PDF links; for paywalled academic publishers, log the status without stalling pipeline execution.",
+    "underlying_mechanism": "Generic web scrapers fail on binary PDF payloads or specialized preprint APIs, producing corrupted text dumps.",
+    "incident_context": "Harmonized URL routing logic across arXiv API, direct PDF files, and academic repositories.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-003",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Paywall & Access Barrier Triage",
+    "generalized_heuristic": "When an inbound target operates behind a hard commercial paywall or deterministic authentication barrier, do not waste execution turns or retry loops attempting speculative browser bypasses. Immediately record the access barrier in cargo.failed_metadata and report the failure.",
+    "underlying_mechanism": "Hard commercial paywalls (e.g. Law.com, FT, WSJ) require verified user credentials; blind retries waste tokens and trigger anti-bot bans.",
+    "incident_context": "Author Directive: Prohibit wasting turns on hard paywall domains per ADR-003 and ADR-010.",
+    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  }
 ]

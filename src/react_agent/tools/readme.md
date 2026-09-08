@@ -69,8 +69,7 @@ Here is the heavy documentation for the current `tools/` directory.
 
 * **Architectural Role:** The local file-system sandbox. Strictly enforces directory traversal protections so agents cannot read or write outside the project root.
 * **Tools Exposed:**
-* `read_local_file`, `write_local_file`, `delete_local_file`, `list_local_directory`.
-* `write_wiki_markdown`: Specifically designed for the downstream synthesis agents to write localized Wiki files while enforcing strict YAML lineage back to the original Bronze URI.
+* `read_local_file`, `write_local_file`, `delete_local_file`, `list_local_directory`, `read_skill_protocol`.
 
 
 

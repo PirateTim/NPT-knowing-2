@@ -17,6 +17,7 @@ It is instantiated by the specific agent entrypoints (e.g., cutlass_runner.py). 
 import os
 import sys
 import json
+import re
 import datetime
 import xml.etree.ElementTree as ET
 import copy
@@ -27,11 +28,13 @@ import pg8000.dbapi
 from google import genai
 from google.genai import types
 
+load_dotenv(override=True)
+
 # Mounts the root src directory to ensure absolute module imports function correctly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.tool_dispatcher import ToolDispatcher
 
-load_dotenv()
+load_dotenv(override=True)
 
 class AgentEngine:
 
@@ -51,8 +54,13 @@ class AgentEngine:
         # Compiles the cognitive state from local JSON and XML files
         self.memory_vault = self._load_agent_memory_vault()
         
-        # Determines the specific Vertex AI model to utilize (e.g., gemini-3.5-flash)
-        self.model_name = model_override or self.memory_vault.get("model_target", "gemini-3.5-flash")
+        # Determines the specific Vertex AI model to utilize using strict 3-level hierarchy:
+        # 1. CLI Override (`model_override`)
+        # 2. XML Profile Override (`xml_model_target`)
+        # 3. .env Default (`DEFAULT_MODEL`)
+        default_sys_model = os.getenv("DEFAULT_MODEL", "gemini-3.7-flash")
+        xml_model = self.memory_vault.get("xml_model_target")
+        self.model_name = model_override or xml_model or default_sys_model
         print(f"  -> [ENGINE BOOT] Routed Cognitive Model: {self.model_name.upper()}")
 
         # Compiles the massive System Prompt used to anchor the model
@@ -82,15 +90,30 @@ class AgentEngine:
         into a unified dictionary representing the agent's complete operational state.
         """
         base_path = os.path.dirname(self.xml_profile_path)
-        profile = {"mandate": "", "lens": {}, "skills": [], "rules": [], "exemplars": [], "requested_tools": {}}
+        profile = {"mandate": "", "lens": {}, "skills": [], "rules": [], "exemplars": [], "requested_tools": {}, "model_target": os.getenv("DEFAULT_MODEL", "gemini-3.7-flash")}
         
         if os.path.exists(self.xml_profile_path):
             tree = ET.parse(self.xml_profile_path)
             root = tree.getroot()
+            
+            # Parse mandate or system_instructions
+            sys_inst_elem = root.find(".//system_instructions")
             mandate_elem = root.find(".//core_mandate")
-            if mandate_elem is not None:
+            if sys_inst_elem is not None:
+                profile["mandate"] = "".join(sys_inst_elem.itertext()).strip()
+            elif mandate_elem is not None:
                 profile["mandate"] = "".join(mandate_elem.itertext()).strip()
             
+            # Parse fleet roster if present (e.g. for Pegleg)
+            roster_elem = root.find(".//fleet_roster")
+            if roster_elem is not None:
+                profile["fleet_roster"] = []
+                for a_node in roster_elem.findall("agent"):
+                    aname = a_node.get("name", "")
+                    arole = a_node.findtext("role", default="").strip()
+                    acap = a_node.findtext("capabilities", default="").strip()
+                    profile["fleet_roster"].append({"name": aname, "role": arole, "capabilities": acap})
+
             tools_elem = root.find(".//available_tools")
             if tools_elem is not None:
                 for tool_node in tools_elem.findall("tool"):
@@ -98,10 +121,14 @@ class AgentEngine:
                     if t_name:
                         profile["requested_tools"][t_name] = "".join(tool_node.itertext()).strip()
 
+            # Parse model target from XML if explicitly configured
             model_elem = root.find(".//model")
-            profile["model_target"] = model_elem.text.strip() if model_elem is not None else "gemini-3.5-flash"
+            if model_elem is not None and model_elem.text and model_elem.text.strip():
+                profile["xml_model_target"] = model_elem.text.strip()
+            else:
+                profile["xml_model_target"] = None
 
-            # Parse specialized operational execution skills
+            # Parse specialized operational execution skills from XML
             skills_elem = root.find(".//skills")
             if skills_elem is not None:
                 for skill_node in skills_elem.findall("skill"):
@@ -114,17 +141,108 @@ class AgentEngine:
                         "protocol": s_exec
                     })
 
+        # Load standalone SKILL.md files from central skills repository
+        central_skills_dir = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "skills"
+        ))
+        if os.path.exists(central_skills_dir):
+            for skill_dir in os.listdir(central_skills_dir):
+                skill_md_path = os.path.join(central_skills_dir, skill_dir, "SKILL.md")
+                if os.path.isfile(skill_md_path):
+                    with open(skill_md_path, 'r', encoding='utf-8') as sf:
+                        content = sf.read()
+                        # Extract frontmatter if present
+                        s_name = skill_dir
+                        s_desc = f"Modular skill: {skill_dir}"
+                        s_protocol = content
+                        if content.startswith("---"):
+                            parts = content.split("---", 2)
+                            if len(parts) >= 3:
+                                frontmatter = parts[1]
+                                s_protocol = parts[2].strip()
+                                for line in frontmatter.splitlines():
+                                    if line.startswith("name:"):
+                                        s_name = line.split("name:", 1)[1].strip()
+                                    elif line.startswith("description:"):
+                                        s_desc = line.split("description:", 1)[1].strip()
+                        
+                        # Append if not already present (comparing normalized kebab-case slug)
+                        s_slug = s_name.replace("_", "-").lower()
+                        if not any(existing['name'].replace("_", "-").lower() == s_slug for existing in profile["skills"]):
+                            profile["skills"].append({
+                                "name": s_slug,
+                                "description": s_desc,
+                                "protocol": s_protocol
+                            })
+
         # Load the philosophical ontology
         lens_path = os.path.join(base_path, "cognitive_lens.json")
         if os.path.exists(lens_path):
             with open(lens_path, 'r', encoding='utf-8') as f:
                 profile["lens"] = json.load(f)
                 
-        # Load permanent behavioral corrections
+        # Parse XML rules, guardrails, and legacy heuristics
+        xml_rules = []
+        if os.path.exists(self.xml_profile_path):
+            tree = ET.parse(self.xml_profile_path)
+            root = tree.getroot()
+            
+            # Parse <guardrails>
+            g_elem = root.find(".//guardrails")
+            if g_elem is not None:
+                for r_node in g_elem.findall("rule"):
+                    r_name = r_node.findtext("name", default=r_node.get("id", "GUARDRAIL")).strip()
+                    r_desc = r_node.findtext("directive", default=r_node.findtext("description", default="")).strip()
+                    r_ctx = r_node.findtext("rationale", default="").strip()
+                    xml_rules.append({"rule_id": f"GUARDRAIL: {r_name}", "rule_directive": r_desc, "source_context": r_ctx})
+
+            # Parse <rules>
+            rules_elem = root.find(".//rules")
+            if rules_elem is not None:
+                for r_node in rules_elem.findall("rule"):
+                    r_name = r_node.findtext("name", default=r_node.get("id", "RULE")).strip()
+                    r_desc = r_node.findtext("directive", default=r_node.findtext("description", default="")).strip()
+                    r_ctx = r_node.findtext("rationale", default="").strip()
+                    xml_rules.append({"rule_id": r_name, "rule_directive": r_desc, "source_context": r_ctx})
+                    
+            # Parse <heuristics> (Legacy fallback)
+            heur_elem = root.find(".//heuristics")
+            if heur_elem is not None:
+                for h_node in heur_elem.findall("rule"):
+                    h_name = h_node.findtext("name", default="HEURISTIC").strip()
+                    h_desc = h_node.findtext("description", default="").strip()
+                    xml_rules.append({"rule_id": h_name, "rule_directive": h_desc, "source_context": "XML Heuristic Directive"})
+
+        # Load universal shared fleet rules (Core Knowledge Vault)
+        shared_vault_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "core_knowledge_vault", "shared_fleet_rules.json"
+        ))
+        combined_rules = xml_rules
+        if os.path.exists(shared_vault_path):
+            with open(shared_vault_path, 'r', encoding='utf-8') as sf:
+                try:
+                    s_rules = json.load(sf)
+                    for r in s_rules:
+                        # Exclude technical System Architecture / ADR rules for non-hook agents
+                        cat = r.get("category", "")
+                        if "System Architecture" in cat or "ADR" in cat:
+                            if self.agent_name != "hook":
+                                continue
+                        combined_rules.append(r)
+                except Exception:
+                    pass
+
+        # Load agent-specific permanent behavioral corrections
         rules_path = os.path.join(base_path, "learned_rules.json")
         if os.path.exists(rules_path):
             with open(rules_path, 'r', encoding='utf-8') as f:
-                profile["rules"] = json.load(f)
+                try:
+                    local_rules = json.load(f)
+                    combined_rules.extend(local_rules)
+                except Exception:
+                    pass
+                    
+        profile["rules"] = combined_rules
                 
         # Load architectural response templates
         exemplars_path = os.path.join(base_path, "few_shot_exemplars.json")
@@ -140,6 +258,13 @@ class AgentEngine:
         
         if memory.get("mandate"):
             prompt += f"=== CORE MANDATE ===\n{memory['mandate']}\n\n"
+
+        roster = memory.get("fleet_roster", [])
+        if roster:
+            prompt += "=== FLEET CREW ROSTER (AUTHORIZED SUBAGENTS) ===\n"
+            for member in roster:
+                prompt += f"• AGENT: {member['name'].upper()}\n  Role: {member['role']}\n  Capabilities: {member['capabilities']}\n"
+            prompt += "\n"
             
         lens = memory.get("lens", {})
         if lens:
@@ -148,26 +273,99 @@ class AgentEngine:
 
         skills = memory.get("skills", [])
         if skills:
-            prompt += "=== ACTIVE SKILLS & EXECUTION PROTOCOLS ===\n"
+            prompt += "=== AUTHORIZED SKILLS & CAPABILITIES ===\n"
+            prompt += "You have access to the following specialized skills. To inspect or execute a skill's full protocol, invoke `read_skill_protocol(skill_name)` on-demand:\n"
             for s in skills:
-                prompt += f"SKILL: {s['name']}\n"
-                prompt += f"DESCRIPTION: {s['description']}\n"
-                prompt += f"PROTOCOL:\n{s['protocol']}\n\n"
+                prompt += f"• `{s['name']}`: {s['description']}\n"
+            prompt += "\n"
             
         rules = memory.get("rules", [])
         if rules:
-            prompt += "=== LEARNED RULES (PERMANENT ALIGNMENT) ===\n"
+            prompt += "=== OPERATIONAL HEURISTICS & LEARNED PRINCIPLES ===\n"
             for idx, rule in enumerate(rules, 1):
-                rule_text = rule.get('rule_directive') or rule.get('rule') or str(rule)
-                source_info = rule.get('source_context') or rule.get('timestamp') or 'Learned Rule'
-                prompt += f"{idx}. {rule_text} (Source: {source_info})\n"
+                if isinstance(rule, dict):
+                    rid = rule.get('heuristic_id') or rule.get('learning_id') or rule.get('rule_id') or rule.get('id') or f'HEURISTIC-{idx:03d}'
+                    rdir = rule.get('generalized_heuristic') or rule.get('rule_directive') or rule.get('directive') or rule.get('description') or str(rule)
+                    mech = rule.get('underlying_mechanism', '')
+                    ctx = rule.get('incident_context') or rule.get('source_context', '')
+                    
+                    details = []
+                    if mech:
+                        details.append(f"   Mechanism: {mech}")
+                    if ctx:
+                        details.append(f"   Context: {ctx}")
+                    detail_str = ("\n" + "\n".join(details)) if details else ""
+                    prompt += f"{idx}. [{rid}]\n   Heuristic: {rdir}{detail_str}\n"
+                else:
+                    prompt += f"{idx}. {str(rule)}\n"
             prompt += "\n"
             
+        tools = memory.get("requested_tools", {})
+        if tools:
+            prompt += "=== AUTHORIZED TOOLS & XML CAPABILITIES ===\n"
+            for t_name, t_purpose in tools.items():
+                purpose_str = f": {t_purpose}" if t_purpose else ""
+                prompt += f"• `{t_name}`{purpose_str}\n"
+            prompt += "\n"
+
         exemplars = memory.get("exemplars", [])
         if exemplars:
             prompt += "=== FEW-SHOT EXEMPLARS ===\n"
             for ex in exemplars:
                 prompt += f"Input Context: {ex.get('input_context', '')}\nIdeal Output: {ex.get('ideal_output', '')}\n\n"
+
+        # Ingest Project Master Guidelines (GEMINI.md) per ADR-010
+        workspace_rules_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "GEMINI.md"))
+        if os.path.exists(workspace_rules_path):
+            try:
+                with open(workspace_rules_path, 'r', encoding='utf-8') as gf:
+                    gemini_content = gf.read()
+                    prompt += f"=== MASTER WORKSPACE ARCHITECTURAL GUIDELINES (GEMINI.MD) ===\n{gemini_content}\n\n"
+            except Exception:
+                pass
+
+        # Ingest Master Assembled Bronze+ Manuscript for Bilgeladle (ADR-003 & SOP-04)
+        if self.agent_name.lower() == "bilgeladle":
+            bp_dirs = [
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "bronze_plus")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "bronzeplus")),
+            ]
+            manuscript_text = ""
+            for bpd in bp_dirs:
+                if os.path.exists(bpd):
+                    # Check for latest pointer first
+                    latest_pointer = os.path.join(bpd, "End-of-Knowing-latest.md")
+                    if os.path.exists(latest_pointer):
+                        try:
+                            with open(latest_pointer, "r", encoding="utf-8") as bf:
+                                manuscript_text = bf.read()
+                                break
+                        except Exception:
+                            pass
+                    
+                    # Or find most recent End-of-Knowing-*.md
+                    candidates = [
+                        os.path.join(bpd, f) for f in os.listdir(bpd)
+                        if f.startswith("End-of-Knowing-") and f.endswith(".md") and f != "End-of-Knowing-latest.md"
+                    ]
+                    if candidates:
+                        candidates.sort(key=os.path.getmtime, reverse=True)
+                        try:
+                            with open(candidates[0], "r", encoding="utf-8") as bf:
+                                manuscript_text = bf.read()
+                                break
+                        except Exception:
+                            pass
+
+            if manuscript_text:
+                prompt += (
+                    "=== COMPLETE MANUSCRIPT CORPUS (THE END OF KNOWING - BRONZE+ TIER) ===\n"
+                    "The following is the full, un-truncated, section-by-section text of 'The End of Knowing' "
+                    "with all verified inline vector citation nodes. You must hold this complete manuscript "
+                    "in your cognitive working memory to evaluate all thesis alignments, expansions, and incoming cargo:\n\n"
+                    f"{manuscript_text}\n"
+                    "================================================================================\n\n"
+                )
                 
         return prompt
 
@@ -234,14 +432,32 @@ class AgentEngine:
 
     def start_chat_session(self, thread_id: str):
         """Initializes the SDK Chat Session object using the retrieved history."""
+        self.active_thread_id = thread_id
         history = self.get_latest_checkpoint(thread_id)
         config = self._get_active_config()
         return self.client.chats.create(model=self.model_name, config=config, history=history)
 
     def _get_active_config(self):
         tool_config = types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode="AUTO")) if self.bound_tools else None
+        
+        # Instate active thread context so agents never hallucinate divergent folder names
+        active_instruction = self.system_instruction
+        if hasattr(self, "active_thread_id") and self.active_thread_id:
+            chase_id = getattr(self, "chase_id", None)
+            if not chase_id:
+                chase_id = re.sub(r"^thread_(?:spyglass|cutlass|grog|plank|bilgeladle|scallywag|landlubber|hook|pegleg)_", "", self.active_thread_id)
+                
+            active_instruction += (
+                f"\n\n=== ACTIVE SESSION THREAD & MANDATORY DIRECTORY BINDING ===\n"
+                f"ACTIVE_THREAD_ID: {self.active_thread_id}\n"
+                f"CHASE_WORKSPACE_ID: {chase_id}\n"
+                f"CRITICAL DIRECTIVE: The root chase workspace directory for this session is strictly \"writings/chases/{chase_id}/\". "
+                f"All stage outputs, audits, extractions, essays, and status tracking MUST be written directly inside \"writings/chases/{chase_id}/\". "
+                f"You are STRICTLY FORBIDDEN from creating or inventing subagent-specific folder prefixes (e.g. do NOT write to 'writings/chases/thread_{self.agent_name}_{chase_id}/').\n"
+            )
+
         return types.GenerateContentConfig(
-            system_instruction=self.system_instruction,
+            system_instruction=active_instruction,
             temperature=0.1, # Extremely low temperature enforces highly deterministic, logical outputs
             tools=self.bound_tools,
             tool_config=tool_config
@@ -286,27 +502,75 @@ class AgentEngine:
                         f"1. Type 'HANDOFF' to generate a state-transfer summary.\n"
                         f"2. Type 'OVERRIDE' to force context expansion.")
 
+        # Helper for resilient send_message with exponential backoff
+        def _send_with_retry(msg, cfg, max_retries=3):
+            import time
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return chat_session.send_message(msg, config=cfg)
+                except Exception as e:
+                    err_str = str(e)
+                    if attempt < max_retries and any(c in err_str for c in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "high demand"]):
+                        sleep_s = attempt * 4
+                        print(f"  -> [API RETRY] Transient Google API error ({err_str[:60]}...). Retrying in {sleep_s}s (Attempt {attempt}/{max_retries})...")
+                        time.sleep(sleep_s)
+                    else:
+                        raise e
+
         # =====================================================================
         # 2. STANDARD EXECUTION & TOOL LOOP
         # =====================================================================
         active_config = self._get_active_config()
-        response = chat_session.send_message(prompt, config=active_config)
+        response = _send_with_retry(prompt, active_config)
         
         tool_loop_count = 0
-        MAX_TOOL_LOOPS = 8  # Hard cap on consecutive tool calls per turn to prevent Panic Loops
+        # DAG orchestrators (e.g. Pegleg) coordinate multi-stage pipelines across 6+ agents
+        MAX_TOOL_LOOPS = 60 if self.agent_name == "pegleg" else 20
 
         while response.function_calls:
             tool_loop_count += 1
             if tool_loop_count > MAX_TOOL_LOOPS:
-                print("  -> [SYSTEM WARNING] Infinite tool loop detected. Aborting turn.")
-                return "[SYSTEM ERROR] Agent entered an infinite Action-Observation loop. Execution halted."
+                print(f"  -> [CIRCUIT BREAKER TRIGGERED] {self.agent_name.upper()} exceeded max tool limit ({MAX_TOOL_LOOPS}). Halting workflow execution.")
+                return f"[CIRCUIT BREAKER TRIGGERED] Agent '{self.agent_name}' reached maximum allowable tool turns ({MAX_TOOL_LOOPS}). Execution safety halt enforced."
 
             tool_responses = []
             for call in response.function_calls:
-                print(f"  -> [SYSTEM] {self.agent_name.upper()} executing tool: {call.name}...")
+                call_args = dict(call.args) if hasattr(call, 'args') and call.args else {}
+                
+                # Format descriptive argument summary for real-time terminal observability
+                arg_summary = ""
+                if "file_path" in call_args:
+                    arg_summary = f" (file: {call_args['file_path']})"
+                elif "target_path" in call_args:
+                    arg_summary = f" (target: {call_args['target_path']})"
+                elif "asset_path" in call_args:
+                    arg_summary = f" (asset: {call_args['asset_path']})"
+                elif "subagent_name" in call_args:
+                    sub_thread = f", thread: {call_args.get('subagent_thread_id', '')}" if call_args.get('subagent_thread_id') else ""
+                    arg_summary = f" (subagent: {str(call_args['subagent_name']).upper()}{sub_thread})"
+                elif "target_url" in call_args:
+                    arg_summary = f" (url: {call_args['target_url']})"
+                elif "url" in call_args:
+                    arg_summary = f" (url: {call_args['url']})"
+                elif "issue_number" in call_args:
+                    arg_summary = f" (issue: #{call_args['issue_number']})"
+                elif "enrichment_type" in call_args:
+                    meta_id = f", metadata_id: {call_args.get('metadata_id', '')}" if call_args.get('metadata_id') else ""
+                    arg_summary = f" (type: {call_args['enrichment_type']}{meta_id})"
+                elif "skill_name" in call_args:
+                    arg_summary = f" (skill: {call_args['skill_name']})"
+                elif "query" in call_args:
+                    arg_summary = f" (query: '{call_args['query']}')"
+                elif "term" in call_args:
+                    arg_summary = f" (term: '{call_args['term']}')"
+                elif call_args:
+                    first_k, first_v = next(iter(call_args.items()))
+                    v_str = str(first_v)[:50]
+                    arg_summary = f" ({first_k}: {v_str})"
+
+                print(f"  -> [SYSTEM] {self.agent_name.upper()} executing tool: {call.name}{arg_summary}...")
                 
                 # Execute and Trace
-                call_args = dict(call.args) if hasattr(call, 'args') and call.args else {}
                 result_str = self.dispatcher.execute_tool_call(call)
                 self._log_tool_trace(call.name, call_args, result_str)
                 
@@ -324,7 +588,7 @@ class AgentEngine:
                 ))
             
             # Send tool observation data back to the model for the next step of reasoning
-            response = chat_session.send_message(tool_responses, config=active_config)
+            response = _send_with_retry(tool_responses, active_config)
             
         final_text = response.text
         self._log_interaction(prompt, final_text)

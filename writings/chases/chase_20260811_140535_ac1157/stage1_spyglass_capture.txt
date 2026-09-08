@@ -1,0 +1,2 @@
+PROMPT INGESTION:
+PEGLEG COMMAND: Execute Checkpoint 1 for Chapter 3. Bilgeladle must extract Chapter 3 from manuscript/2026-02-24AChapters_complete.md into ship/bronze/chapters/ch03/.

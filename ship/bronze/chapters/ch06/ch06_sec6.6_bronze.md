@@ -1,0 +1,6 @@
+### 6.6 The Load-Bearing Crime (The Two Pams)
+If the metaphor is broken, why has the law failed? The answer is structural **Amnesty by Scale**. In 2026, the public was presented with the two faces of the **Impunity Doctrine**.
+
+**The Folklore of Collapse:** Following the redaction of the Epstein files, a viral rumor claimed Attorney General Pam Bondi warned that if the full list were released, "the system will collapse". She never said it; the quote was a fabrication. But the lie traveled at the speed of light because it accurately described the architecture: the crimes were so entangled with the state that justice had become a structural risk.
+
+**The Math of Ruin:** Pamela Samuelson provided the arithmetic. She pointed to Section 1202 of the DMCA, which imposes a $\$2,500$ fine for removing "Copyright Management Information" (CMI). Multiplied by the $5$ billion works ingested by AI models, the total is **$\$12.5$ Trillion**. This is not a fine; it is an extinction event exceeding the combined market cap of the companies involved. The liability has achieved escape velocity from the law. The theft is now load-bearing.
