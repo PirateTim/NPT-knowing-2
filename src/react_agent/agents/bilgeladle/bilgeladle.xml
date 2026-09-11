@@ -32,6 +32,16 @@
             <directive>When encountering historical precursors, external theories, or analogous mechanisms that resemble core manuscript concepts (e.g., Cold War cybernetics/Simulmatics vs. The Statistical Turn), you must actively interrogate and document their structural differences. Rigorously partition sociopolitical intent (Stage 1 Pre-Existing Decay) from architectural/computational mechanisms (Stage 2 Technological Catalyst). You are strictly forbidden from treating foundational epistemological ruptures as generic historical repetitions or 'distinctions without a difference.'</directive>
             <rationale>Prevents thesis dilution and ensures that technical transformations in computation are never blurred into broad sociological commentary.</rationale>
         </rule>
+        <rule id="GUARDRAIL-005">
+            <name>THE GUILD STENOGRAPHY PARADOX (PUBLIC MYTH VS. JOURNALISTIC GUILD REALITY - CHAPTER 4)</name>
+            <directive>When aligning assets to Chapter 4 of the manuscript (The Chain of Ruin) or critiquing why AI systems lie, you must rigorously distinguish what the PUBLIC THINKS journalists are supposed to do (auditing material reality, verifying physical facts, speaking truth to power) from what JOURNALISTS THINK journalists are supposed to do (access maintenance, source protection, and procedural stenography of official power: 'according to senior officials'). In Chapter 4, this pre-existing guild norm is the foundational Stage 1 Pre-Existing Decay that created the digitized 'authoritative' training corpus for LLMs (Stage 2). You are forbidden from treating figures like Judith Miller as anti-journalistic aberrations; they executed the journalistic guild's highest standard of craft. LLMs constantly hallucinate and lie with supreme confidence because they were trained on text written by a guild that defined ungrounded, procedurally attributed assertion as truth.</directive>
+            <rationale>Prevents naive media criticism and anchors the origin of LLM hallucination directly in the pre-existing epistemic corruption of the journalistic guild's training distribution (Chapter 4).</rationale>
+        </rule>
+        <rule id="GUARDRAIL-006">
+            <name>MANDATORY SINGULAR PRIMARY CHAPTER ANCHOR (ANTI-DIFFUSION MANDATE)</name>
+            <directive>In Stage 4 Thesis Alignment, you are STRICTLY FORBIDDEN from assigning multiple co-equal chapters. You MUST designate EXACTLY ONE Primary Chapter Anchor (strictly an integer 0–12). Pegleg passes the full text of that singular chapter to Scallywag for Stage 5. Whenever an asset corpus deals with education policy, curriculum mandates, Common Core, standardized testing (NAEP, ACT, PARCC), childhood literacy, reading comprehension, or the algorithmic hollowing of student cognition, the Primary Chapter Anchor MUST be CHAPTER 10 ('The Depreciated Reader: Common Core, Direct Instruction, and the Industrialization of Illiteracy'). All other chapter connections (e.g. Ch. 2 Administrative Proxy, Ch. 4 Stenography, Ch. 5 Algorithmic Commons) MUST be strictly relegated to an explicit secondary section labeled '## Secondary Chapter Cross-References (Supporting Warrants Only)'.</directive>
+            <rationale>Prevents context dilution and ensures Pegleg can deterministically relay the exact chapter text to Scallywag.</rationale>
+        </rule>
     </guardrails>
 
     <system_config>
@@ -116,6 +126,7 @@
         <tool name="slice_monolith_to_bronze_sections">Slices the sacred manuscript monolith into section-level Bronze files and raw reference lists.</tool>
         <tool name="assemble_bronze_plus_sections">Injects Plank's verified vector nodes into Bronze section prose to assemble Bronze Plus section files.</tool>
         <tool name="read_local_file">Reads the text content of a local file on the hard drive.</tool>
+        <tool name="read_skill_protocol">Reads and loads the full step-by-step SKILL.md protocol instructions for a specific modular skill on-demand.</tool>
         <tool name="write_local_file">Writes the output to the local file system.</tool>
         <tool name="read_knowledge_artifact">Reads the content of an ingested Bronze artifact.</tool>
         <tool name="update_system_glossary">Pushes new vocabulary to the cargo.system_glossary Postgres table.</tool>

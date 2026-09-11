@@ -1,6 +1,6 @@
 """
 NPT Fleet: Asynchronous Batch Ingestion Worker
-Architecture: Headless Agent Orchestration via Postgres Queue
+Architecture: Headless Agent Orchestration via Postgres Queue with Mechanical Pre-Flight Filtering
 """
 import os
 import sys
@@ -13,8 +13,32 @@ import pg8000.dbapi
 # Map the path backward so we can import from the core directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.agent_engine import AgentEngine
+from tools.cargo_db_tools import check_cargo_manifest, log_ingestion_failure
 
 load_dotenv(override=True)
+
+# Deterministic Hard Paywall and Authentication Barriers (SPYGLASS-HEURISTIC-003 & 007)
+HARD_PAYWALL_DOMAINS = {
+    "law.com",
+    "wsj.com",
+    "ft.com",
+    "theinformation.com",
+    "economist.com",
+    "barrons.com",
+    "bloomberg.com",
+}
+
+# Aggregate and Search Root Patterns (SPYGLASS-HEURISTIC-004)
+AGGREGATE_SUBPATHS = [
+    "/search?",
+    "/search/",
+    "/tag/",
+    "/tags/",
+    "/category/",
+    "/topic/",
+    "/discover",
+    "/r/",
+]
 
 def get_cargo_connection():
     conn_string = os.getenv("CONTENT_DATABASE_URL")
@@ -68,6 +92,47 @@ def _extract_domain(url: str) -> str:
     except Exception:
         return url
 
+def _is_aggregate_or_search_url(url: str) -> bool:
+    """Heuristic check for search queries, tag feeds, and category indices (SPYGLASS-HEURISTIC-004)."""
+    parsed = urlparse(url)
+    path_and_query = (parsed.path + "?" + parsed.query).lower()
+    
+    # Check for search engine query endpoints
+    if "google.com/search" in url.lower() or "bing.com/search" in url.lower() or "duckduckgo.com/?" in url.lower():
+        return True
+        
+    for subpath in AGGREGATE_SUBPATHS:
+        if subpath in path_and_query:
+            return True
+            
+    # Check for naked root domains without article paths (e.g. https://medium.com)
+    if parsed.path.strip("/") == "" and not parsed.query:
+        return True
+        
+    return False
+
+def load_historical_failed_domains(conn) -> set:
+    """Pre-loads domains with recurring failures from cargo.failed_metadata to prime the circuit breaker."""
+    blocked = set()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT source_url FROM cargo.failed_metadata;")
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        domain_counts = {}
+        for (src_url,) in rows:
+            dom = _extract_domain(src_url)
+            domain_counts[dom] = domain_counts.get(dom, 0) + 1
+            
+        # If a domain has failed 3+ times across historical runs, add it to startup blocklist
+        for dom, count in domain_counts.items():
+            if count >= 3:
+                blocked.add(dom)
+    except Exception as e:
+        print(f"[NOTICE] Could not pre-load failed domains: {e}")
+    return blocked
+
 def run_worker_loop(max_items: int = 5):
     print("=========================================================")
     print(f" NPT FLEET: BATCH INGESTION WORKER (BATCH SIZE: {max_items})")
@@ -76,13 +141,15 @@ def run_worker_loop(max_items: int = 5):
     conn = get_cargo_connection()
     xml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "spyglass", "spyglass.xml"))
     
-    # We initialize the engine once to load the DB rules and XML mandate
+    # Pre-load known failed domains from DB to prime mechanical circuit breaker
+    blocked_domains = load_historical_failed_domains(conn)
+    if blocked_domains:
+        print(f"[CIRCUIT BREAKER] Pre-loaded {len(blocked_domains)} recurring failure domains from dead-letter warehouse.")
+
+    # Initialize ReAct Engine
     engine = AgentEngine("spyglass", xml_path)
-    
-    from tools.cargo_db_tools import log_ingestion_failure
 
     items_processed = 0
-    blocked_domains = set()
 
     while items_processed < max_items:
         queue_id, target_url = fetch_next_url(conn)
@@ -95,7 +162,7 @@ def run_worker_loop(max_items: int = 5):
         items_processed += 1
         print(f"\n[{items_processed}] Dequeued ID {queue_id}: {target_url}")
 
-        # THREADS.NET BYPASS logic: Threads blocks Gemini tools. Append to list file and skip.
+        # 1. THREADS.NET BYPASS: Threads blocks automated tools. Fast append and skip.
         if "threads.net" in target_url.lower():
             print(f"  -> [THREADS BYPASS] Threads.net URL encountered. Appending to acquisitions/threads_links.txt and skipping...")
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -106,14 +173,40 @@ def run_worker_loop(max_items: int = 5):
             mark_queue_status(conn, queue_id, 'COMPLETED')
             continue
 
-        # DOMAIN CIRCUIT BREAKER: Skip LLM turn if domain is already blocked in this run
-        if domain in blocked_domains:
-            print(f"  -> [CIRCUIT BREAKER ACTIVE] Domain '{domain}' is blocked. Fast-logging to dead-letter queue...")
-            log_ingestion_failure(target_url, f"[SKIPPED: DOMAIN_CIRCUIT_BREAKER] Domain '{domain}' hit an access barrier in this batch run. Issue logged.")
+        # 2. MECHANICAL HARD PAYWALL FILTER (SPYGLASS-HEURISTIC-007)
+        if domain in HARD_PAYWALL_DOMAINS:
+            print(f"  -> [PRE-FLIGHT BLOCKED] Domain '{domain}' is a deterministic commercial paywall. Fast-logging to dead-letter queue...")
+            log_ingestion_failure(target_url, f"[PRE_FLIGHT_HARD_PAYWALL] Domain '{domain}' operates behind a hard commercial paywall (ADR-003 / SPYGLASS-HEURISTIC-007).")
             mark_queue_status(conn, queue_id, 'FAILED')
             continue
 
-        print("  -> Booting Spyglass thread...")
+        # 3. MECHANICAL AGGREGATE / SEARCH QUERY FILTER (SPYGLASS-HEURISTIC-004)
+        if _is_aggregate_or_search_url(target_url):
+            print(f"  -> [PRE-FLIGHT BLOCKED] URL is an aggregate/search feed. Fast-logging to dead-letter queue...")
+            log_ingestion_failure(target_url, f"[UNSUPPORTED AGGREGATE DOMAIN] URL '{target_url}' represents a dynamic feed or search stub (SPYGLASS-HEURISTIC-004).")
+            mark_queue_status(conn, queue_id, 'FAILED')
+            continue
+
+        # 4. MECHANICAL RECURRING DOMAIN CIRCUIT BREAKER
+        if domain in blocked_domains:
+            print(f"  -> [CIRCUIT BREAKER ACTIVE] Domain '{domain}' is blocked. Fast-logging to dead-letter queue...")
+            log_ingestion_failure(target_url, f"[SKIPPED: DOMAIN_CIRCUIT_BREAKER] Domain '{domain}' hit repeated access barriers. Skipping LLM execution.")
+            mark_queue_status(conn, queue_id, 'FAILED')
+            continue
+
+        # 5. MECHANICAL DEDUPLICATION & DEAD-LETTER PRE-CHECK
+        manifest_status = check_cargo_manifest(target_url)
+        if "[DUPLICATE FOUND]" in manifest_status:
+            print(f"  -> [PRE-FLIGHT DEDUP] {manifest_status} Skipping acquisition.")
+            mark_queue_status(conn, queue_id, 'COMPLETED')
+            continue
+        elif "[KNOWN DEAD-LETTER]" in manifest_status:
+            print(f"  -> [PRE-FLIGHT DEAD-LETTER] {manifest_status} Skipping re-scraping.")
+            mark_queue_status(conn, queue_id, 'FAILED')
+            continue
+
+        # 6. REACt AGENT TURN (Only invoked for genuine, un-cached targets)
+        print("  -> Booting Spyglass ReAct thread...")
         thread_id = f"batch_worker_{uuid.uuid4().hex[:8]}"
         
         try:
@@ -121,20 +214,18 @@ def run_worker_loop(max_items: int = 5):
             prompt = (
                 f"COMMAND: Acquire the following target URL immediately: {target_url}\n\n"
                 f"EXECUTION PROTOCOL:\n"
-                f"1. Run 'check_cargo_manifest'. If it returns [DUPLICATE FOUND], report the GCS path and STOP.\n"
-                f"2. Run the appropriate acquisition tool for the URL domain (download_url, download_remote_pdf, acquire_arxiv_document, extract_youtube_transcript).\n"
-                f"3. FAILURE & ESCALATION PROTOCOL: If acquisition fails due to access barriers (HTTP 403/401, paywall, blocked DOM) or aggregate playlist URLs ([UNSUPPORTED AGGREGATE DOMAIN]), you MUST:\n"
+                f"1. Run the appropriate acquisition tool for the URL domain (download_url, download_remote_pdf, acquire_arxiv_document, extract_youtube_transcript, call_zotero_translator, acquire_google_doc).\n"
+                f"2. FAILURE & ESCALATION PROTOCOL: If download_url fails on an academic/journal paper or paywalled article, attempt 'call_zotero_translator' before logging failure. If all tools fail due to access barriers (HTTP 403/401, soft paywall, bot challenge, blocked DOM) or aggregate playlist URLs ([UNSUPPORTED AGGREGATE DOMAIN]), you MUST:\n"
                 f"   a. Call 'log_ingestion_failure' with target_url='{target_url}' and the detailed error payload.\n"
-                f"   b. Call 'create_github_issue' ONLY IF a GitHub issue for domain '{domain}' has NOT already been created. Title format: '[Ingestion Barrier] Access blocked for domain {domain}'.\n"
-                f"   c. Stop execution after logging the failure.\n"
-                f"4. SUCCESS PROTOCOL: If successful, call 'upsert_knowledge_artifact' using 'local_cache_path' and 'log_content_metadata' using the metadata from the receipt. (Do NOT call create_zotero_item; Zotero sync is handled downstream).\n"
+                f"   b. Stop execution after logging the failure.\n"
+                f"3. SUCCESS PROTOCOL: If successful, call 'upsert_knowledge_artifact' using 'local_cache_path' and 'log_content_metadata' using the metadata from the receipt. (Do NOT call create_zotero_item; Zotero sync is handled downstream).\n"
             )
             
             # Let Spyglass autonomously execute her tool chain
             response = engine.execute_turn(chat_session, prompt)
             
             # If failure occurred, activate domain circuit breaker for subsequent URLs in this run
-            if "[ACCESS BARRIER]" in response or "log_ingestion_failure" in response or "IP block" in response or "HTTP 40" in response:
+            if "[ACCESS BARRIER]" in response or "log_ingestion_failure" in response or "IP block" in response or "HTTP 40" in response or "SOFT_PAYWALL" in response:
                 blocked_domains.add(domain)
                 print(f"  -> [CIRCUIT BREAKER ENGAGED] Domain '{domain}' marked as blocked for remaining queue.")
                 mark_queue_status(conn, queue_id, 'FAILED')
@@ -148,7 +239,7 @@ def run_worker_loop(max_items: int = 5):
             blocked_domains.add(domain)
             mark_queue_status(conn, queue_id, 'FAILED')
             
-        time.sleep(2)
+        time.sleep(1)
 
     conn.close()
     print(f"\n[WORKER SHUTDOWN] Processed {items_processed} items from the queue.")

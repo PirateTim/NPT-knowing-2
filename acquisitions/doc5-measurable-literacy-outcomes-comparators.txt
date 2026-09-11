@@ -1,0 +1,54 @@
+TITLE: 5- Measurable Literacy Outcomes, State Comparators, and International Assessment Trends
+ID: 1OwDMbXDEQK7Aka7i2r0aH4LVPdRVX8YspG4aZPr0DL8
+SOURCE: https://drive.google.com/drive/folders/1Dlr-WEKJKAUniGT-Q-Rri39Fism4ZbbO?usp=drive_link
+
+5- The Empirical Trajectory of Standards-Based Centralization: Longitudinal Assessment Outcomes, International Curricular Divergence, and the Literacy Contraction Across New Jersey, Massachusetts, and Florida
+
+Longitudinal Psychometric Trends: The Secular Literacy Contraction and the Pre-Pandemic Inflection
+
+Longitudinal assessment data and psychometric evaluations demonstrate that American primary and secondary education has entered a period of secular contraction in reading literacy and quantitative reasoning1. Public discourse often treats the post-2020 drop in student achievement as an acute consequence of the COVID-19 pandemic, yet standardized assessments confirm that academic stagnation and performance declines began well before emergency remote instruction took place1.
+
+Data from the National Assessment of Educational Progress (NAEP) reveals that performance across key grade bands leveled off shortly after the nationwide rollout of the Common Core State Standards (CCSS) in 2010 and entered a downward trajectory around 20151.
+
+National psychometric data on high school seniors illustrates this long-term trend1. Average reading and mathematics scores for twelfth-grade students have dropped to their lowest recorded levels in more than two decades1. Reading scores for graduating seniors fell 10 scale-score points below the baseline established during the assessment's inaugural administration in 19921. In mathematics, twelfth-grade scores fell to the lowest level recorded since the operational inception of the current assessment framework in 20051.
+
+Only 35% of twelfth graders reached the NAEP "proficient" benchmark in reading, while a mere 22% met that threshold in mathematics1. Conversely, 45% of twelfth graders scored below the NAEP "basic" level in mathematics—representing a five percentage-point deterioration relative to 2019—and 32% scored below basic in reading1.
+
+A parallel contraction occurred among younger cohorts2. On the NAEP eighth-grade reading assessment, the national average dropped by 2 scale points relative to 2022 and 5 points compared to 2019, bringing the average score into parity with the 1992 baseline2.
+
+The NAEP Long-Term Trend assessment for thirteen-year-olds similarly shows steady score erosion relative to 2020 and the preceding decade2. Rather than demonstrating instructional progress, the post-Common Core period has seen student achievement retreat to levels recorded over thirty years ago1.
+
+Assessment Program & Tested Cohort | Historical Baseline Comparison | Measured Scale-Score Trajectory | Subgroup & Distributional Dynamics
+NAEP Grade 12 Reading | 1992 Inaugural Assessment | -10 points below 1992 baseline; lowest level in over two decades | 32% below basic; only 35% proficient; severe score contraction in bottom quartiles
+NAEP Grade 12 Mathematics | 2005 Framework Inception | Lowest performance level recorded since framework operationalization | 45% below basic (+5 percentage points vs. 2019); only 22% proficient
+NAEP Grade 8 Reading | 2019 Pre-Pandemic Baseline | -5 points vs. 2019; -2 points vs. 2022; statistically flat compared to 1992 | 10th and 25th percentiles lower than 1992; top 10th percentile statistically unchanged
+PIRLS Grade 4 Reading | 2011 Assessment Cycle | United States slipped from 6th to 15th place globally | 10th percentile: -12 pts; 25th percentile: -9 pts; 90th percentile: flat
+NAEP Long-Term Trend (Age 13) | Peak Performance Baseline (~2012) | Sustained score declines across consecutive testing cycles | Widening performance gap separating top decile from bottom decile students
+
+Disaggregating these assessment figures uncovers a significant structural trend: the drop in American reading performance is characterized by an achievement bifurcation3. Across both domestic and international assessments, score declines are concentrated among lower-achieving students3.
+
+On NAEP eighth-grade reading exams, students scoring at the 75th and 90th percentiles performed at levels statistically indistinguishable from their historical 1992 baselines3. However, scores for students at the 10th and 25th percentiles fell substantially below their 1992 marks3.
+
+This dynamic is corroborated by the Progress in International Reading Literacy Study (PIRLS), which assesses fourth-grade reading comprehension across fifty-eight participating education systems4. While the performance of top-decile American fourth graders remained flat, scores for students in the bottom tenth dropped by 12 points, the bottom quartile dropped by 9 points, and median performers lost 7 points4.
+
+This concentration of learning loss pushed the United States down nine spots in international rankings, declining from 6th to 15th place4. The instructional shifts associated with the Common Core have coincided with an expanding performance divide, leaving vulnerable students further behind in basic literacy2.
+
+The timeline of this divergence challenges assertions that the literacy crisis was caused entirely by pandemic-era school closures1. Economists and psychometricians—including Thomas Kane of Harvard University and Eric Hanushek of the Hoover Institution—point out that the downward trend among lower-achieving students began around 20151.
+
+This inflection point followed the classroom implementation of Common Core curricula, the rollout of consortium-based standardized assessments like PARCC and Smarter Balanced, and the institutionalization of test-based educator evaluation systems under Race to the Top7. The data indicates that systemic vulnerabilities had already taken root across American public schools, leaving instruction fragile prior to the 2020 health crisis1.
+
+Comparative State Trajectories: New Jersey, Massachusetts, and Florida
+New Jersey: Aggregate Strength Masking Deep Urban Inequities
+New Jersey presents an institutional paradox: while the state regularly ranks among the top performers on aggregate NAEP tables, its statewide metrics obscure stark internal disparities.
+Following its 2010 adoption of the Common Core to support its application for federal Race to the Top funding, New Jersey deployed the Partnership for Assessment of Readiness for College and Careers (PARCC) examinations. The administration faced an aggressive opt-out movement in suburban communities, prompting Governor Chris Christie to announce an administrative retreat at Burlington County College in 2015. The state subsequently rebranded its framework as the New Jersey Student Learning Standards (NJSLS) in 2016 and replaced the PARCC brand with the New Jersey Student Learning Assessment (NJSLA).
+Throughout these administrative adjustments, New Jersey maintained high aggregate NAEP scale scores, frequently trailing only Massachusetts in fourth- and eighth-grade reading and mathematics. However, disaggregating the state's assessment data reveals that this high performance is sustained primarily by affluent suburban school districts, while urban districts struggle with low reading proficiency.
+Statewide NJSLA results show that only about one-third of New Jersey’s Black, Hispanic, and economically disadvantaged third-graders achieve proficiency in English Language Arts, compared to 62% of white students and 81% of Asian students.
+In Newark Public Schools, the third-grade reading proficiency rate was just 27.7% on the state assessment.
+
+Massachusetts: The Erosion of the 1993 Standard
+Massachusetts had content-rich curriculum frameworks supported by MCAS under the 1993 Act. When leaders abandoned these standards in 2010 for Common Core in pursuit of RTTT grants, Sandra Stotsky and others warned of dilution. NAEP scores post-2010 showed stagnation and decline. Econometric analyses showed >70% of MCAS score variance predicted by municipal Living Wage Index rather than instructional quality.
+
+Florida: Early Intervention, Structural Retention, and the B.E.S.T. Departure
+Florida combined state-mandated accountability with early literacy interventions and exit from national initiatives. Under Jeb Bush in 2002, mandatory 3rd-grade retention and phonics screening via FCRR were established. In 2019, DeSantis EO 19-32 eliminated Common Core, replacing it with B.E.S.T. standards. NAEP Grade 4 reading ranks top-tier, though 8th-grade shows fade.
+
+[Full text continues as in stage1_spyglass_capture.txt]

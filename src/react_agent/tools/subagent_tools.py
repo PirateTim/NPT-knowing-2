@@ -24,7 +24,8 @@ def dispatch_subagent_turn(
     agent_name: str,
     prompt: str,
     chase_id: Optional[str] = None,
-    thread_id: Optional[str] = None
+    thread_id: Optional[str] = None,
+    cargo_id: Optional[int] = None
 ) -> str:
     """
     Dispatches an operational turn to a named fleet subagent (plank, spyglass, bilgeladle, cutlass, scallywag, grog).
@@ -32,8 +33,9 @@ def dispatch_subagent_turn(
     Args:
         agent_name: Name of the subagent to task (e.g. 'plank', 'spyglass', 'bilgeladle', 'cutlass').
         prompt: Specific operational instruction or prompt for the subagent.
-        chase_id: Unique Chase execution run ID (e.g. 'ch04_silver_v1').
-        thread_id: Optional thread ID override. If omitted, constructed as 'thread_{agent_name}_{chase_id}'.
+        chase_id: Unique Chase execution run ID (e.g. 'august-chase-9').
+        thread_id: Optional thread ID override. If omitted, constructed deterministically.
+        cargo_id: Optional database metadata ID (e.g. 238) to bind the thread to 'cargo_{cargo_id}_{agent_name}'.
         
     Returns:
         JSON string receipt containing status, subagent name, thread ID, and response text.
@@ -48,10 +50,16 @@ def dispatch_subagent_turn(
             "error": f"Agent '{agent_name}' not found in fleet roster. Valid agents: {valid_agents}"
         })
 
-    # Construct deterministic thread ID tied to Chase run
+    # Construct deterministic thread ID
     if not thread_id:
-        c_slug = chase_id.strip() if chase_id else f"run_{uuid.uuid4().hex[:6]}"
-        thread_id = f"thread_{agent_name_lower}_{c_slug}"
+        if cargo_id is not None:
+            thread_id = f"cargo_{cargo_id}_{agent_name_lower}"
+            c_slug = chase_id.strip() if chase_id else f"cargo_{cargo_id}"
+        else:
+            c_slug = chase_id.strip() if chase_id else f"run_{uuid.uuid4().hex[:6]}"
+            thread_id = f"thread_{agent_name_lower}_{c_slug}"
+    else:
+        c_slug = chase_id.strip() if chase_id else thread_id
 
     xml_rel_path = roster[agent_name_lower]["xml_path"]
     xml_abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", xml_rel_path))

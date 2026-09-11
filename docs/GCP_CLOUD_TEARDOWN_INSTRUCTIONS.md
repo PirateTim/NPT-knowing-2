@@ -65,7 +65,12 @@ Therefore, if you want **true zero cost** during an idle period, you must:
 * `gs://npt-reckoning-drafts/`: Legacy chapter draft storage.
 * `gs://npt-reckoning-scrape-cache/`: Scraper transient cache.
 
-### E. IAM Service Accounts, Roles & Credential Keys
+### E. Google Cloud APIs for Fleet Ingestion
+* **`drive.googleapis.com`**: Google Drive API v3 (Used by Spyglass to read private Google Docs/Drive assets shared with `npt-fleet-manager`).
+* **`docs.googleapis.com`**: Google Docs API v1 (Used for programmatic document export).
+* **3-Month Idle Cost**: **$0.00** (APIs incur no standby or idle charges).
+
+### F. IAM Service Accounts, Roles & Credential Keys
 
 > [!WARNING]
 > While IAM service accounts and keys cost **$0.00/month**, active downloaded private JSON keys stored on local development machines represent a persistent security vector if left unmanaged during long periods of dormancy.
@@ -191,6 +196,11 @@ gcloud sql instances delete npt-instance-postgressql --quiet
 ```bash
 gcloud iam service-accounts delete npt-fleet-manager@npt-reckoning-1.iam.gserviceaccount.com --quiet
 gcloud iam service-accounts delete vertex-express@npt-reckoning-1.iam.gserviceaccount.com --quiet
+```
+
+#### Step 7: Disable Enabled Google APIs (Optional)
+```bash
+gcloud services disable drive.googleapis.com docs.googleapis.com
 ```
 
 ---

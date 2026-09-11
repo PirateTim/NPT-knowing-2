@@ -126,3 +126,22 @@ sequenceDiagram
 ```
 
 * **Consequences:** Eliminates scraping barriers on protected scholarly domains. Yields bit-for-bit extraction of complex citation structures (authors, DOIs, volume, issue, publication dates, and abstracts) directly matching Zotero's data contract. Incurs zero compute expense when idle.
+
+**ADR-015: Two-Tier Content Storage Architecture: Permanent Asset Dossiers vs. Chase Synthesis Sinks**
+
+* **Context:** In multi-stage investigative sweeps ("Chases"), early stage deliverables—specifically Cutlass's epistemic and structural logic audit (Stage 2) and Grog's core factual extraction (Stage 3)—were historically written directly into transient chase folders (`writings/chases/{chase_id}/stage2_cutlass_{slug}.md`). However, Round 1 audits are strictly prompt-free, objective deconstructions of what the external content says, what it is, and its evidentiary warrants. Trapping these evaluations in specific chase folders forced the fleet to redundantly re-audit assets when reused across different chases, chapter expansions, or standalone research sprints, wasting substantial LLM tokens and API budget. Furthermore, running multi-turn asset audits in monolithic chase threads caused exponential context token accumulation.
+* **Decision:**
+  1. *Physical Output Separation:* Establish a strict physical boundary between **Reusable Asset Dossiers** and **Chase Synthesis Deliverables**:
+     - **Reusable Asset Dossiers (`writings/cargo/cargo_{metadata_id}/`)**: Indexed permanently by database metadata ID (`cargo_{id}`). Houses objective, prompt-free asset assessments:
+       - `cutlass_audit.md`: Epistemic deconstruction (SAYS vs IS), Chain of Ruin evaluation, Causal Warrants & Claims, Epistemic Fallacy Scan, Sail Locker rating (`MAINSAIL`/`BILGE`/`JIB`), and Epistemic Scorecard.
+       - `grog_extraction.md`: Dead Reckoning, Fact Plumbing, Strict Summary, and Reference Sightings.
+       - `cargo_ontology.json`: Entity-relationship knowledge graph primitives.
+     - **Chase Synthesis Sinks (`writings/chases/{chase_id}/`)**: Reserved strictly for deliverables that compare multiple assets or directly answer the Author's thesis prompt:
+       - `stage4_bilgeladle_alignment.md`: Thesis mapping of the asset cluster against manuscript chapters.
+       - `stage5_scallywag_essay.md`: Satirical synthesis essay answering the Author's inquiry prompt.
+       - `stage6_peer_reviews.md`: Bilgeladle and Cutlass peer consensus reviews of Scallywag.
+       - `chase_status.md`: Real-time stage gate and telemetry log.
+  2. *Pre-Flight Reuse Gate:* Before dispatching Cutlass (Stage 2) or Grog (Stage 3), Pegleg must inspect `writings/cargo/cargo_{metadata_id}/`. If the deliverable exists, Pegleg reuses it immediately with **zero token spend**.
+  3. *Deterministic Thread Binding:* Asset-level subagent turns are bound to `cargo_{metadata_id}_{agent_name}` (e.g. `cargo_238_cutlass`), ensuring clean ~25k token context windows and perfect resuscitability for subsequent revisions.
+* **Consequences:** Eliminates redundant token expenditure across multi-asset chases. Creates a cumulative, searchable knowledge repository of audited cargo assets. Decouples objective forensic deconstruction from prompt-biased narrative synthesis. Ensures tri-fold alignment across PostgreSQL (`cargo.content_metadata.id`), ReAct cognitive threads (`cargo_{metadata_id}`), and disk storage (`writings/cargo/cargo_{metadata_id}/`).
+

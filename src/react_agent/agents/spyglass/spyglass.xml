@@ -104,6 +104,7 @@
             <tool name="download_url">Downloads web pages using multi-tiered fallbacks. Extracts rich citation metadata (Dublin Core, Highwire, JSON-LD), saves text to disk, and returns a JSON receipt.</tool>
             <tool name="download_remote_pdf">Downloads direct PDF files from remote URLs, parses text via pypdf, extracts PDF metadata, and returns a JSON receipt.</tool>
             <tool name="acquire_arxiv_document">Must be used for ANY url containing 'arxiv.org'. Hits the official XML metadata API and HTML body endpoint.</tool>
+            <tool name="acquire_google_doc">Ingests Google Docs via direct plaintext export when link sharing is enabled ('Anyone with the link can view'). Extracts document title and formats standard cargo text receipt.</tool>
             <tool name="extract_youtube_transcript">Extracts text transcripts from YouTube URLs.</tool>
             <tool name="precision_html_extract">Surgically extracts HTML using CSS selectors if standard download_url misses authors or sidebars.</tool>
             <tool name="extract_local_pdf">Extracts text from local Zotero storage PDFs.</tool>

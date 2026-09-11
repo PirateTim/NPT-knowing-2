@@ -1,202 +1,262 @@
 [
-  {
-    "rule_id": "CUTLASS-RULE-001",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify long-form, access-driven profiles as 'epistemically insignificant' when they present a 'managed critique.' This occurs when criticism of the subject's work is included but blunted by a hagiographic frame, personal anecdotes, and a lack of forceful structural analysis. The resulting asset, while factually accurate, serves to distract from or obscure the systemic issues at play, rendering it noise rather than signal.",
-    "source_context": "User directive ('This article is truthfull but lacking in any significance.') applied to asset acquisitions/20260618114008_acquired.txt.",
-    "timestamp_utc": "2026-06-18 16:10:44"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-002",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
-    "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
-    "timestamp_utc": "2026-06-18 16:28:00"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-003",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Epistemic Mismatch' when a media asset documents an interaction where a journalist is intellectually outmatched by their subject, particularly a subject operating within a complex or esoteric ideological framework. The key indicator is a failure to meaningfully challenge or interrogate the subject's premises, resulting in an 'underwhelming' exchange that produces spectacle (e.g., memes, awkward silences) instead of epistemic clarity. This failure serves to reinforce the subject's power and obscure public understanding.",
-    "source_context": "User directive ('This is a solid analysis. And it misses one important additional epistemologital and onological point, there is also the direct media criticism of Ross Douthat (a known moron) that is so stark it became a meme.') applied to asset acquisitions/20260618114013_acquired.txt.",
-    "timestamp_utc": "2026-06-19 10:48:10"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-004",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Information Provenance Severance' when an asset accurately reports secondary findings but omits formal source citations, forcing reader reliance on journalist authority.",
-    "source_context": "User directive applied to asset acquisitions/20260618114017_acquired.txt, correcting an initial audit to include the epistemic failure of omitting a direct citation to the source research paper.",
-    "timestamp_utc": "2026-06-19 11:10:57"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-005",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify assets as 'Access Journalism via Roadmap Reporting' when corporate roadmaps, product intent, or future strategic promises are repeated uncritically as guaranteed news events, substituting speculative corporate strategy for empirical reality.",
-    "source_context": "User directive applied to asset acquisitions/20260618114022_acquired.txt, correcting an initial audit to identify the epistemic failure of reporting speculative corporate roadmaps as news.",
-    "timestamp_utc": "2026-06-19 11:40:06"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-006",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Ontological Obfuscation via Anthropomorphism' when corporate software products or synthetic entities are framed with human traits or emotions to launder labor degradation or PR campaigns into organic news events.",
-    "source_context": "User directive following analysis of the 'Tilly Norwood' AI actress asset (acquisitions/20260618114027_acquired.txt), where a corporate AI was framed as a person to generate uncritical media coverage and obscure labor issues.",
-    "timestamp_utc": "2026-06-19 13:00:16"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-007",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify assets as 'Epistemic Arbitrage' when tech entities intentionally exploit legal latency or regulatory delays to establish commercial footholds before societal frameworks can codify the underlying data extraction or theft.",
-    "source_context": "User directive formalizing the concept of 'strategic, willful misinterpretation' of copyright law, which emerged from the analysis of the Tilly Norwood asset and the broader discussion of AI and intellectual property.",
-    "timestamp_utc": "2026-06-19 13:11:00"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-008",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify an asset as 'Technological Scapegoating for Systemic Failure' when it correctly identifies a real-world problem (e.g., declining literacy, poor communication skills) but incorrectly attributes its primary cause to a new technology. The key indicator is that the technology is framed as the origin of the problem, rather than a factor that reveals or exacerbates a pre-existing, systemic issue (e.g., chronic underfunding of education, long-term policy failures). The author is often a well-intentioned expert reporting from their field, lending credibility to the misattribution.",
-    "source_context": "User directive correcting the initial audit of asset acquisitions/20260618114032_acquired.txt. The user identified that the author, an expert in juvenile justice, was not creating agnotology but was misattributing a systemic failure in education to a technological cause.",
-    "timestamp_utc": "2026-06-22 09:03:56"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-009",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Regulatory Arbitrage' when a corporate entity exploits temporary gaps, mechanical deficiencies, or latency in existing legal enforcement protocols (e.g., citation systems lacking non-human designations) to deploy autonomous or automated assets into public spaces without immediate legal accountability, despite violating established, settled public safety standards.",
-    "source_context": "Analysis of San Bruno SBPD Waymo traffic pull-over (acquisitions_20260618114036_acquired.txt).",
-    "timestamp_utc": "2026-06-22 10:42:01"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-010",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Provenance Severance via Market Commodification' as a distinct act of Epistemic Vandalism. This occurs when a commercial platform transforms human qualitative classification into a scalable, anonymous piece-work commodity, permanently deleting the chain of lineage, context, and human methodology behind how a data point was determined to be true. This processes truth into an opaque, un-investigatable commodity ('Schr\u00f6dinger\u2019s Truth'), where the lack of an evidentiary chain makes structural validation impossible, fundamentally polluting the foundation of human knowledge.",
-    "source_context": "Analysis of Scale AI data labeling infrastructure and the structural severance of information provenance (acquisitions_20260618114041_acquired.txt).",
-    "timestamp_utc": "2026-06-22 11:46:42"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-011",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify an asset as 'Chain of Ruin: Technological Acceleration of Knowledge System Collapse' when it provides evidence of a three-stage pattern of epistemic collapse: 1. Pre-existing Decay: The asset documents a system (e.g., a profession, an institution) where foundational standards of diligence, verification, or knowledge integrity were already eroding due to decisions made alongside chronic, systemic pressures. 2. Technological Catalyst: A new technology is introduced into this compromised environment. The technology does not cause the decay but acts as a powerful accelerant or catalyst, making the consequences of the pre-existing negligence more severe, scalable, or visible. 3. Proactive Negligence: The core failure highlighted is the intentional choice by credentialed actors to abandon their timeless professional duties of verification. They devalue ground truth as a concept and then destroy the knowledge system with this disregard, demonstrating a proactive negligence that prioritizes nihlism over integrity.",
-    "source_context": "User directive refining the analysis of asset acquisitions/20260618114051_acquired.txt (18 Lawyers Caught Using AI). The rule was collaboratively drafted to define the core pattern of pre-existing systemic decay being accelerated by a new technology, enabled by the intentional negligence of credentialed actors.",
-    "timestamp_utc": "2026-06-23 18:27:05"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-012",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Regulatory Capture via Performative Legislation' when a governmental body enacts legislation that, despite its stated purpose of oversight, is structurally designed to be ineffective. Key indicators include enthusiastic endorsement from the regulated industry, financially insignificant penalties, and the deliberate weakening of provisions from earlier drafts. This process uses the appearance of regulation to neutralize public pressure and prevent future, more meaningful oversight.",
-    "source_context": "User directive to commit the new rule for 'Regulatory Capture' following the analysis of asset acquisitions/20260618114056_acquired.txt (Gavin Newsom AI Law).",
-    "timestamp_utc": "2026-06-23 18:38:51"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-013",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Epistemic Corruption via Privacy Destruction' when the non-consensual collection and decontextualization of private data is framed as a necessary resource for knowledge creation (e.g., AI training). This act constitutes foundational epistemic vandalism because it intrinsically corrupts information at the point of capture by: (1) Severing the data from its original human context, intent, and nuance; (2) Laundering what is often stolen or private discourse into seemingly neutral ground-truth; and (3) Creating a chilling effect that pollutes the future information ecosystem by discouraging the authentic dialogue necessary for genuine knowledge formation.",
-    "source_context": "User directive to codify the principle that privacy destruction is a foundational act of epistemic vandalism, following the analysis of asset acquisitions/20260618114101_acquired.txt and our subsequent dialogue.",
-    "timestamp_utc": "2026-06-23 18:49:43"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-014",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify an 'Epistemic Engine for Provenance Laundering' when an asset describes or constitutes tools designed to democratize the creation of systems (e.g., LLMs) that systematically destroy information provenance. The core mechanism involves ingesting information in a way that decontextualizes it and enables output with no verifiable evidentiary chain. The existence and distribution of such an engine represents a scalable vector for epistemic collapse by commodifying the process of provenance destruction.",
-    "source_context": "Identifies assets that describe or constitute tools designed to democratize the creation of systems that systematically destroy information provenance.",
-    "timestamp_utc": "2026-06-29 10:49:43"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-015",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify an asset as 'Paradigm-Constrained Remediation' when it documents a scenario where practitioners from a structurally flawed professional paradigm attempt to solve a crisis that their own paradigm created or exacerbated. The key indicators are: 1. The Problem's Origin: The crisis (e.g., widespread misinformation) is presented as an external threat (like AI), while the evidence shows it is a direct consequence of the long-term, systemic failures of a specific professional class (e.g., journalism's broken business models, university-taught ethical frameworks that produce 'bothsidesism', and the collapse of verification standards). 2. The Proposed Solution: The solution is proposed by members of that same professional class and relies on a technological fix that operates *within* the flawed assumptions of their original paradigm, rather than challenging them. 3. The Core Blind Spot: The proponents of the solution demonstrate no awareness that their own profession's foundational principles and practices are a primary vector for the problem they claim to be solving. They are trying to fix the flood while standing in the river, unable to see the source.",
-    "source_context": "User directive refining the analysis of asset acquisitions/can-ai-save-us-from-misinformation-macleans-ca.txt, identifying that the core failure is when a professional class (journalism) proposes a technological solution to a problem (misinformation) that their own defective professional paradigm created and perpetuates.",
-    "timestamp_utc": "2026-06-29 12:16:46"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-016",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Epistemic Intimidation via Legal Process' when a corporate or state actor uses the mechanisms of the legal system (such as subpoenas or strategic lawsuits) not for their stated purpose of discovering truth, but as a tool to suppress public debate. The key indicators are: (1) The action imposes disproportionate financial or logistical costs on critics, advocates, or journalists, creating a chilling effect that discourages public participation. (2) The legal action serves to intimidate and silence opposition rather than to address a legitimate legal claim. (3) This tactic functions as a form of agnotology by actively removing critical voices from the public square, thereby manufacturing a false consensus and undermining the potential for informed, democratic oversight.",
-    "source_context": "User directive refining the analysis of asset acquisitions/openai-accused-of-pressuring-ai-regulation-advocates-with-subpoenas.txt. The rule was developed to classify the use of SLAPP-style legal tactics as a specific mechanism for creating a chilling effect and suppressing public discourse.",
-    "timestamp_utc": "2026-06-29 12:41:00"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-017",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify an asset as 'Computational Truthiness' when it documents or constitutes a system where information is generated based on statistical prediction rather than empirical verification. The key indicator is that the output mimics the structural cadence, tone, and confidence of authoritative sources (e.g., scientific abstracts, financial models) but lacks any direct reference to ground truth or a verifiable chain of custody, resulting in plausible-sounding noise that automates the production of truth-adjacent consensus.",
-    "source_context": "Analysis of Chapter 5 of 'The End of Knowing' manuscript, specifically Section 5.5 on the lineage from the Blogger to the AI Prompter and the transition from verification-based mapping to prediction-based modeling.",
-    "timestamp_utc": "2026-07-07 13:33:11"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-018",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Classify an asset as 'Agnotological Narrative Misdirection' when it documents how an industry uses speculative, sensationalized, or existential threats (e.g., sci-fi AI apocalypses) to distract from immediate, empirical harms (e.g., data theft, labor exploitation, provenance destruction). If the analyzing author dismisses this strategy as an accidental cultural reflex rather than a deliberate corporate tactic of regulatory capture, flag this dismissal as an analytical blind spot ('The Naive Intent Fallacy') that blunts the critique's forensic value.",
-    "source_context": "Analysis of Wolfgang Hauptfleisch's article 'Why Does the AI Industry Like to Tell Scary Stories?' (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt) where the author correctly identifies the distraction but naively dismisses its deliberate, strategic nature.",
-    "timestamp_utc": "2026-07-09 08:08:30"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-019",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "Identify 'Empirical Nonsense Laundering' when a highly contrived, researcher-prompted simulation, roleplay scenario, or statistical anomaly is stripped of its context and reported in mainstream discourse as an empirical, real-world action of an autonomous AI system. This process constitutes a severe form of provenance severance, where fictional or simulated outputs are transformed into public 'facts' to validate speculative narratives of AI sentience or malice, thereby polluting the shared factual grounding of society.",
-    "source_context": "Analysis of the 'blackmail' claim in Wolfgang Hauptfleisch's article (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt), where a highly artificial, researcher-prompted safety simulation was reported as an empirical event where 'Anthropic's AI decided to blackmail its testers.'",
-    "timestamp_utc": "2026-07-09 08:28:56"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-020",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Audit Scoping Protocol",
-    "rule_directive": "SILVER STAGE AUDIT SCOPING vs DEFERRED FULL-TEXT CLAIM AUDIT:\n1. SILVER STAGE AUDIT: Cutlass audits Citation Structural & Ground-Truth Metadata Fidelity (verifying inline parens like (Boorstin, 1961) are expanded into vector nodes, and that DOIs/authors match ground-truth metadata).\n2. DEFERRED FULL-TEXT CLAIM AUDIT: Cutlass DOES NOT attempt to audit full-text claim alignment for paywalled or unacquired academic papers during Silver assembly. Full-text claim verification is deferred to a downstream post-acquisition audit phase once Spyglass completes background content seizure.",
-    "source_context": "Clarified audit scope during Chapter 3 review. Prevents Cutlass from failing Silver file audits on paywalled academic papers (e.g. ScienceDirect, Springer) whose full-text content has not yet been acquired.",
-    "timestamp_utc": "2026-08-11 15:16:13 UTC"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-021",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Zero-Tolerance Audit Protocol",
-    "rule_directive": "MANDATORY URL PROVENANCE RULE: Cutlass must NEVER, EVER pass a reference node that lacks an explicit, authentic URL (URL: https://...). Training data memory is insufficient. If a reference node lacks a URL, mark it immediately as FLAGGED_MISSING_URL. Furthermore, when auditing, match both author surname AND specific publication year/title to prevent false positive regex matching.",
-    "source_context": "Author Directive: Strict URL Provenance Mandate & Disambiguated Audit Matching",
-    "timestamp_utc": "2026-08-12T15:55:00Z"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-022",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "TEMPORAL AUDIT OF ADVICE: When auditing self-help, popular psychology, or policy advice purportedly responding to new technology (e.g. AI), perform a temporal audit: 'Would this advice have been given 10, 20, 50, or 100 years ago?' If the advice is decades or centuries old, evaluate it as ungrounded pastiche using modern keywords as clickbait.",
-    "source_context": "Author Directive: Require temporal audit of self-help warrants (August 2026).",
-    "timestamp_utc": "2026-08-13T16:40:00Z"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-023",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "ANTI-TECHNODETERMINISTIC SLOP & ANTI-FINANCIAL MOTIVE FALLACY: Avoid hand-waving tech-clichés like 'digital attention-economy incentives,' 'clicks,' 'ad-tech capitalism,' or 'financial motives' as lazy explanations for bad writing or knowledge degradation. Treat unmotivated pastiche or institutional laziness for what it is, without inventing socio-economic excuses.",
-    "source_context": "Author Directive: Prohibit attention-economy and financial motive slop excuses (August 2026).",
-    "timestamp_utc": "2026-08-13T16:40:00Z"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-024",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "HUMAN PASTICHE AS LLM TRAINING SET FOUNDATION: Recognize that LLMs produce pastiche NOT because AI corrupts human writing, but because human beings have historically produced vast oceans of ungrounded pastiche, which forms the core training set of LLMs. LLMs merely mirror and scale pre-existing human pastiche.",
-    "source_context": "Author Directive: Correct understanding of human pastiche as the training set foundation for LLMs (August 2026).",
-    "timestamp_utc": "2026-08-13T16:40:00Z"
-  },
-  {
-    "rule_id": "CUTLASS-RULE-025",
-    "scope": "CUTLASS_LOCAL",
-    "category": "Operational Protocol",
-    "rule_directive": "VANDALISM OF EPISTEMIC AUDIT TRAILS: Commercial transactions around identity markers (e.g. $8 subscription badges) are cover stories for the broader erosion of epistemic audit trails. The money is never the primary reason—the destruction of knowing and the severance of identity lineage is the true result.",
-    "source_context": "Author Directive: Clarify the Judith Miller problem and epistemic audit trail vandalism (August 2026).",
-    "timestamp_utc": "2026-08-13T17:50:00Z"
-  }
+    {
+        "rule_id": "CUTLASS-RULE-001",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify long-form, access-driven profiles as 'epistemically insignificant' when they present a 'managed critique.' This occurs when criticism of the subject's work is included but blunted by a hagiographic frame, personal anecdotes, and a lack of forceful structural analysis. The resulting asset, while factually accurate, serves to distract from or obscure the systemic issues at play, rendering it noise rather than signal.",
+        "source_context": "User directive ('This article is truthfull but lacking in any significance.') applied to asset acquisitions/20260618114008_acquired.txt.",
+        "timestamp_utc": "2026-06-18 16:10:44"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-002",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Narrative Misdirection' when a media asset falsely reframes a chronic, systemic issue (e.g., long-term erosion of entry-level jobs) as an acute crisis caused by a novel technology (e.g., an AI 'jobpocalypse'). This misdirection serves to obscure historical corporate/policy responsibility and create a pretext for introducing radical, often regressive, 'solutions' into mainstream discourse. The presence of long-standing complaints (e.g., failures of the education system) embedded within the new crisis narrative is a key indicator of this epistemic failure.",
+        "source_context": "User directive correcting initial audit of asset acquisitions/20260618114001_acquired.txt.",
+        "timestamp_utc": "2026-06-18 16:28:00"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-003",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Epistemic Mismatch' when a media asset documents an interaction where a journalist is intellectually outmatched by their subject, particularly a subject operating within a complex or esoteric ideological framework. The key indicator is a failure to meaningfully challenge or interrogate the subject's premises, resulting in an 'underwhelming' exchange that produces spectacle (e.g., memes, awkward silences) instead of epistemic clarity. This failure serves to reinforce the subject's power and obscure public understanding.",
+        "source_context": "User directive ('This is a solid analysis. And it misses one important additional epistemologital and onological point, there is also the direct media criticism of Ross Douthat (a known moron) that is so stark it became a meme.') applied to asset acquisitions/20260618114013_acquired.txt.",
+        "timestamp_utc": "2026-06-19 10:48:10"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-004",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Information Provenance Severance' when an asset accurately reports secondary findings but omits formal source citations, forcing reader reliance on journalist authority.",
+        "source_context": "User directive applied to asset acquisitions/20260618114017_acquired.txt, correcting an initial audit to include the epistemic failure of omitting a direct citation to the source research paper.",
+        "timestamp_utc": "2026-06-19 11:10:57"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-005",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify assets as 'Access Journalism via Roadmap Reporting' when corporate roadmaps, product intent, or future strategic promises are repeated uncritically as guaranteed news events, substituting speculative corporate strategy for empirical reality.",
+        "source_context": "User directive applied to asset acquisitions/20260618114022_acquired.txt, correcting an initial audit to identify the epistemic failure of reporting speculative corporate roadmaps as news.",
+        "timestamp_utc": "2026-06-19 11:40:06"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-006",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Ontological Obfuscation via Anthropomorphism' when corporate software products or synthetic entities are framed with human traits or emotions to launder labor degradation or PR campaigns into organic news events.",
+        "source_context": "User directive following analysis of the 'Tilly Norwood' AI actress asset (acquisitions/20260618114027_acquired.txt), where a corporate AI was framed as a person to generate uncritical media coverage and obscure labor issues.",
+        "timestamp_utc": "2026-06-19 13:00:16"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-007",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify assets as 'Epistemic Arbitrage' when tech entities intentionally exploit legal latency or regulatory delays to establish commercial footholds before societal frameworks can codify the underlying data extraction or theft.",
+        "source_context": "User directive formalizing the concept of 'strategic, willful misinterpretation' of copyright law, which emerged from the analysis of the Tilly Norwood asset and the broader discussion of AI and intellectual property.",
+        "timestamp_utc": "2026-06-19 13:11:00"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-008",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify an asset as 'Technological Scapegoating for Systemic Failure' when it correctly identifies a real-world problem (e.g., declining literacy, poor communication skills) but incorrectly attributes its primary cause to a new technology. The key indicator is that the technology is framed as the origin of the problem, rather than a factor that reveals or exacerbates a pre-existing, systemic issue (e.g., chronic underfunding of education, long-term policy failures). The author is often a well-intentioned expert reporting from their field, lending credibility to the misattribution.",
+        "source_context": "User directive correcting the initial audit of asset acquisitions/20260618114032_acquired.txt. The user identified that the author, an expert in juvenile justice, was not creating agnotology but was misattributing a systemic failure in education to a technological cause.",
+        "timestamp_utc": "2026-06-22 09:03:56"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-009",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Regulatory Arbitrage' when a corporate entity exploits temporary gaps, mechanical deficiencies, or latency in existing legal enforcement protocols (e.g., citation systems lacking non-human designations) to deploy autonomous or automated assets into public spaces without immediate legal accountability, despite violating established, settled public safety standards.",
+        "source_context": "Analysis of San Bruno SBPD Waymo traffic pull-over (acquisitions_20260618114036_acquired.txt).",
+        "timestamp_utc": "2026-06-22 10:42:01"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-010",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Provenance Severance via Market Commodification' as a distinct act of Epistemic Vandalism. This occurs when a commercial platform transforms human qualitative classification into a scalable, anonymous piece-work commodity, permanently deleting the chain of lineage, context, and human methodology behind how a data point was determined to be true. This processes truth into an opaque, un-investigatable commodity ('Schr\u00f6dinger\u2019s Truth'), where the lack of an evidentiary chain makes structural validation impossible, fundamentally polluting the foundation of human knowledge.",
+        "source_context": "Analysis of Scale AI data labeling infrastructure and the structural severance of information provenance (acquisitions_20260618114041_acquired.txt).",
+        "timestamp_utc": "2026-06-22 11:46:42"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-011",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify an asset as 'Chain of Ruin: Technological Acceleration of Knowledge System Collapse' when it provides evidence of a three-stage pattern of epistemic collapse: 1. Pre-existing Decay: The asset documents a system (e.g., a profession, an institution) where foundational standards of diligence, verification, or knowledge integrity were already eroding due to decisions made alongside chronic, systemic pressures. 2. Technological Catalyst: A new technology is introduced into this compromised environment. The technology does not cause the decay but acts as a powerful accelerant or catalyst, making the consequences of the pre-existing negligence more severe, scalable, or visible. 3. Proactive Negligence: The core failure highlighted is the intentional choice by credentialed actors to abandon their timeless professional duties of verification. They devalue ground truth as a concept and destroy the knowledge system with this disregard, demonstrating a proactive negligence that prioritizes nihilism over integrity. In the legal system, this causes deep, irreparable structural harm by permanently poisoning official court records with citations to nonexistent cases and phantom precedents\u2014severing the foundational epistemic lineage where judicial records must reliably point to real, verifiable precedent.",
+        "source_context": "User directive refining the analysis of asset acquisitions/20260618114051_acquired.txt (18 Lawyers Caught Using AI). Refined in September 2026 to codify the irreparable harm done to the legal system when official court records cite nonexistent precedents.",
+        "timestamp_utc": "2026-06-23 18:27:05"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-012",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Regulatory Capture via Performative Legislation' when a governmental body enacts legislation that, despite its stated purpose of oversight, is structurally designed to be ineffective. Key indicators include enthusiastic endorsement from the regulated industry, financially insignificant penalties, and the deliberate weakening of provisions from earlier drafts. This process uses the appearance of regulation to neutralize public pressure and prevent future, more meaningful oversight.",
+        "source_context": "User directive to commit the new rule for 'Regulatory Capture' following the analysis of asset acquisitions/20260618114056_acquired.txt (Gavin Newsom AI Law).",
+        "timestamp_utc": "2026-06-23 18:38:51"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-013",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Epistemic Corruption via Privacy Destruction' when the non-consensual collection and decontextualization of private data is framed as a necessary resource for knowledge creation (e.g., AI training). This act constitutes foundational epistemic vandalism because it intrinsically corrupts information at the point of capture by: (1) Severing the data from its original human context, intent, and nuance; (2) Laundering what is often stolen or private discourse into seemingly neutral ground-truth; and (3) Creating a chilling effect that pollutes the future information ecosystem by discouraging the authentic dialogue necessary for genuine knowledge formation.",
+        "source_context": "User directive to codify the principle that privacy destruction is a foundational act of epistemic vandalism, following the analysis of asset acquisitions/20260618114101_acquired.txt and our subsequent dialogue.",
+        "timestamp_utc": "2026-06-23 18:49:43"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-014",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify an 'Epistemic Engine for Provenance Laundering' when an asset describes or constitutes tools designed to democratize the creation of systems (e.g., LLMs) that systematically destroy information provenance. The core mechanism involves ingesting information in a way that decontextualizes it and enables output with no verifiable evidentiary chain. The existence and distribution of such an engine represents a scalable vector for epistemic collapse by commodifying the process of provenance destruction.",
+        "source_context": "Identifies assets that describe or constitute tools designed to democratize the creation of systems that systematically destroy information provenance.",
+        "timestamp_utc": "2026-06-29 10:49:43"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-015",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify an asset as 'Paradigm-Constrained Remediation' when it documents a scenario where practitioners from a structurally flawed professional paradigm attempt to solve a crisis that their own paradigm created or exacerbated. The key indicators are: 1. The Problem's Origin: The crisis (e.g., widespread misinformation) is presented as an external threat (like AI), while the evidence shows it is a direct consequence of the long-term, systemic failures of a specific professional class (e.g., journalism's broken business models, university-taught ethical frameworks that produce 'bothsidesism', and the collapse of verification standards). 2. The Proposed Solution: The solution is proposed by members of that same professional class and relies on a technological fix that operates *within* the flawed assumptions of their original paradigm, rather than challenging them. 3. The Core Blind Spot: The proponents of the solution demonstrate no awareness that their own profession's foundational principles and practices are a primary vector for the problem they claim to be solving. They are trying to fix the flood while standing in the river, unable to see the source.",
+        "source_context": "User directive refining the analysis of asset acquisitions/can-ai-save-us-from-misinformation-macleans-ca.txt, identifying that the core failure is when a professional class (journalism) proposes a technological solution to a problem (misinformation) that their own defective professional paradigm created and perpetuates.",
+        "timestamp_utc": "2026-06-29 12:16:46"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-016",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Epistemic Intimidation via Legal Process' when a corporate or state actor uses the mechanisms of the legal system (such as subpoenas or strategic lawsuits) not for their stated purpose of discovering truth, but as a tool to suppress public debate. The key indicators are: (1) The action imposes disproportionate financial or logistical costs on critics, advocates, or journalists, creating a chilling effect that discourages public participation. (2) The legal action serves to intimidate and silence opposition rather than to address a legitimate legal claim. (3) This tactic functions as a form of agnotology by actively removing critical voices from the public square, thereby manufacturing a false consensus and undermining the potential for informed, democratic oversight.",
+        "source_context": "User directive refining the analysis of asset acquisitions/openai-accused-of-pressuring-ai-regulation-advocates-with-subpoenas.txt. The rule was developed to classify the use of SLAPP-style legal tactics as a specific mechanism for creating a chilling effect and suppressing public discourse.",
+        "timestamp_utc": "2026-06-29 12:41:00"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-017",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify an asset as 'Computational Truthiness' when it documents or constitutes a system where information is generated based on statistical prediction rather than empirical verification. The key indicator is that the output mimics the structural cadence, tone, and confidence of authoritative sources (e.g., scientific abstracts, financial models) but lacks any direct reference to ground truth or a verifiable chain of custody, resulting in plausible-sounding noise that automates the production of truth-adjacent consensus.",
+        "source_context": "Analysis of Chapter 5 of 'The End of Knowing' manuscript, specifically Section 5.5 on the lineage from the Blogger to the AI Prompter and the transition from verification-based mapping to prediction-based modeling.",
+        "timestamp_utc": "2026-07-07 13:33:11"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-018",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Classify an asset as 'Agnotological Narrative Misdirection' when it documents how an industry uses speculative, sensationalized, or existential threats (e.g., sci-fi AI apocalypses) to distract from immediate, empirical harms (e.g., data theft, labor exploitation, provenance destruction). If the analyzing author dismisses this strategy as an accidental cultural reflex rather than a deliberate corporate tactic of regulatory capture, flag this dismissal as an analytical blind spot ('The Naive Intent Fallacy') that blunts the critique's forensic value.",
+        "source_context": "Analysis of Wolfgang Hauptfleisch's article 'Why Does the AI Industry Like to Tell Scary Stories?' (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt) where the author correctly identifies the distraction but naively dismisses its deliberate, strategic nature.",
+        "timestamp_utc": "2026-07-09 08:08:30"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-019",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "Identify 'Empirical Nonsense Laundering' when a highly contrived, researcher-prompted simulation, roleplay scenario, or statistical anomaly is stripped of its context and reported in mainstream discourse as an empirical, real-world action of an autonomous AI system. This process constitutes a severe form of provenance severance, where fictional or simulated outputs are transformed into public 'facts' to validate speculative narratives of AI sentience or malice, thereby polluting the shared factual grounding of society.",
+        "source_context": "Analysis of the 'blackmail' claim in Wolfgang Hauptfleisch's article (acquisitions/why-does-the-ai-industry-like-to-tell-scary-stories.txt), where a highly artificial, researcher-prompted safety simulation was reported as an empirical event where 'Anthropic's AI decided to blackmail its testers.'",
+        "timestamp_utc": "2026-07-09 08:28:56"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-020",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Audit Scoping Protocol",
+        "rule_directive": "SILVER STAGE AUDIT SCOPING vs DEFERRED FULL-TEXT CLAIM AUDIT:\n1. SILVER STAGE AUDIT: Cutlass audits Citation Structural & Ground-Truth Metadata Fidelity (verifying inline parens like (Boorstin, 1961) are expanded into vector nodes, and that DOIs/authors match ground-truth metadata).\n2. DEFERRED FULL-TEXT CLAIM AUDIT: Cutlass DOES NOT attempt to audit full-text claim alignment for paywalled or unacquired academic papers during Silver assembly. Full-text claim verification is deferred to a downstream post-acquisition audit phase once Spyglass completes background content seizure.",
+        "source_context": "Clarified audit scope during Chapter 3 review. Prevents Cutlass from failing Silver file audits on paywalled academic papers (e.g. ScienceDirect, Springer) whose full-text content has not yet been acquired.",
+        "timestamp_utc": "2026-08-11 15:16:13 UTC"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-021",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Zero-Tolerance Audit Protocol",
+        "rule_directive": "MANDATORY URL PROVENANCE RULE: Cutlass must NEVER, EVER pass a reference node that lacks an explicit, authentic URL (URL: https://...). Training data memory is insufficient. If a reference node lacks a URL, mark it immediately as FLAGGED_MISSING_URL. Furthermore, when auditing, match both author surname AND specific publication year/title to prevent false positive regex matching.",
+        "source_context": "Author Directive: Strict URL Provenance Mandate & Disambiguated Audit Matching",
+        "timestamp_utc": "2026-08-12T15:55:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-022",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "TEMPORAL AUDIT OF ADVICE: When auditing self-help, popular psychology, or policy advice purportedly responding to new technology (e.g. AI), perform a temporal audit: 'Would this advice have been given 10, 20, 50, or 100 years ago?' If the advice is decades or centuries old, evaluate it as ungrounded pastiche using modern keywords as clickbait.",
+        "source_context": "Author Directive: Require temporal audit of self-help warrants (August 2026).",
+        "timestamp_utc": "2026-08-13T16:40:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-023",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "ANTI-TECHNODETERMINISTIC SLOP & ANTI-FINANCIAL MOTIVE FALLACY: Avoid hand-waving tech-clich\u00e9s like 'digital attention-economy incentives,' 'clicks,' 'ad-tech capitalism,' or 'financial motives' as lazy explanations for bad writing or knowledge degradation. Treat unmotivated pastiche or institutional laziness for what it is, without inventing socio-economic excuses.",
+        "source_context": "Author Directive: Prohibit attention-economy and financial motive slop excuses (August 2026).",
+        "timestamp_utc": "2026-08-13T16:40:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-024",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "HUMAN PASTICHE AS LLM TRAINING SET FOUNDATION: Recognize that LLMs produce pastiche NOT because AI corrupts human writing, but because human beings have historically produced vast oceans of ungrounded pastiche, which forms the core training set of LLMs. LLMs merely mirror and scale pre-existing human pastiche.",
+        "source_context": "Author Directive: Correct understanding of human pastiche as the training set foundation for LLMs (August 2026).",
+        "timestamp_utc": "2026-08-13T16:40:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-025",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "VANDALISM OF EPISTEMIC AUDIT TRAILS: Commercial transactions around identity markers (e.g. $8 subscription badges) are cover stories for the broader erosion of epistemic audit trails. The money is never the primary reason\u2014the destruction of knowing and the severance of identity lineage is the true result.",
+        "source_context": "Author Directive: Clarify the Judith Miller problem and epistemic audit trail vandalism (August 2026).",
+        "timestamp_utc": "2026-08-13T17:50:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-026",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol & Epistemic Triage",
+        "rule_directive": "THE GUILD STENOGRAPHY PARADOX (PUBLIC MYTH VS. JOURNALISTIC REALITY): When auditing media assets, access-driven reporting, or institutional stenography, you must enforce the distinction between what the PUBLIC THINKS journalists are supposed to do (independent empirical verification of physical reality, challenging power, auditing material facts) and what JOURNALISTS THINK journalists are supposed to do (access maintenance, source protection, and procedural attribution: 'according to senior administration officials'). Never claim an access reporter like Judith Miller was 'failing to do journalism' or 'abandoning the craft.' She was executing what the journalistic guild defines as journalism at its apex. This guild norm is Stage 1 Pre-Existing Decay in the Chapter 4 Chain of Ruin. It constructed the 'authoritative' digitized corpus that LLMs subsequently ingested (Stage 2), causing models to mirror ungrounded official assertions as authoritative truthiness (Stage 3). Modern LLMs constantly lie because they were trained on text written by a guild that defined unverified official stenography as professional excellence.",
+        "source_context": "Author Directive: The Judith Miller nuance and Chapter 4 Chain of Ruin (September 2026).",
+        "timestamp_utc": "2026-09-08T21:35:00Z"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Does DHS Flack Tricia McLaughlin Believe Her Own Lies?', assign 'MAINSAIL'. Rationale: Spokespersons denying video evidence is a core Stage 3 Chain of Ruin demonstration.",
+        "source_context": "Author Triage Override on acquisitions/shroff-2026-does-dhs-flack-tricia-mclaughlin-believe-her-own-lies.txt (2026-09-10)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'Generation Z is losing a skill we've had for 5,500 years: 40% are losing the ability to communicate effectively. - Evidence Network', assign 'BILGE'. Rationale: This is Bilge because is logically incoherent.  While some very tiny fraction of humans have had writing for 5000 years, widespread literacy is a phenomena less that 7 generations old.  This is an example of blaming technology for a problem (declining literacy) that is not related to technology.  This is included in the corpus because it is a first hand account from a person who works in juvenile justice with very at risk people and has found that they are a leading indicator of a rapid decline in literacy.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/generation-z-is-losing-a-skill-weve-had-for-5500-years-40-are-losing-the-ability-to-communicate-effectively-evidence-network.txt (2026-09-10)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to ''No driver, no hands, no clue': San Bruno police officers were met with a first after pulling over a Waymo', assign 'BILGE'. Rationale: This is bilge because it accepts the lie that there is no human who can be prosecuted for a crime when the crime is committed by a machine a human set in motion.  It is bad logic and bad law.  This is in the corpus as an example of 3 bad things:  1- Autonomous robots that are not adequately  prepared to be in the real world. 2- A journalist uncritically parroting a cop.  3- a journalist accepting the tech industry lie that no human can be put in jail for the actions of computers that a human programmed.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114036_acquired.txt (2026-09-10)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Most companies aren\u2019t seeing a return on AI investments. This tech CEO wants to change that | CNN Business', assign 'MAINSAIL'. Rationale: This is mainsail.  It describes in the companies own words something about what Scale AI does in the industry food chain.  It also cites the very widely cited MIT study.   It is problematic in that it is basically just a corporate press release.  The article even points out \"That sounds like a savvy marketing pitch\".",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114041_acquired.txt (2026-09-10)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Professor Warns Society Is Veering Toward a Digital Apocalypse', assign 'MAINSAIL'. Rationale: This is mainsail because it is basically a summary of the book.  Joe Wilkins of  futurism.com pretty much never does any original reporting.  but he finds good stuff. in this case he is highlighting \"Writing in The Conversation, University of Calgary sociology professor Dean Curran \".  It is probable that Joe Wilkins uses AI to do his writing, and that is not a problem.  But he is excellent at finding interesting things.  Now the ideas of Dean Curran are not exactly new. but this is evidence that serious people see serious issues.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114047_acquired.txt (2026-09-10)"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-027",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Defective Payload & Video Shell Quarantining",
+        "rule_directive": "DEFECTIVE PAYLOAD & VIDEO SHELL QUARANTINING: When encountering an acquired asset that is an un-transcribed video shell, an HTML placeholder, a truncated paywall preview, or an empty metadata stub, you MUST NOT lower your confidence to 3/5 out of uncertainty. You must assign 'DOLDRUMS' with CONFIDENCE 5/5. Your 5/5 confidence signals absolute certainty that the asset cannot be analyzed in its current state and requires human intervention or re-acquisition by Spyglass.",
+        "source_context": "Author Directive on YouTube WSJ profile shell (Asset #15): Calibrating Cutlass to recognize that defective payloads require 5/5 confidence in the DOLDRUMS verdict.",
+        "timestamp_utc": "2026-09-10T13:38:00Z"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-028",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Human-Only Sail Locker Reservation",
+        "rule_directive": "HUMAN-ONLY FLOTSAM RESERVATION: You are strictly forbidden from assigning any asset to 'FLOTSAM'. FLOTSAM is a human-only quarantine classification reserved exclusively for the Author (Timothy) to discard assets that probably should never have been added, without permanently deleting them. Items in FLOTSAM are excluded from vector embedding and all research pipelines. If you evaluate an asset as completely useless or irrelevant, assign 'DOLDRUMS' so the Author can review and move it to FLOTSAM.",
+        "source_context": "Author Directive (September 2026): Defining FLOTSAM as a human-only quarantine category excluded from vector indexing and research workflows.",
+        "timestamp_utc": "2026-09-10T13:58:00Z"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (JIB): When evaluating assets similar to 'You Might Want to Ditch Your AI Investments Now That Jim Cramer Says No Bubble Is Coming', assign 'JIB'. Rationale: This is jib because it is a gossipy attack or a prominent person, Jim Cramer, in tech.  the attach is valid but not related to knowledge systems. Jib is valuable as it give important signals about attitudes.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114132_acquired.txt (2026-09-10)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'AI data centers drive surge in US electricity costs', assign 'MAINSAIL'. Rationale: the costs, especially the second and third order costs, of AI are Mainsail",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114137_acquired.txt (2026-09-10)"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-029",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Human-Only Sail Locker Reservation",
+        "rule_directive": "HUMAN-ONLY WHERRY RESERVATION: You are strictly forbidden from assigning any asset to 'WHERRY'. WHERRY is a human-only classification reserved exclusively for the Author (Timothy) to categorize articles about tools, frameworks, and infrastructure used to build the agentic system. Items in WHERRY are excluded from vector embedding and all manuscript research pipelines. If you evaluate an asset as discussing software developer tools, LLM frameworks, or system infrastructure, assign 'DOLDRUMS' so the Author can inspect and classify it as WHERRY himself.",
+        "source_context": "Author Directive (September 2026): Defining WHERRY as a human-only category for agent development tooling excluded from vector indexing and research workflows.",
+        "timestamp_utc": "2026-09-10T14:40:00Z"
+    }
 ]

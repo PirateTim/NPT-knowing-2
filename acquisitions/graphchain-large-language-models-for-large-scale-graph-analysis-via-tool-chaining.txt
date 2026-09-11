@@ -1,0 +1,67 @@
+Title: GraphChain: Large Language Models for Large-scale Graph Analysis via Tool Chaining
+Authors: Chunyu Wei, Wenji Hu, Xingjia Hao, Xin Wang, Yifan Yang, Yueguo Chen, Yang Tian, Yunhai Wang
+Published Date: 2025-11-01
+arXiv ID: 2511.00457
+Source URL: https://arxiv.org/abs/2511.00457
+
+Abstract:
+Large Language Models (LLMs) face significant limitations when applied to large-scale graphs, struggling with context constraints and inflexible reasoning. We present GraphChain, a framework that enables LLMs to analyze complex graphs through dynamic sequences of specialized tools, mimicking human exploratory intelligence. Our approach introduces two key innovations: (1) Progressive Graph Distillation, a reinforcement learning mechanism that generates optimized tool sequences balancing task relevance with information compression, and (2) Structure-aware Test-Time Adaptation, which efficiently tailors tool selection strategies to diverse graph topologies using spectral properties and lightweight adapters without costly retraining. Experiments show GraphChain significantly outperforms prior methods, enabling scalable and adaptive LLM-driven graph analysis.
+
+=== FULL TEXT ===
+GraphChain: Large Language Models for Large-scale Graph Analysis via Tool Chaining
+
+Chunyu Wei, Wenji Hu, Xingjia Hao, Xin Wang, Yifan Yang, Yueguo Chen, Yang Tian, Yunhai Wang
+
+1 Introduction
+Graph-structured data represents a fundamental paradigm across diverse domains, from social networks and molecular structures to knowledge bases and recommendation systems. While large language models (LLMs) have demonstrated remarkable reasoning capabilities, they encounter significant challenges when processing graph data.
+
+Recent approaches to enhancing LLMs’ graph processing capabilities have taken two primary directions. The first attempts to adapt LLMs to directly process graph structures—either through tokenization or natural language descriptions (Chai et al., 2023; Wang et al., 2023b). However, this approach faces Context Exhaustion: large-scale graphs with millions of nodes and edges cannot be effectively compressed within LLMs’ context limitations, making it computationally infeasible to load entire subgraphs into their context windows (Figure 1, left).
+
+Recognizing these limitations, a second direction draws inspiration from tool learning paradigms. Approaches like Graph-ToolFormer (Zhang, 2023a) and GraphForge (Wang et al., 2024b) pioneered integrating specialized tools with LLMs for graph reasoning, enabling models to call external graph processing functions. However, these methods primarily conceptualize tool learning as text generation, relying on single-step tool invocations with textually described graph structures. This approach leads to Reasoning Hallucination (Figure 1, middle), as it places unrealistic demands on individual tools to provide comprehensive functionality for complex graph analysis.
+
+Complex graph analysis parallels human exploration of unknown environments. Just as humans navigate unfamiliar territories through interactive, adaptive exploration—where each step reveals information that guides subsequent decisions—effective graph analysis requires progressive, sequential information gathering rather than comprehensive analysis in one operation. A field researcher might first survey an area broadly before focusing on regions of interest; similarly, graph analysis benefits from incremental understanding built through sequential operations.
+
+Inspired by human exploratory cognition, we propose GraphChain, a novel framework enabling LLMs to process large-scale graphs through dynamic tool-chaining (Figure 1, right). GraphChain decomposes complex graph problems into sequences of specialized operations, activating LLMs’ reasoning capabilities to create, refine, and execute chains of graph processing tools. This approach allows progressive refinement and deeper exploration of graph structures, mimicking how human experts methodically investigate complex systems layer by layer.
+
+The implementation of GraphChain addresses two significant technical challenges:
+1. Informative Tool Sequence Generation requires determining optimal tool sequences for diverse analytical tasks, navigating an exponentially growing space of possible combinations. Traditional approaches struggle with this challenge due to scarce labeled data for complex graph analysis.
+2. Adaptive Graph Structure Sensing must address real-world graph data exhibiting distributional shifts and structural variations. Unlike natural data types, graph structures are heavily human-defined with domain-specific schemas, leading to severe distribution shifts across domains.
+
+To generate informative tool sequences, we propose a progressive graph distillation training mechanism. Our key insight is that effective graph analysis mirrors human exploration: beginning broadly and systematically narrowing focus as relevant information emerges. This approach transforms the exponential tool-selection problem into a principled information bottleneck optimization, iteratively refining both structural scope and representational complexity while preserving only task-critical information—similar to how humans selectively attend to relevant environmental cues.
+
+For adapting to diverse graphs, we introduce a structure-aware test-time adaptation mechanism. We leverage the insight that graph topology fundamentally influences optimal analysis strategies, just as explorers adjust techniques for different terrains. Our lightweight adapter dynamically modifies tool selection policy based on spectral properties capturing essential structural characteristics, enabling GraphChain to maintain effectiveness across diverse graphs while preserving efficiency.
+
+Our main contributions include:
+• GraphChain, a novel framework leveraging Graph-Oriented Reinforcement Learning with progressive information distillation, enabling systematic exploration of large-scale graphs through interconnected tool sequences.
+• A structure-aware test-time adaptation mechanism that adjusts tool-chaining strategies based on graph topology, enabling efficient transfer to diverse graph structures without costly retraining.
+• Extensive experimentation demonstrating that GraphChain significantly outperforms existing methods by an average of 20.7%, with exceptional scalability handling graphs up to 200,000 nodes while maintaining consistent performance.
+
+2 Related Work
+Tool Learning for LLMs: Tool learning for LLMs encompasses tuning-free methods using prompting strategies like Chain-of-Thought (Wei et al., 2022), ReAct (Yao et al., 2023), and DFSDT (Qin et al., 2023), alongside approaches integrating tools into conversations (Chen et al., 2023) or employing structured selection via graphs (Liu et al., 2024), hierarchies (Du et al., 2024), or intent filtering (Fore et al., 2024). Meanwhile, tuning-based methods directly adapt LLM parameters (Xu et al., 2023) through behavior cloning with reinforcement learning (Qiao et al., 2024; Yu et al., 2024), fine-tuning on specialized decision data (Qin et al., 2023), frameworks for varying tool complexities (Gao et al., 2024), and self-verification mechanisms (Mekala et al., 2024).
+
+Graph Processing with LLMs: Recent work enhances LLMs for graph processing via: (1) Direct processing with text or visual graph descriptions (Wang et al., 2023b; Guo et al., 2023) or specialized token sequences (Chen et al., 2024b; Wang et al., 2024a); (2) Tool integration and agent-based methods for external function calls (Zhang, 2023b) or multi-step reasoning (Gu et al., 2024); (3) GNN-LLM combinations using GNNs as encoders (Tang et al., 2024) or aligning representation spaces (Su et al., 2022).
+
+Test-time Adaptation: Traditional machine learning assumes identical training and testing distributions, but real-world deployments often encounter distribution shifts (Kulinski and Inouye, 2023). Test-Time Adaptation (TTA) addresses this challenge (Liang et al., 2025; Alfarra et al., 2025). For LLMs, adaptation techniques include test-time prompt tuning (Shu et al., 2022; Ma et al., 2023), Parameter-Efficient Fine-Tuning methods like adapters or LoRA (Hu et al., 2022) for efficient updates (Shi et al., 2024; Muhtar et al., 2024), and "test-time compute scaling" with iterative refinement, search, or self-correction (Jaech et al., 2024; Guo et al., 2025; Suzgun et al., 2025).
+
+3 Preliminaries and Problem Formulation
+Graph Notation: Let G = (V, E) represent a graph, where V = {v1, v2, ..., vn} is the set of n = |V| nodes and E is the set of m = |E| edges. The adjacency matrix A in {0, 1}^{n x n} has entries A_ij = 1 if (vi, vj) in E, and 0 otherwise. Node features are represented by matrix X in R^{n x d}. The degree matrix D is diagonal with D_ii = sum_j A_ij, and the normalized graph Laplacian is defined as L = I - D^{-1/2} A D^{-1/2}.
+
+Graph Processing Tool Library: We define a library of graph processing tools T = {T1, T2, ..., TK}, which are implemented based on 45 selected functions from the NetworkX library, and operate on tensor representations within the current memory state m. Tools produce a natural language summary d and updated memory state m'.
+
+Sequential Graph Exploration as an MDP: Modeled as MDP M = (S, A, P, R, gamma) with states, actions (selecting tools and params or TERMINATE), transition dynamics, and reward functions.
+
+4 Methodology
+4.1 Progressive Graph Distillation:
+Graph Description Length (GDL(m_t)) measures data size needed to represent the current graph state: GDL(m_t) = L(structure) + L(features) approx alpha_s * m'_t + alpha_f * n'_t * d_f.
+Task Relevance Rel(m_t, Q) estimated by an auxiliary LLM scorer.
+Reward function shapes policy by rewarding execution success, relative GDL reduction, and task relevance gains.
+
+4.2 Structure-aware Test-Time Adaptation (STTA):
+Computes normalized Laplacian SVD smallest singular values z_G = (sigma_0, sigma_1, ..., sigma_M) as graph structural fingerprint.
+Adapter network maps z_G to soft prompt P_G prepended to state embedding. Self-supervised adaptation optimizes trajectory efficiency and KL divergence regularization.
+
+5 Experiment
+Evaluated on five graph domains: Citation Graphs (Cora, CiteSeer, PubMed), Social Networks (Facebook, Twitter), Chemical Molecules (QM9), Traffic Networks (METR-LA), and Financial Networks (Elliptic). GraphChain achieves 84.7% average accuracy compared to 70.2% for GraphForge (20.7% relative improvement) while using only 7B parameters. Scales effectively to graphs up to 200,000 nodes.
+
+6 Conclusions and Limitations
+GraphChain enables LLMs to process large-scale graph data through dynamic tool-chaining with progressive distillation and test-time adaptation. Limitations include focus on static graphs and current tool library coverage.

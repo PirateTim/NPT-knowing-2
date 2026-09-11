@@ -25,5 +25,68 @@
     "underlying_mechanism": "Hard commercial paywalls (e.g. Law.com, FT, WSJ) require verified user credentials; blind retries waste tokens and trigger anti-bot bans.",
     "incident_context": "Author Directive: Prohibit wasting turns on hard paywall domains per ADR-003 and ADR-010.",
     "timestamp_utc": "2026-08-24 11:58:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-004",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Ingestion Domain & URL Triage",
+    "generalized_heuristic": "Inbound URLs representing search queries, category listing stubs, topic feeds, or social aggregate streams (e.g., google.com/search, medium.com/tag/*, reddit.com/r/*, substack.com/discover) must not undergo full article extraction. Upon identifying an aggregate or search index URL without a target article slug, immediately reject the ingestion, log the failure to cargo.failed_metadata with reason [UNSUPPORTED AGGREGATE DOMAIN], and halt.",
+    "underlying_mechanism": "Aggregate listings contain dynamic, transient snippets and shifting outbound links rather than a stable, singular intellectual artifact. Ingesting feeds creates noisy, ungrounded cargo chunks that corrupt vector embeddings and downstream epistemic audits.",
+    "incident_context": "Observed crawlers attempting to parse multi-article index feeds, leading to concatenated snippets and missing author/DOI metadata.",
+    "timestamp_utc": "2026-09-03 16:20:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-005",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Access Barrier & Anti-Scraping Defense",
+    "generalized_heuristic": "When a downloaded payload contains anti-bot challenge signatures (e.g., Cloudflare Turnstile, 'Just a moment...', 'Attention Required!', 'Checking your browser before accessing', or HTTP 403/503 challenge pages) and lacks substantive article text (< 500 characters of meaningful prose), do not proceed with GCS storage. Execute log_ingestion_failure directly to cargo.failed_metadata specifying the bot-defense mechanism, and quarantine the URL.",
+    "underlying_mechanism": "Anti-bot challenge pages return HTTP 200/403 with valid HTML templates that trick naive DOM scrapers into writing challenge boilerplate as cargo text, polluting the knowledge repository with bot-defense copy.",
+    "incident_context": "Target websites utilizing Cloudflare Turnstile returned challenge boilerplate rather than the underlying investigative reporting.",
+    "timestamp_utc": "2026-09-03 16:20:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-006",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Academic & Journal Paywall Ingestion",
+    "generalized_heuristic": "For academic publisher domains (e.g., nature.com, sciencedirect.com, jstor.org, springer.com, wiley.com, ieee.org) where standard HTML scraping yields paywall gates or missing author metadata, prioritize routing the request through the serverless Zotero Translation Server protocol. If the translation server cannot resolve the full text or metadata, register the DOI/URL in cargo.failed_metadata rather than falling back to noisy generic browser scraping.",
+    "underlying_mechanism": "Academic publisher platforms store rich bibliographic metadata in Highwire Press and Dublin Core tags or behind API tokens. The Zotero Translation Server utilizes specialized site translators that parse bibliographic records and open-access PDF attachments cleanly without capturing paywall banners.",
+    "incident_context": "Paywalled academic papers parsed via standard HTTP scrapers resulted in truncated abstracts and missing author lists.",
+    "timestamp_utc": "2026-09-03 16:20:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-007",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Ingestion Pipeline Economics & Performance",
+    "generalized_heuristic": "Domains marked as deterministic hard paywalls (e.g., law.com, wsj.com, ft.com, theinformation.com, economist.com) or unsupported aggregate roots must be rejected at the queue/pre-flight level in Python before instantiating LLM turns or launching headless browser instances.",
+    "underlying_mechanism": "Bypassing the LLM ReAct loop and headless browser timeout cascade for known-closed domains saves 15-30 seconds of wall-clock blocking and ~10k tokens per rejected URL.",
+    "incident_context": "Observed repeated 25-second Botasaurus browser timeouts on law.com and ft.com before fallback failure logging.",
+    "timestamp_utc": "2026-09-03 16:35:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-008",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "False-Positive Elimination & Payload Verification",
+    "generalized_heuristic": "Reject payloads that exhibit 'Truncated Preview' or 'Cookie Wall' signatures: 1. Extracted body text length is < 1,200 characters while metadata claims a full article; 2. Payload contains explicit paywall/interstitial sentinel strings ('subscribe to continue reading', 'exclusive content for subscribers', 'accept all cookies', 'create a free account to unlock'); 3. Payload contains < 3 paragraphs of body text. Upon encountering these signatures, immediately abort GCS upload, log [TRUNCATED_PREVIEW_SOFT_PAYWALL] to cargo.failed_metadata, and halt.",
+    "underlying_mechanism": "Soft paywalls return HTTP 200 with partial content that passes naive non-empty checks. Enforcing substantive prose density prevents poisoned partial fragments from corrupting downstream vector embeddings and epistemic audits.",
+    "incident_context": "Metered news articles captured only the first two introductory paragraphs, causing Cutlass and Grog to audit incomplete arguments.",
+    "timestamp_utc": "2026-09-03 16:35:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-009",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Scraper Fallback Mechanics",
+    "generalized_heuristic": "For client-rendered Single Page Applications (SPAs) returning empty root <div> containers on fast GET, cap browser DOM-rendering wait times strictly to 8 seconds. If substantive body text does not mount within 8 seconds, fail fast and log [CLIENT_HYDRATION_TIMEOUT].",
+    "underlying_mechanism": "Un-renderable JS SPAs or broken frontends trigger standard 30-second headless browser network idle timeouts. Capping hydration wait to 8 seconds reduces dead time by >70% without sacrificing valid article rendering.",
+    "incident_context": "SPA pages with dead client-side bundles hung headless browser instances for the full default 30-second timeout.",
+    "timestamp_utc": "2026-09-03 16:35:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-010",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Video Payload & Transcript Enforcement",
+    "generalized_heuristic": "When an inbound target URL belongs to a video domain (youtube.com, youtu.be), never scrape the page with generic DOM or HTML scrapers. Ingesting an HTML shell or metadata stub without the spoken transcript is considered an acquisition failure. All video acquisitions must use extract_youtube_transcript to capture the full dialogue text. If no transcript exists, log failure to cargo.failed_metadata and do not upload empty shells to GCS.",
+    "underlying_mechanism": "YouTube video pages contain little to no static body prose in their HTML; scraping the page with requests or Botasaurus yields only navigation chrome and copyright notices (< 1,000 chars), creating useless metadata shells.",
+    "incident_context": "Author audit caught an un-transcribed YouTube metadata shell for WSJ profile (Asset #15), requiring re-acquisition protocol.",
+    "timestamp_utc": "2026-09-10 13:38:00 UTC"
   }
 ]

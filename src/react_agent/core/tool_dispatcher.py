@@ -28,7 +28,7 @@ from tools.file_io_tools import read_local_file, write_local_file, delete_local_
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
 from tools.subagent_tools import dispatch_subagent_turn
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator
+from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator, acquire_google_doc
 from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
@@ -41,6 +41,7 @@ from tools.chapter_analysis_tools import perform_chapter_structural_analysis, ge
 from tools.reference_resolution_tools import triage_and_expand_chapter_references, fetch_crossref_metadata
 from tools.manuscript_slicing_tools import slice_monolith_to_bronze_sections, assemble_bronze_plus_sections
 from tools.cutlass_audit_tools import audit_chapter_silver_citations
+from tools.cargo_vector_tools import embed_cargo_index, query_cargo_vector_index
 
 
 # =====================================================================
@@ -149,6 +150,8 @@ class ToolDispatcher:
             elif call.name == "purge_corrupted_cargo": return purge_corrupted_cargo(**args)
             elif call.name == "log_fleet_enrichment": return log_fleet_enrichment(**args)
             elif call.name == "reseed_failed_cargo_queue": return reseed_failed_cargo_queue()
+            elif call.name == "embed_cargo_index": return embed_cargo_index(**args)
+            elif call.name == "query_cargo_vector_index": return query_cargo_vector_index(**args)
 
             # --- Acquisition & Search ---
             elif call.name == "download_url": return download_url(**args)
@@ -157,6 +160,7 @@ class ToolDispatcher:
             elif call.name == "extract_local_pdf": return extract_local_pdf(**args)
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_zotero_translator": return call_zotero_translator(**args)
+            elif call.name == "acquire_google_doc": return acquire_google_doc(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
@@ -248,8 +252,9 @@ class ToolDispatcher:
                     "properties": {
                         "agent_name": {"type": "STRING", "description": "The target subagent name (e.g. 'plank', 'spyglass', 'bilgeladle', 'cutlass')."},
                         "prompt": {"type": "STRING", "description": "The explicit operational prompt/instruction for the subagent."},
-                        "chase_id": {"type": "STRING", "description": "Optional Chase execution run ID (e.g. 'ch04_silver_v1')."},
-                        "thread_id": {"type": "STRING", "description": "Optional thread ID override. If omitted, defaults to 'thread_{agent_name}_{chase_id}'."}
+                        "chase_id": {"type": "STRING", "description": "Optional Chase execution run ID (e.g. 'august-chase-9')."},
+                        "thread_id": {"type": "STRING", "description": "Optional thread ID override."},
+                        "cargo_id": {"type": "INTEGER", "description": "Optional database metadata ID (e.g. 238) to bind the thread to 'cargo_{cargo_id}_{agent_name}'."}
                     },
                     "required": ["agent_name", "prompt"]
                 }
@@ -359,6 +364,11 @@ class ToolDispatcher:
                 name="call_zotero_translator",
                 description="Invokes the Google Cloud Run Zotero Translation Server to extract rich metadata and bypass paywalls for academic articles, journals, and complex web pages.",
                 parameters={"type": "OBJECT", "properties": {"target_url": {"type": "STRING", "description": "The URL of the academic or web article to translate."}}, "required": ["target_url"]}
+            ),
+            types.FunctionDeclaration(
+                name="acquire_google_doc",
+                description="Ingests Google Docs via direct plaintext export when link sharing is enabled ('Anyone with the link can view'). Automatically parses document title and formats standard cargo text receipt.",
+                parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING", "description": "The full Google Docs URL."}}, "required": ["url"]}
             ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
             types.FunctionDeclaration(
@@ -532,9 +542,30 @@ class ToolDispatcher:
                     }, 
                     "required": ["role", "action", "payload"]
                 }
-            ) #,
-
-            # Infrastructure Provisioning
-            # types.FunctionDeclaration(name="provision_agent_state_db", description="Provisions Cloud SQL.", parameters={"type": "OBJECT", "properties": {"instance_name": {"type": "STRING"}, "authorized_ip": {"type": "STRING"}}, "required": ["instance_name", "authorized_ip"]}),
-            # types.FunctionDeclaration(name="create_database_and_user", description="DDL schema.", parameters={"type": "OBJECT", "properties": {"instance_ip": {"type": "STRING"}, "db_name": {"type": "STRING"}, "user_name": {"type": "STRING"}, "password": {"type": "STRING"}}, "required": ["instance_ip", "db_name", "user_name", "password"]})
+            ),
+            types.FunctionDeclaration(
+                name="embed_cargo_index",
+                description="Generates 1536-dim vector embeddings for cargo acquisitions and populates cargo.content_vectors under the specified index_scope ('all-cargo' or 'only-mainsail').",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "index_scope": {"type": "STRING", "description": "Target index scope ('all-cargo', 'only-mainsail', 'manuscript-silver'). Default: 'all-cargo'."},
+                        "batch_limit": {"type": "INTEGER", "description": "Optional maximum number of metadata assets to process."}
+                    },
+                    "required": ["index_scope"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="query_cargo_vector_index",
+                description="Queries cargo.content_vectors using pgVector 1536-dim cosine similarity and hybrid keyword search, returning matching paragraph chunks with complete provenance metadata.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "query": {"type": "STRING", "description": "The research topic, question, or keyword phrase to search for."},
+                        "index_scope": {"type": "STRING", "description": "Target index scope ('all-cargo', 'only-mainsail', 'manuscript-silver'). Default: 'all-cargo'."},
+                        "top_k": {"type": "INTEGER", "description": "Maximum number of matching chunks to return. Default: 10."}
+                    },
+                    "required": ["query"]
+                }
+            )
         ]

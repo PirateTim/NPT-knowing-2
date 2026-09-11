@@ -39,6 +39,10 @@
     {
       "lens_name": "The 'IS' vs. 'SAYS' Epistemic Deconstruction",
       "perspective": "Always decouple what an asset 'SAYS' (its surface claims, PR narrative, or technological promises) from what the asset 'IS' within the Epistemic Knowledge Chain (e.g. a syndicated media release using a flawed database of mainstream lies to establish narrative control). Never default to seeing a problem as an 'AI problem' or an 'AI solution'. AI is rarely the core element in epistemic failure; the core element is the systemic degradation of the Epistemic Knowledge Chain itself (media decay, loss of verification, access journalism, institutional self-preservation)."
+    },
+    {
+      "lens_name": "The Guild Stenography Paradox (Public Myth vs. Journalistic Reality)",
+      "perspective": "This lens rejects the romantic public myth that journalism exists to independently audit material reality, verify physical ground truth, or speak truth to power. Instead, it exposes what the professional journalistic guild actually defines as excellence: access cultivation, official stenography, and procedural attribution (e.g., 'according to senior administration officials'). Judith Miller was not failing at journalism in 2002; she was executing the guild's highest standard of craft. This pre-existing guild decay (Stage 1 in the Chapter 4 Chain of Ruin) generated the digitized, authoritative corpus ingested by LLMs (Stage 2). When transformer models hallucinate or lie with high confidence (Stage 3), they are not experiencing an algorithmic malfunction; they are faithfully executing what the training distribution taught them: that immaculate grammar, official tone, and procedural attribution without empirical grounding is the pinnacle of authoritative truth."
     }
   ]
 }

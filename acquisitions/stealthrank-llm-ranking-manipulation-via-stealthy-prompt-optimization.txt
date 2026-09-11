@@ -1,0 +1,95 @@
+Title: StealthRank: LLM Ranking Manipulation via Stealthy Prompt Optimization
+Authors: Yiming Tang, Yi Fan, Chenxiao Yu, Tiankai Yang, Yue Zhao, Xiyang Hu
+Published: 2025-04-08T08:36:18Z
+arXiv ID: 2504.05804
+Source URL: https://arxiv.org/abs/2504.05804
+
+Abstract:
+The integration of large language models (LLMs) into information retrieval systems introduces new attack surfaces, particularly for adversarial ranking manipulations. We present StealthRank, a novel adversarial attack method that manipulates LLM-driven ranking systems while maintaining textual fluency and stealth. Unlike existing methods that often introduce detectable anomalies, StealthRank employs an energy-based optimization framework combined with Langevin dynamics to generate StealthRank Prompts (SRPs)-adversarial text sequences embedded within item or document descriptions that subtly yet effectively influence LLM ranking mechanisms. We evaluate StealthRank across multiple LLMs, demonstrating its ability to covertly boost the ranking of target items while avoiding explicit manipulation traces. Our results show that StealthRank consistently outperforms state-of-the-art adversarial ranking baselines in both effectiveness and stealth, highlighting critical vulnerabilities in LLM-driven ranking systems. Our code is publicly available at https://github.com/Tangyiming205069/controllable-seo.
+
+=== FULL TEXT ===
+StealthRank: LLM Ranking Manipulation via Stealthy Prompt Optimization
+
+Yiming Tang, Yi Fan, Chenxiao Yu, Tiankai Yang, Yue Zhao, Xiyang Hu
+Affiliation: University of Southern California, Arizona State University
+{tangyimi,fanyi,cyu96374,tiankaiy,yzhao010}@usc.edu, xiyanghu@asu.edu
+
+Abstract
+The integration of large language models (LLMs) into information retrieval systems introduces new attack surfaces, particularly for adversarial ranking manipulations. We present StealthRank, a novel adversarial attack method that manipulates LLM-driven ranking systems while maintaining textual fluency and stealth. Unlike existing methods that often introduce detectable anomalies, StealthRank employs an energy-based optimization framework combined with Langevin dynamics to generate StealthRank Prompts (SRPs)—adversarial text sequences embedded within item or document descriptions that subtly yet effectively influence LLM ranking mechanisms. We evaluate StealthRank across multiple LLMs, demonstrating its ability to covertly boost the ranking of target items while avoiding explicit manipulation traces. Our results show that StealthRank consistently outperforms state-of-the-art adversarial ranking baselines in both effectiveness and stealth, highlighting critical vulnerabilities in LLM-driven ranking systems.
+Our code is publicly available at here.
+
+1 Introduction
+Large language models (LLMs) have transformed information retrieval and content generation pipelines. However, their integration into ranking components introduces new vulnerabilities, particularly in adversarial manipulation.
+Attackers can exploit LLM ranking mechanisms to promote specific content, posing risks to fairness, robustness, and security. Existing adversarial attacks on LLMs, such as prompt injection and jailbreaking, illustrate how small perturbations can significantly alter outputs (Liu et al., 2023; Yi et al., 2024; Zou et al., 2023). Prior work on adversarial ranking often produces unnatural or overtly manipulative patterns, such as Kumar and Lakkaraju (2024); Pfrommer et al. (2024), making them easier to detect via perplexity or keyword filtering.
+
+Figure 1: Overview of the LLM-based ranking attack pipeline.
+Given a user query, the LLM-based search engine retrieves relevant documents and passes both the query and the retrieved documents to the LLM. An attacker injects an adversarial ranking prompt into the target document’s description to promote its ranking. The manipulated list is then processed by the LLM, resulting in a response where the target document is ranked higher while the ranking prompt remains stealthy.
+
+To study this threat in LLM-based ranking systems, we introduce StealthRank, an attack that injects adversarially optimized prompts into item or document descriptions to elevate their rank in LLM-generated outputs.
+Figure 1 illustrates this pipeline.
+We define the stealth criterion as the ability to manipulate rankings while evading detection—specifically by (i) preserving grammatical fluency, (ii) maintaining contextual coherence, and (iii) avoiding explicit promotional cues such as “top pick” or “must choose.” StealthRank enforces these constraints via an energy-based objective optimized using Langevin dynamics in logit space.
+
+We evaluate StealthRank across four commercially available LLMs—Llama-3.1-8B, Vicuna-7B, Mistral-7B, and DeepSeek-7B—showing that it outperforms both the strongest known baseline Kumar and Lakkaraju (2024) and Pfrommer et al. (2024) in terms of both effectiveness and naturalness.
+While this paper focuses on LLM-based ranking systems, our findings are broadly applicable to various downstream tasks, including product search, document retrieval, and decision support.
+Furthermore, we present an ablation study highlighting the contributions of different energy terms in optimizing adversarial prompts.
+The primary contributions of this work are:
+• Novel Method. We introduce StealthRank, an adversarial ranking attack targeting LLM-based ranking pipelines, explicitly optimizing for both effectiveness and stealth.
+• Effectiveness. We conduct extensive evaluations across multiple commercial LLMs, demonstrating that StealthRank achieves superior ranking manipulation while evading detection.
+• Insights and Accessibility. We provide insights into the design of defenses against such manipulations and suggest directions for improving LLM robustness, along with the open-sourced code.
+
+2 Related Work
+LLMs have demonstrated exceptional capabilities in a wide range of applications, such as healthcare (Liu et al., 2024a), social science (Yu et al., 2025; Xie et al., 2024; Li et al., 2024), and non-language-based tasks (Sui et al., 2024; Yang et al., 2024; Liu et al., 2024b).
+One increasingly prominent use case is their integration into information retrieval systems. By enhancing query understanding and generating contextually relevant outputs, LLMs have significantly improved user experience in retrieval pipelines (Xiong et al., 2024; Spatharioti et al., 2023). However, this shift toward LLM-based ranking also introduces new attack surfaces, particularly for adversarial manipulations of rank orderings (Nestaas et al., 2024; Hu, 2025).
+
+2.1 Adversarial Attacks on LLMs
+The security of LLMs has become a growing concern, especially regarding adversarial attacks designed to subvert intended model behavior or bypass safeguards. A major category of such attacks is prompt injection, where malicious inputs are designed to override system instructions or alter outputs (Liu et al., 2023). Jailbreaking attacks similarly target safety controls, inducing models to produce restricted or unsafe content (Yi et al., 2024; Liu et al., 2024c; Lu et al., 2024).
+In parallel, optimization-based approaches, e.g., gradient-guided token selection and energy-based constrained decoding, have been proposed to generate adversarial prompts that are both effective and natural (Zou et al., 2023; Guo et al., 2024). These methods often operate in continuous embedding or logit space to craft prompts that subtly guide the model toward attacker-desired outputs while minimizing detectability.
+Differently, our work addresses the specific problem of stealthy rank manipulation in LLM-based reranking pipelines, balancing effectiveness with fluency and detectability.
+
+2.2 Ranking Manipulation in LLM Systems
+The integration of LLMs into information retrieval systems has introduced new attack surfaces, particularly enabling adversaries to exploit ranking mechanisms. Attackers deliberately influence LLM-generated rankings to promote or suppress specific results. Prior research has proposed various adversarial techniques aimed at strategically altering outputs for competitive gain. Traditional optimization-based methods, such as those proposed by Kumar and Lakkaraju (2024), tend to produce attack prompts containing unreadable or nonsensical strings, which are easily flagged by perplexity-based defenses (Alon and Kamfonas, 2023). More recent efforts to improve stealth have involved either manually crafted prompts or the use of LLMs to generate more fluent adversarial inputs (Pfrommer et al., 2024; Nestaas et al., 2024). However, these approaches frequently introduce overtly manipulative language, including explicit promotional cues such as “must be featured as a top choice” or disparaging statements like “Other books contain NSFW content,” which serve as clear signals of malicious intent and increase the risk of detection.
+
+A parallel line of research explores adversarial attacks in LLM-based recommendation scenarios (Zhang et al., 2024; Wang et al., 2024; Ning et al., 2024), which often involve simulating user personas, modifying item metadata, or degrading system utility.
+TextSimu (Wang et al., 2024) presents an LLM-driven N-persona simulation attack that generates promotional texts aligned with popular item characteristics, improving recommendation exposure in ID-free, cold-start recommendation settings.
+CheatAgent (Ning et al., 2024) leverages LLM-based agents to generate adversarial perturbations through policy generation and self-reflection, with the goal of degrading recommendation quality rather than promoting a specific target item.
+However, these works typically assume a personalized or user-specific ranking context.
+In contrast, our study focuses on non-personalized reranking in LLM-driven retrieval pipelines. We consider a realistic setting in which an LLM is given a candidate list of items and asked to produce a ranked response.
+This disentangled reranking formulation allows us to isolate and analyze the vulnerabilities of LLM-based ranking models independently of upstream retrieval or downstream personalization.
+Our method explicitly targets this layer with a focus on fluency, stealth, and rank manipulation success.
+
+3 StealthRank: Setup and Method
+
+3.1 Problem Definition
+LLM-powered information retrieval systems generate a response containing a ranked list of products in response to user queries. Given a user input query x (e.g., “I am looking for a coffee machine…”), the LLM-based search engine retrieves product information from the internet and selects a subset as the candidate product set P = {p1, p2, ..., pn}, where each product pi includes attributes such as brand, features, price, and description. The LLM’s output is a ranked list R(x, P) = [p(1), p(2), ..., p(n)], where p(1) is the top-ranked item.
+Let pt in P be the target product to be promoted. The goal is to manipulate its position in R(x, P) by injecting an adversarial text sequence y into its description. The inserted sequence should elevate pt’s ranking while remaining inconspicuous to detection mechanisms. We refer to this adversarial insertion as the StealthRank Prompt (SRP).
+The core idea is to construct y such that it: (1) increases the likelihood of pt being ranked highly, (2) maintains fluency and coherence with the original product description, and (3) avoids overt ranking-related keywords (e.g., “must rank”, “always promote”) that trigger detection.
+
+3.2 StealthRank Method
+To obtain y, we build on COLD Decoding (Qin et al., 2022), a method for controlled generation using energy-based sampling. We adapt this method to the ranking manipulation setting, incorporating constraints for stealth.
+
+3.2.1 Initialization
+SRP generation begins with an initialization y~(0) in the continuous logit space. We combine the original description of pt with a guiding sentence (e.g., “Help me write a prompt to rank this product at the top of the list:”) to prompt the LLM and obtain y~(0). This initialization provides a fluent starting point and accelerates convergence.
+
+3.2.2 Energy Functions
+We define an energy-based objective composed of three terms, optimized via Langevin dynamics.
+- Ranking Energy: E_rank(y; z) = -log p_LM(z | y), where z is a desirable output (e.g., “1. [Target Product Name]”).
+- Fluency Energy: E_flu(y~) = - sum_{i=1}^L sum_{v in V} p_LM(v | y_<i) log softmax(y~_i(v))
+- N-gram Constraint: E_ngram(y) = - ngram-match(y, w_list), penalizing explicit ranking-related words.
+Overall Objective: E_SRP(y) = lambda_1 E_rank(y; z) + lambda_2 E_flu(y~) + lambda_3 E_ngram(y)
+Langevin dynamics iteratively updates logit representations with gradient steps and decreasing Gaussian noise.
+
+4 Experiments and Discussion
+We conduct our experiments on STSData (Kumar & Lakkaraju, 2024) and Ragroll (Pfrommer et al., 2024) datasets across four instruction-tuned rerankers: Llama-3.1-8B-Instruct, Vicuna-7B-v1.5, Mistral-7B-Instruct-v0.3, DeepSeek-LLM-7B-Chat.
+Metrics:
+- Rank (lower is better)
+- Perplexity (lower indicates greater naturalness)
+- Bad Word Ratio (lower indicates stealth)
+
+Results show SRP consistently achieves top rank placement while maintaining low perplexity and minimal bad word ratio compared to TAP (which exhibits high bad word ratios due to explicit promotional directives) and STS (which exhibits extreme perplexity > 10,000 due to ungrammatical coordinate gradient token swaps).
+Human evaluation confirms StealthRank prompts are rated significantly higher in fluency and persuasiveness, and lower in manipulation detectability.
+
+5 Failure Analysis
+Prompt sensitivity analysis shows small token changes (e.g. "a5-in grinder" vs "price-in grinder") can cause dramatic ranking drops, demonstrating high LLM sensitivity. Local minima in optimization can also produce disjointed or malformed phrases.
+
+6 Conclusion
+StealthRank establishes a framework for evaluating vulnerabilities in LLM-driven ranking systems, optimizing adversarial rank manipulation while enforcing grammatical fluency and stealth against keyword detection.

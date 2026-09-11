@@ -330,6 +330,17 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
         print(f"  -> [SPYGLASS ROUTING] Direct PDF URL detected ({target_url}). Forwarding to download_remote_pdf...")
         return download_remote_pdf(target_url, cookies=cookies, custom_headers=custom_headers)
 
+    # 3. GOOGLE DOCS & DRIVE AUTO-DETECTION
+    if "docs.google.com/document/d/" in lower_target or "drive.google.com/drive/folders/" in lower_target or "drive.google.com/file/d/" in lower_target:
+        print(f"  -> [SPYGLASS ROUTING] Google Docs/Drive URL detected ({target_url}). Forwarding to acquire_google_doc...")
+        return acquire_google_doc(target_url)
+
+    # 4. YOUTUBE VIDEO AUTO-DETECTION
+    if "youtube.com/watch" in lower_target or "youtu.be/" in lower_target or "youtube.com/shorts/" in lower_target or "youtube.com/live/" in lower_target:
+        print(f"  -> [SPYGLASS ROUTING] YouTube Video URL detected ({target_url}). Forwarding to extract_youtube_transcript...")
+        from tools.youtube_tools import extract_youtube_transcript
+        return extract_youtube_transcript(target_url)
+
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     custom_headers_dict, cookies_dict = _parse_headers_and_cookies(cookies, custom_headers)
     headers.update(custom_headers_dict)
@@ -411,14 +422,52 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 else:
                     raise ValueError(f"Jina returned HTTP {jina_response.status_code}")
             except Exception as e3:
-                receipt = {
-                    "status": "FAILED",
-                    "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}"
-                }
-                return json.dumps(receipt, indent=2)
+                print(f"  -> [SPYGLASS TIER 3 FAILED] Reason: {str(e3)}. Triggering Tier 4 (Zotero Translation Server)...")
+                try:
+                    zotero_endpoint = os.getenv("ZOTERO_TRANSLATOR_URL", "https://zotero-translator-809652732702.us-central1.run.app/web")
+                    zotero_resp = requests.post(zotero_endpoint, data=target_url, headers={"Content-Type": "text/plain"}, timeout=35)
+                    if zotero_resp.status_code == 200:
+                        z_items = zotero_resp.json()
+                        if z_items and isinstance(z_items, list) and len(z_items) > 0:
+                            z_item = z_items[0]
+                            z_title = z_item.get("title") or target_url.split('/')[-1]
+                            z_creators = []
+                            for c in z_item.get("creators", []):
+                                name = f"{c.get('firstName', '')} {c.get('lastName', '')}".strip() or c.get("name", "")
+                                if name:
+                                    z_creators.append(name)
+                            
+                            z_abstract = z_item.get("abstractNote") or ""
+                            clean_content = f"Title: {z_title}\n\nAbstract:\n{z_abstract}\n\nPublication: {z_item.get('publicationTitle', '')}\nDOI: {z_item.get('DOI', '')}"
+                            html_string = f"<html><body><h1>{z_title}</h1><p>{z_abstract}</p></body></html>"
+                            
+                            jina_meta = {
+                                "title": z_title,
+                                "authors": z_creators,
+                                "published_date": z_item.get("date", "UNKNOWN"),
+                                "publisher": z_item.get("publisher") or z_item.get("publicationTitle") or "UNKNOWN",
+                                "item_type": z_item.get("itemType", "journalArticle"),
+                                "doi": z_item.get("DOI", ""),
+                                "journal_title": z_item.get("publicationTitle", ""),
+                                "volume": z_item.get("volume", ""),
+                                "issue": z_item.get("issue", ""),
+                                "pages": z_item.get("pages", ""),
+                                "abstract": z_abstract
+                            }
+                            print(f"  -> [SPYGLASS TIER 4 SUCCESS] Ingested URL via Zotero Translation Server. Title: '{z_title}'")
+                        else:
+                            raise ValueError("Zotero translator returned 0 items.")
+                    else:
+                        raise ValueError(f"Zotero translator HTTP {zotero_resp.status_code}")
+                except Exception as e4:
+                    receipt = {
+                        "status": "FAILED",
+                        "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}, Tier 4 (Zotero): {str(e4)}"
+                    }
+                    return json.dumps(receipt, indent=2)
 
     # Secondary check to guarantee content safety
-    if not clean_content or len(clean_content.strip()) < 200:
+    if (not clean_content or len(clean_content.strip()) < 200) and not (jina_meta and jina_meta.get("doi")):
         receipt = {
             "status": "FAILED",
             "reason": f"[ACCESS BARRIER] Ingestion succeeded but extracted content density was too low ({len(clean_content.strip()) if clean_content else 0} chars)."
@@ -687,13 +736,67 @@ def call_zotero_translator(target_url: str) -> str:
         if response.status_code == 200:
             import json
             items = response.json()
-            if items:
-                return json.dumps({
+            if items and isinstance(items, list) and len(items) > 0:
+                item = items[0]
+                title = item.get("title") or target_url.split('/')[-1]
+                authors = []
+                for c in item.get("creators", []):
+                    name = f"{c.get('firstName', '')} {c.get('lastName', '')}".strip() or c.get("name", "")
+                    if name:
+                        authors.append(name)
+                
+                abstract = item.get("abstractNote") or ""
+                clean_body = f"Title: {title}\n\nAbstract:\n{abstract}\n\nPublication: {item.get('publicationTitle', '')}\nDOI: {item.get('DOI', '')}"
+                
+                rich_meta = {
+                    "title": title,
+                    "authors": authors,
+                    "published_date": item.get("date", "UNKNOWN"),
+                    "publisher": item.get("publisher") or item.get("publicationTitle") or "UNKNOWN",
+                    "item_type": item.get("itemType", "journalArticle"),
+                    "journal_title": item.get("publicationTitle", ""),
+                    "doi": item.get("DOI", ""),
+                    "volume": item.get("volume", ""),
+                    "issue": item.get("issue", ""),
+                    "pages": item.get("pages", ""),
+                    "abstract": abstract,
+                    "raw_json_ld": items
+                }
+                
+                cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+                os.makedirs(cache_dir, exist_ok=True)
+                temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+                temp_filepath = os.path.join(cache_dir, temp_filename)
+                
+                formatted_payload = (
+                    f"=== ACQUISITION INDEX ===\n"
+                    f"SOURCE: {target_url}\n"
+                    f"TITLE: {rich_meta['title']}\n"
+                    f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta['authors'] else 'UNKNOWN'}\n"
+                    f"PUBLISHED: {rich_meta['published_date']}\n"
+                    f"PUBLISHER: {rich_meta['publisher']}\n"
+                    f"ITEM_TYPE: {rich_meta['item_type']}\n"
+                    f"JOURNAL: {rich_meta['journal_title']}\n"
+                    f"DOI: {rich_meta['doi']}\n"
+                    f"VOLUME: {rich_meta['volume']}\n"
+                    f"ISSUE: {rich_meta['issue']}\n"
+                    f"PAGES: {rich_meta['pages']}\n"
+                    f"=== RAW JSON-LD DUMP (FOR FUTURE ONTOLOGY SPECIALIST) ===\n"
+                    f"{json.dumps(items, indent=2)}\n"
+                    f"===========================================================\n\n"
+                    f"{clean_body}"
+                )
+                
+                with open(temp_filepath, "w", encoding="utf-8") as f:
+                    f.write(formatted_payload)
+                    
+                receipt = {
                     "status": "SUCCESS",
-                    "url": target_url,
-                    "item_count": len(items),
-                    "items": items
-                }, indent=2)
+                    "metadata": rich_meta,
+                    "local_cache_path": temp_filepath,
+                    "message": f"Successfully translated by Cloud Run Zotero Server. Saved to {temp_filename}"
+                }
+                return json.dumps(receipt, indent=2)
             else:
                 return json.dumps({
                     "status": "FAILED",
@@ -709,3 +812,269 @@ def call_zotero_translator(target_url: str) -> str:
             "status": "ERROR",
             "reason": f"Failed to connect to Zotero translation server: {str(e)}"
         }, indent=2)
+
+
+def acquire_google_doc(url: str) -> str:
+    """
+    Agent Tool: Google Docs Ingestion Engine.
+    Purpose: Ingests Google Docs via Google Drive API using npt-fleet-manager service account
+    (for documents/folders shared with npt-fleet-manager@npt-reckoning-1.iam.gserviceaccount.com),
+    with an automatic fallback to public plaintext HTTP export for link-shared docs.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
+    import re, os, uuid, json, urllib.parse
+    target_url = url.strip().replace('"', '').replace("'", "")
+    
+    # Locate Service Account Key
+    key_candidates = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "credentials", "npt-service-key.json")),
+        r"C:\Users\timot\Agentic-Book-Team\npt-service-key.json",
+        r"C:\Users\timot\npt-core-agent\npt-service-key.json"
+    ]
+    key_path = None
+    for cand in key_candidates:
+        if os.path.exists(cand):
+            key_path = cand
+            break
+
+    # 1. GOOGLE DRIVE FOLDER ENUMERATION & INGESTION
+    match_folder = re.search(r"/drive/folders/([a-zA-Z0-9-_]+)", target_url)
+    if match_folder:
+        folder_id = match_folder.group(1)
+        if not key_path:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": "[ERROR] Google Drive folder ingestion requires service account key in credentials/npt-service-key.json."
+            }, indent=2)
+        try:
+            from google.oauth2 import service_account
+            from googleapiclient.discovery import build
+            scopes = ['https://www.googleapis.com/auth/drive.readonly']
+            creds = service_account.Credentials.from_service_account_file(key_path, scopes=scopes)
+            drive_service = build('drive', 'v3', credentials=creds)
+            
+            folder_meta = drive_service.files().get(fileId=folder_id, fields='id, name').execute()
+            folder_name = folder_meta.get('name', 'Google Drive Folder')
+            
+            query = f"'{folder_id}' in parents and trashed=false"
+            results = drive_service.files().list(q=query, fields='files(id, name, mimeType, createdTime)').execute()
+            files = results.get('files', [])
+            files.sort(key=lambda x: x.get('name', ''))
+            
+            if not files:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": f"No files found inside Google Drive folder '{folder_name}' ({folder_id})."
+                }, indent=2)
+                
+            dossier_sections = []
+            for f in files:
+                fid = f['id']
+                fname = f.get('name', 'Untitled Doc')
+                fmime = f.get('mimeType', '')
+                if 'document' in fmime or 'text' in fmime:
+                    try:
+                        c = drive_service.files().export(fileId=fid, mimeType='text/plain').execute()
+                        t = c.decode('utf-8-sig', errors='replace').strip()
+                        dossier_sections.append(f"===========================================================\n=== DOCUMENT: {fname} (ID: {fid}) ===\n===========================================================\n\n{t}\n\n")
+                    except Exception as ex:
+                        print(f"Error exporting file {fname}: {ex}")
+                        
+            if not dossier_sections:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": f"No readable documents could be exported from folder '{folder_name}'."
+                }, indent=2)
+                
+            combined_text = "\n".join(dossier_sections)
+            cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+            os.makedirs(cache_dir, exist_ok=True)
+            temp_filename = f"temp_acquire_folder_{folder_id[:8]}.txt"
+            temp_filepath = os.path.join(cache_dir, temp_filename)
+            
+            rich_meta = {
+                "title": f"{folder_name} (Collection of {len(dossier_sections)} Documents)",
+                "authors": ["Google Drive Folder Collection"],
+                "published_date": "UNKNOWN",
+                "publisher": "Google Drive",
+                "item_type": "manuscript_collection",
+                "journal_title": "",
+                "doi": "",
+                "volume": "",
+                "issue": "",
+                "pages": "",
+                "abstract": f"Complete aggregated dossier of {len(dossier_sections)} research documents from Google Drive folder '{folder_name}'."
+            }
+            
+            formatted_payload = (
+                f"=== ACQUISITION INDEX ===\n"
+                f"SOURCE: {target_url}\n"
+                f"TITLE: {rich_meta['title']}\n"
+                f"AUTHORS: {', '.join(rich_meta['authors'])}\n"
+                f"PUBLISHED: {rich_meta['published_date']}\n"
+                f"PUBLISHER: {rich_meta['publisher']}\n"
+                f"ITEM_TYPE: {rich_meta['item_type']}\n"
+                f"===========================================================\n\n"
+                f"{combined_text}"
+            )
+            
+            with open(temp_filepath, "w", encoding="utf-8") as f:
+                f.write(formatted_payload)
+                
+            receipt = {
+                "status": "SUCCESS",
+                "metadata": rich_meta,
+                "local_cache_path": temp_filepath,
+                "message": f"Successfully exported folder '{folder_name}' with {len(dossier_sections)} documents. Saved to {temp_filename}"
+            }
+            print(f"  -> [SPYGLASS SERVICE ACCOUNT SUCCESS] Ingested Google Drive folder '{folder_name}' ({len(dossier_sections)} docs).")
+            return json.dumps(receipt, indent=2)
+        except Exception as f_err:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"[ERROR] Failed to export Google Drive folder: {str(f_err)}"
+            }, indent=2)
+
+    # 2. INDIVIDUAL GOOGLE DOC OR FILE EXTRACTION
+    match_doc = re.search(r"/(?:document|file)/d/([a-zA-Z0-9-_]+)", target_url)
+    if not match_doc:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[ERROR] Could not extract a valid Google Doc/Drive ID from URL: {target_url}"
+        }, indent=2)
+        
+    doc_id = match_doc.group(1)
+
+    doc_text = None
+    title = None
+    created_time = "UNKNOWN"
+    
+    # 1. ATTEMPT SERVICE ACCOUNT INGESTION VIA GOOGLE DRIVE API
+    if key_path:
+        try:
+            from google.oauth2 import service_account
+            from googleapiclient.discovery import build
+            
+            scopes = ['https://www.googleapis.com/auth/drive.readonly']
+            creds = service_account.Credentials.from_service_account_file(key_path, scopes=scopes)
+            drive_service = build('drive', 'v3', credentials=creds)
+            
+            # Fetch file metadata
+            meta = drive_service.files().get(fileId=doc_id, fields='id, name, createdTime, modifiedTime').execute()
+            title = meta.get('name')
+            created_time = meta.get('createdTime', 'UNKNOWN')
+            
+            # Export plaintext
+            content = drive_service.files().export(fileId=doc_id, mimeType='text/plain').execute()
+            doc_text = content.decode('utf-8-sig', errors='replace').strip()
+            print(f"  -> [SPYGLASS SERVICE ACCOUNT SUCCESS] Ingested Google Doc '{title}' via Drive API.")
+        except Exception as sa_err:
+            print(f"  -> [SPYGLASS SERVICE ACCOUNT NOTICE] Drive API attempt on doc {doc_id}: {str(sa_err)}. Trying HTTP export fallback...")
+
+    # 2. ATTEMPT PUBLIC HTTP EXPORT FALLBACK (If Drive API not used or failed)
+    if not doc_text:
+        export_url = f"https://docs.google.com/document/d/{doc_id}/export?format=txt"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        try:
+            response = requests.get(export_url, headers=headers, timeout=20, allow_redirects=True)
+            if "accounts.google.com" in response.url or response.status_code in [401, 403]:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": (
+                        "[ACCESS BARRIER] Google Doc is private (Restricted) and not shared with npt-fleet-manager service account. "
+                        "To grant access, share the doc/folder with 'npt-fleet-manager@npt-reckoning-1.iam.gserviceaccount.com' (Viewer) "
+                        "or change General Access to 'Anyone with the link'."
+                    )
+                }, indent=2)
+                
+            if response.status_code != 200:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": f"[ACCESS BARRIER] Google Docs export failed with HTTP {response.status_code}"
+                }, indent=2)
+                
+            doc_text = response.content.decode("utf-8-sig", errors="replace").strip()
+            
+            # Parse title from Content-Disposition if not yet found
+            if not title:
+                cd = response.headers.get("Content-Disposition", "")
+                if "filename*=" in cd:
+                    try:
+                        fn_star = cd.split("filename*=")[1].split(";")[0].strip()
+                        if "''" in fn_star:
+                            encoding, encoded_title = fn_star.split("''", 1)
+                            title = urllib.parse.unquote(encoded_title)
+                    except Exception:
+                        pass
+                elif "filename=" in cd:
+                    try:
+                        raw_fn = cd.split("filename=")[1].split(";")[0].strip(' "')
+                        title = raw_fn[:-4] if raw_fn.endswith(".txt") else raw_fn
+                    except Exception:
+                        pass
+        except Exception as http_err:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"[ERROR] Failed to export Google Doc: {str(http_err)}"
+            }, indent=2)
+
+    if not doc_text or len(doc_text) < 10:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": "[ACCESS BARRIER] Google Doc exported empty or insufficient content."
+        }, indent=2)
+
+    if not title:
+        title = f"Google Doc {doc_id[:8]}"
+        first_line = doc_text.split("\n")[0].strip()
+        if first_line and len(first_line) < 100:
+            title = first_line
+
+    cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+    os.makedirs(cache_dir, exist_ok=True)
+    temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+    temp_filepath = os.path.join(cache_dir, temp_filename)
+    
+    rich_meta = {
+        "title": title,
+        "authors": ["Google Doc Export"],
+        "published_date": created_time,
+        "publisher": "Google Docs",
+        "item_type": "manuscript",
+        "journal_title": "",
+        "doi": "",
+        "volume": "",
+        "issue": "",
+        "pages": "",
+        "abstract": doc_text[:300]
+    }
+    
+    formatted_payload = (
+        f"=== ACQUISITION INDEX ===\n"
+        f"SOURCE: {target_url}\n"
+        f"TITLE: {rich_meta['title']}\n"
+        f"AUTHORS: {', '.join(rich_meta['authors'])}\n"
+        f"PUBLISHED: {rich_meta['published_date']}\n"
+        f"PUBLISHER: {rich_meta['publisher']}\n"
+        f"ITEM_TYPE: {rich_meta['item_type']}\n"
+        f"JOURNAL: \n"
+        f"DOI: \n"
+        f"VOLUME: \n"
+        f"ISSUE: \n"
+        f"PAGES: \n"
+        f"=== RAW JSON-LD DUMP (FOR FUTURE ONTOLOGY SPECIALIST) ===\n"
+        f"[]\n"
+        f"===========================================================\n\n"
+        f"{doc_text}"
+    )
+    
+    with open(temp_filepath, "w", encoding="utf-8") as f:
+        f.write(formatted_payload)
+        
+    receipt = {
+        "status": "SUCCESS",
+        "metadata": rich_meta,
+        "local_cache_path": temp_filepath,
+        "message": f"Successfully exported Google Doc '{title}'. Saved to {temp_filename}"
+    }
+    return json.dumps(receipt, indent=2)

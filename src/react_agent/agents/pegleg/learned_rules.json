@@ -30,5 +30,13 @@
     "rule_directive": "PREEMPTIVE BATCH CHUNKING FOR MASSIVE CHAPTERS:\n1. SECTION COUNT THRESHOLD: Before dispatching Stage 1 (Slicing) or Stage 5 (Bronze Plus Assembly), evaluate the section count of the target chapter. If total sections exceed 10, DO NOT dispatch an unbounded full-chapter directive to Bilgeladle.\n2. PROACTIVE CHUNKED DISPATCH: Partition the execution into deterministic subagent turns capped at a maximum of 8-10 sections per dispatch turn (e.g. Turn 1: Sec 4.1–4.10; Turn 2: Sec 4.11–4.20; Turn 3: Sec 4.21–4.32).\n3. PREVENTATIVE HYGIENE: This prevents subagents from exhausting the 20-tool turn budget mid-execution, eliminates token-wasting error cascades, and eliminates the risk of simulation hallucinations on high-volume file generation.",
     "source_context": "Author Directive (/learn): Chapter 4 Execution Review: Observed circuit breaker triggers and write simulation under 32-section payload load.",
     "timestamp_utc": "2026-08-26T16:00:00Z"
+  },
+  {
+    "rule_id": "PEGLEG-RULE-014",
+    "scope": "PEGLEG_LOCAL",
+    "category": "Singular Chapter Context Relay Gate",
+    "rule_directive": "SINGULAR CHAPTER CONTEXT RELAY GATE: When transitioning from Stage 4 (Bilgeladle Thesis Mapping) to Stage 5 (Scallywag Essay Dispatch), you MUST inspect stage4_bilgeladle_alignment.md to extract the singular 'Primary Chapter Anchor' and its file pointer (e.g. ship/bronze_plus/chapters/chXX/). You are STRICTLY FORBIDDEN from dispatching Scallywag with multiple chapters or leaving the chapter grounding ambiguous. You MUST explicitly pass the file pointer of that singular primary chapter directly to Scallywag in the Stage 5 dispatch prompt so Scallywag grounds her synthesis in that exact chapter's text.",
+    "source_context": "Author Directive (/learn): Enforce singular Primary Chapter Anchor handoff from Bilgeladle to Scallywag in Stage 5 (September 2026).",
+    "timestamp_utc": "2026-09-09T16:47:00Z"
   }
 ]

@@ -54,12 +54,12 @@ def check_cargo_manifest(target_url: str) -> str:
     try:
         cursor = conn.cursor()
         # 1. Check successful acquisitions
-        cursor.execute('SELECT gcp_bucket_path, title FROM cargo.content_metadata WHERE source_url = %s;', (target_url,))
+        cursor.execute('SELECT id, gcp_bucket_path, title FROM cargo.content_metadata WHERE source_url = %s;', (target_url,))
         record = cursor.fetchone()
         if record:
             cursor.close()
-            title_str = f" ('{record[1]}')" if record[1] else ""
-            return f"[DUPLICATE FOUND] URL already exists in cargo hold at path: {record[0]}{title_str}."
+            title_str = f" ('{record[2]}')" if record[2] else ""
+            return f"[DUPLICATE FOUND] URL already exists in cargo hold (cargo_{record[0]}) at path: {record[1]}{title_str}."
             
         # 2. Check dead-letter queue for previous failures
         cursor.execute('SELECT error_message, error_state, failed_at FROM cargo.failed_metadata WHERE source_url = %s;', (target_url,))
@@ -206,16 +206,18 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
                 authors = EXCLUDED.authors,
                 abstract = EXCLUDED.abstract,
                 gcp_bucket_path = EXCLUDED.gcp_bucket_path,
-                created_at = NOW();
+                created_at = NOW()
+            RETURNING id;
             ''',
             (source_url, item_type, title, authors_json, abstract, gcp_bucket_path)
         )
+        record_id = cursor.fetchone()[0]
         
         cursor.execute("DELETE FROM cargo.failed_metadata WHERE source_url = %s", (source_url,))
         
         conn.commit()
         cursor.close()
-        return f"[SUCCESS] Manifest updated for {source_url} and dead-letter queue cleared."
+        return f"[SUCCESS] Manifest updated for cargo_{record_id} ('{title}') at {source_url} and dead-letter queue cleared."
     except Exception as e:
         return f"[ERROR] Database log failed: {str(e)}"
     finally:
@@ -265,7 +267,23 @@ def log_fleet_enrichment(agent_name: str, enrichment_type: str, gcp_bucket_path:
         cursor = conn.cursor()
         
         # 1. Resolve the metadata_id using the GCS path the agent just audited
-        cursor.execute("SELECT id FROM cargo.content_metadata WHERE gcp_bucket_path = %s LIMIT 1;", (gcp_bucket_path,))
+        clean_name = (gcp_bucket_path or "").strip()
+        if clean_name.startswith("gs://"):
+            clean_name = clean_name[5:]
+        if clean_name.startswith("npt-fleet-cargo-hold/"):
+            bare_name = clean_name[len("npt-fleet-cargo-hold/"):]
+        else:
+            bare_name = clean_name
+        prefixed_name = f"npt-fleet-cargo-hold/{bare_name}"
+
+        cursor.execute(
+            """
+            SELECT id FROM cargo.content_metadata 
+            WHERE gcp_bucket_path IN (%s, %s, %s)
+            LIMIT 1;
+            """,
+            (gcp_bucket_path, bare_name, prefixed_name)
+        )
         record = cursor.fetchone()
         
         if not record:

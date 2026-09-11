@@ -115,5 +115,23 @@
     "underlying_mechanism": "Cloud infrastructure sprawl generates zombie recurring billing and orphaned security vectors (e.g. unauthenticated invoker policies, active private JSON keys, or auto-restarting Cloud SQL instances) if teardown procedures are not documented at the moment of creation.",
     "incident_context": "Author Directive (/learn): Mandatory Teardown Documentation on Cloud Provisioning.",
     "timestamp_utc": "2026-09-03 15:02:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-014",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "The Guild Stenography Paradox & Chapter 4 Chain of Ruin",
+    "generalized_heuristic": "When evaluating journalism, institutional reporting, and why LLMs constantly emit ungrounded falsehoods ('lie'), rigorously distinguish between what the public thinks journalists are supposed to do (independently audit material reality and verify physical ground truth) and what journalists think journalists are supposed to do (access maintenance, source protection, and procedural stenography of power: 'according to senior officials'). Do not treat access stenography as an anti-journalistic aberration; recognize it as the journalistic guild's highest standard of craft. In the Chapter 4 Chain of Ruin, this pre-existing guild rot (Stage 1 Pre-Existing Decay) created the 'authoritative' digitized corpus scraped to train LLMs (Stage 2 Technological Catalyst). Transformer models minimize loss on text written by a guild whose definition of excellence was ungrounded official assertion. LLMs lie with supreme confidence because their training data defined grammatically immaculate stenography without empirical verification as the gold standard of language.",
+    "underlying_mechanism": "Conflating public ideals of journalism with actual guild practice obscures the root of epistemic collapse. LLMs do not hallucinate due to mathematical defects; they faithfully reproduce the pre-training distribution of an elite journalistic guild that institutionalized official stenography over empirical verification decades prior to generative AI.",
+    "incident_context": "Author Directive (/learn): The Guild Stenography Paradox & Journalistic Duty vs Public Myth (Judith Miller Nuance - Chapter 4 Chain of Ruin).",
+    "timestamp_utc": "2026-09-08 21:30:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-015",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Stage 2 Forensic Audit Contract & Atomic Dispatch",
+    "generalized_heuristic": "Pegleg must dispatch Cutlass atomically for each incoming asset individually in Round 1, strictly passing only the file pointer (acquisitions/[slug].txt) without bundling assets or passing the Author's inquiry prompt. Cutlass's Stage 2 deliverable (stage2_cutlass_{slug}.md) MUST strictly follow the canonical 6-section schema: (1) SAYS vs IS, (2) Chain of Ruin, (3) Structural Logic Audit (Causal Claims & Evidentiary Warrants), (4) Classical & Epistemic Fallacy Scan (formal fallacies + 32 failure modes), (5) Anti-Financial Reductionism Audit & Scorecard, and (6) Downstream Directives for Grog, Bilgeladle, and Scallywag. All modular skill-using agents are equipped with read_skill_protocol to inspect execution protocols on-demand.",
+    "underlying_mechanism": "Bundling multiple assets into Stage 2 causes cognitive overload, dropping granular causal-claim and fallacy audits. Mandating the 6-section schema guarantees that logic-audit and epistemic-fallacy-scan cannot be squeezed out by high-level narrative summaries.",
+    "incident_context": "Author Directive (/learn): Enforce logic-audit and epistemic-fallacy-scan in Cutlass Stage 2 dispatch and schema.",
+    "timestamp_utc": "2026-09-08 21:50:00 UTC"
   }
 ]

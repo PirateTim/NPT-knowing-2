@@ -55,10 +55,18 @@ def read_knowledge_artifact(artifact_name: str) -> str:
     """
     try:
         bucket = _get_bucket()
-        blob = bucket.blob(artifact_name)
+        clean_name = (artifact_name or "").strip()
+        if clean_name.startswith("gs://"):
+            clean_name = clean_name[5:]
+        if bucket.name and clean_name.startswith(f"{bucket.name}/"):
+            clean_name = clean_name[len(bucket.name) + 1:]
+        elif clean_name.startswith("npt-fleet-cargo-hold/"):
+            clean_name = clean_name[len("npt-fleet-cargo-hold/"):]
+
+        blob = bucket.blob(clean_name)
         
         if not blob.exists():
-            return f"[ERROR] Artifact '{artifact_name}' not found."
+            return f"[ERROR] Artifact '{clean_name}' not found."
             
         return blob.download_as_text(encoding="utf-8")
     except Exception as e:

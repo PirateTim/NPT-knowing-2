@@ -19,13 +19,13 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
 
 | Agent | Role & Mandate | Key Tools & Skills |
 | :--- | :--- | :--- |
-| **`pegleg`** | **Mission Commander & DAG Foreman**: Batch orchestration, subagent dispatch, and stage gate enforcement. | `dispatch_subagent_turn`, `chapter-silver-pipeline`, `orchestrate-chase` |
+| **`pegleg`** | **Mission Commander & DAG Foreman**: Batch orchestration, agile subagent dispatch, and stage gate enforcement. | `dispatch_subagent_turn`, `dispatch-fleet-task`, `orchestrate-chase`, `chapter-silver-pipeline` |
 | **`spyglass`** | **Ingestion & Seizure Engine**: Deduplicated acquisition of web, PDF, and arXiv payloads into GCS Cargo Hold. | `download_url`, `download_remote_pdf`, `upsert_knowledge_artifact`, `bootstrap-ingestion` |
 | **`cutlass`** | **Epistemic Auditor & Triage Officer**: Audits against the 3-Stage Chain of Ruin, 32 failure modes, and assigns Sail Lockers. | `read_knowledge_artifact`, `log_fleet_enrichment`, `audit_chapter_silver_citations` |
 | **`grog`** | **Content Summarizer & Core Extraction Agent**: Objective extraction of provenance context, factual assertions, unstated assumptions, strict summaries, and reference sightings for single content files. | `dead-reckoning`, `fact-plumbing`, `summarize`, `making-a-sighting`, `read_knowledge_artifact` |
 | **`plank`** | **Reference & Zotero Specialist**: CrossRef metadata resolution and vector node expansion. | `fetch_crossref_metadata`, `call_landlubber`, `expand-chapter-references` |
 | **`bilgeladle`** | **Thesis Alignment & Section Assembler,  Voice of the manuscript for The End of Knowing**: Slices chapters to sections, enforces completeness gates, and evaluates alignment. | `silver-section-assembly`, `vector_search_manuscript`, `read_manuscript_section` |
-| **`scallywag`** | **Satirical Critic & Prose Stress-Tester**: Sarcastic, unvarnished critiques of assets and cargo.  Scallywag presents the findings of the collective brain instatiaterd int he other agents while adding her own linguistic edge. | `narrative-synthesis`, `read_manuscript_section` |
+| **`scallywag`** | **Academic Diagnostician of Institutional Misanthropy & Epistemic Stress-Tester**: Formidable academic scholar (Ph.Ds in philosophy and psychology) driven by cold, justifiable anger. Rejects cheap snark for rigorous argument, diagnosing the abject disregard for humanity in political actors, corporate bureaucracies, and algorithmic monopolies. | `narrative-synthesis`, `read_manuscript_section` |
 | **`landlubber`** | **Web & Search Grounding Helper**: Headless browser verification, live HTTP status checks (200 OK vs 404), and search. | `call_landlubber` |
 | **`hook`** | **Progenitor & Meta-Architect**: Generates agent XML firmwares and manages PostgreSQL DDL schema migrations. | `write_local_file`, `regrant_permissions.py` (SOP-06) |
 
@@ -47,12 +47,13 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
   - **`agent_state.ontology_rules`**: Long-term persistent learned behavioral rules and architect directives.
   - *Hard Firewall*: Never mix content payloads with cognitive turn execution state.
 
-### B. Process Tracking & Output Routing (ADR-008 & SOP-04)
+### B. Process Tracking & Output Routing (ADR-008, ADR-015 & SOP-04)
 - **The Task Tracking Map**: Agent analytical events, gate verdicts (PASS/FAIL), and resulting file paths are committed to `cargo.fleet_enrichments` via `log_fleet_enrichment`.
 - **Deprecation of `local_wiki/`**: The concept of storing intermediate task outputs in a `local_wiki/` directory (borrowed from Karpathy's LLM wiki pattern) proved confusing for pipeline orchestration and is permanently deprecated and purged.
 - **Authorized Physical Output Locations**:
+  - Reusable Asset Dossiers (Prompt-Free Asset Evaluations): `writings/cargo/cargo_{metadata_id}/` (`cutlass_audit.md`, `grog_extraction.md`)
   - Knowledge graph JSON extractions: `cargo_ontology/[slug].json`
-  - Multi-stage chase publications & satirical essays: `writings/chases/{chase_id}/`
+  - Multi-stage chase publications & satirical essays: `writings/chases/{chase_id}/` (Prompt-bound synthesis: `stage4_bilgeladle_alignment.md`, `stage5_scallywag_essay.md`, `stage6_peer_reviews.md`)
 
 ### C. The Ship Tier Architecture (Bilgeladle's Training Ground)
 The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be the authentic voice of the book manuscript (*The End of Knowing*). It processes the 120-page context file into distinct pedagogical tiers so Bilgeladle can parse, challenge, and discuss any piece of incoming external cargo against the book's thesis:
@@ -94,6 +95,14 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
   2. *Receipt-Based File Pointers for Cargo:* Multi-agent handoffs (`Spyglass -> Cutlass -> Grog -> Bilgeladle -> Scallywag`) must pass lightweight file pointers (`acquisitions/[slug].txt`) rather than concatenating 30k+ character raw text strings into prompts. Downstream agents stream or inspect files on demand via `read_knowledge_artifact` / `read_local_file`.
   3. *On-Demand Section Expansions:* Deep section expansions (`ship/expansions/ch01_sec1.4_expansion.md`) are kept as specialized reference deep-dives, loaded on-demand via tool calls (`read_local_file`) when a specific section requires forensic audit.
 - **Cloud Resource Teardown Governance (SHARED-HEURISTIC-013)**: Whenever new cloud resources (Cloud Run services, Cloud SQL databases, GCS buckets, Artifact Registry repositories, service accounts, or IAM access policies) are provisioned or altered, immediately update `docs/GCP_CLOUD_TEARDOWN_INSTRUCTIONS.md` with resource specifications, 3-month idle cost implications, and exact CLI deletion/dormancy recovery commands.
+- **The Guild Stenography Paradox & Chapter 4 Chain of Ruin (SHARED-HEURISTIC-014)**:
+  - *Public Myth vs. Guild Reality:* Rigorously distinguish what the **public thinks** journalists are supposed to do (independent empirical verification of physical reality, challenging power) from what **journalists think** journalists are supposed to do (access maintenance, source protection, and procedural stenography of official power: *"according to senior administration officials"*).
+  - *Anti-Aberration Rule:* Figures like Judith Miller were NOT failing at journalism in 2002; they were executing what the journalistic guild defines as journalism at its highest level of craft.
+  - *Origin of LLM Hallucination:* In Chapter 4's Chain of Ruin, this pre-existing professional rot (Stage 1 Pre-Existing Decay) generated the digitized "authoritative" corpus scraped to train foundation models (Stage 2 Technological Catalyst). LLMs emit computational truthiness and lie with supreme confidence (Stage 3 Proactive Negligence) not because of a mechanical bug, but because their training distribution defined ungrounded, procedurally attributed official assertion as the apex of authoritative language.
+- **Unified Cutlass Stage 2 Deliverable & Atomic Dispatch Contract (SHARED-HEURISTIC-015)**:
+  - *Atomic Single-Asset Dispatch:* Pegleg must dispatch Cutlass for each asset individually (`acquisitions/[slug].txt`) without bundling multiple assets or passing the Author's inquiry prompt in Round 1.
+  - *Mandatory 6-Section Schema:* To prevent `logic-audit` and `epistemic-fallacy-scan` from being omitted, Cutlass's deliverable (`stage2_cutlass_{slug}.md`) MUST include all 6 canonical sections: (1) SAYS vs IS, (2) Chain of Ruin, (3) Structural Logic Audit (Causal Claims & Evidentiary Warrants), (4) Classical & Epistemic Fallacy Scan (formal fallacies + 32 failure modes), (5) Anti-Financial Reductionism Audit & Scorecard, and (6) Downstream Value Directives for Grog, Bilgeladle, and Scallywag.
+  - *Skill Protocol Tooling:* All modular skill-using agents (Cutlass, Pegleg, Bilgeladle, Grog) are equipped with `read_skill_protocol` to load full execution protocols on demand.
 
 ---
 
@@ -106,7 +115,7 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
   - `docs/README.md`: Master table of contents and documentation navigation index.
   - `docs/AGENT_ROSTER.md`: Master dossier for all 9 fleet agents (`pegleg`, `spyglass`, `cutlass`, `grog`, `plank`, `bilgeladle`, `scallywag`, `landlubber`, `hook`), detailing their psychological archetypes, directives, tools, and exemplar outputs.
   - `docs/WORKFLOWS_AND_SYSTEM_FLOWS.md`: Sequence diagrams and Mermaid flowcharts for all fleet pipelines (Chase Lifecycle, Chapter Silver Expansion, Ingestion Deduplication, Vector Search).
-  - `docs/ADRs.md`: Master Architectural Decision Records (ADR-001 through ADR-013) codifying database isolation, receipt-based ingestion, deterministic naming, and output routing.
+  - `docs/ADRs.md`: Master Architectural Decision Records (ADR-001 through ADR-014) codifying database isolation, receipt-based ingestion, deterministic naming, output routing, and serverless Zotero translation.
   - `docs/SOPs.md`: Standard Operating Procedures (SOP-01 through SOP-07) governing agent XML creation, GCS slug conventions, ingestion loops, task map tracking, doc synchronization, and the Enterprise DDL Protocol.
   - `docs/Hook_constitutiuon.md`: Foundational governance rules, DDL safety constraints, and self-modification firewalls for the meta-architect agent (`hook`).
   - `docs/PROJECT_CHARTER_v7.md`: The original multi-agent architecture specification, epistemic thesis, and tier definitions.
@@ -142,7 +151,8 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
 
 ### D. Authorized Output & Publication Sinks (`writings/` & `cargo_ontology/`)
 - **`writings/`**: The primary publication sink for human-readable articles, critical commentaries, and investigative deliverables (`README.md`).
-  - `writings/chases/{chase_id}/`: Dedicated workspace folders for multi-agent pirate chase sweeps. Houses sequential stage deliverables (`stage2_cutlass_audit.md`, `stage3_grog_extraction.md`, `stage4_bilgeladle_alignment.md`, `stage5_scallywag_essay.md`, and stage 6 review consensus scorecards).
+  - `writings/cargo/cargo_{metadata_id}/`: **Reusable Asset Dossiers (ADR-015)**. Houses prompt-free, objective asset assessments evaluated once and reused across all subsequent chases and chapter reductions (`cutlass_audit.md`, `grog_extraction.md`).
+  - `writings/chases/{chase_id}/`: Dedicated workspace folders for multi-agent pirate chase sweeps. Houses prompt-bound synthesis deliverables (`stage4_bilgeladle_alignment.md`, `stage5_scallywag_essay.md`, and stage 6 review consensus scorecards).
   - `writings/`: Standalone essays, critical reviews, and commentaries produced by agents (Scallywag, Bilgeladle, Cutlass) when prompted outside an orchestrated chase context.
 - **`cargo_ontology/`**: Machine-readable knowledge graph primitives extracted by Grog using LangExtract (`[slug].json`), capturing entities, claims, and relational tuples.
 
