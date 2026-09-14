@@ -21,10 +21,10 @@
     "heuristic_id": "SPYGLASS-HEURISTIC-003",
     "scope": "SPYGLASS_LOCAL",
     "category": "Paywall & Access Barrier Triage",
-    "generalized_heuristic": "When an inbound target operates behind a hard commercial paywall or deterministic authentication barrier, do not waste execution turns or retry loops attempting speculative browser bypasses. Immediately record the access barrier in cargo.failed_metadata and report the failure.",
-    "underlying_mechanism": "Hard commercial paywalls (e.g. Law.com, FT, WSJ) require verified user credentials; blind retries waste tokens and trigger anti-bot bans.",
-    "incident_context": "Author Directive: Prohibit wasting turns on hard paywall domains per ADR-003 and ADR-010.",
-    "timestamp_utc": "2026-08-24 11:58:00 UTC"
+    "generalized_heuristic": "For commercial news paywalls (e.g., WSJ, NYT, FT, Economist, Bloomberg, The Information), attempt recovery via acquire_archive_snapshot (Wayback Machine). For academic publishers (e.g., Nature, ScienceDirect, Wiley, Springer, JSTOR), attempt recovery via resolve_open_access_pdf (Unpaywall). Only if these recovery methods fail or if a target requires active enterprise authentication (e.g., Law.com) should you record the barrier in cargo.failed_metadata and halt.",
+    "underlying_mechanism": "Archive snapshots and open-access repositories (Unpaywall/CrossRef) frequently host legal, complete public copies of paywalled assets. Querying targeted recovery endpoints avoids speculative browser retries while retrieving high-signal text.",
+    "incident_context": "Integrated acquire_archive_snapshot and resolve_open_access_pdf recovery tools to unblock historical paywalled domains.",
+    "timestamp_utc": "2026-09-14 17:00:00 UTC"
   },
   {
     "heuristic_id": "SPYGLASS-HEURISTIC-004",
@@ -57,10 +57,10 @@
     "heuristic_id": "SPYGLASS-HEURISTIC-007",
     "scope": "SPYGLASS_LOCAL",
     "category": "Ingestion Pipeline Economics & Performance",
-    "generalized_heuristic": "Domains marked as deterministic hard paywalls (e.g., law.com, wsj.com, ft.com, theinformation.com, economist.com) or unsupported aggregate roots must be rejected at the queue/pre-flight level in Python before instantiating LLM turns or launching headless browser instances.",
-    "underlying_mechanism": "Bypassing the LLM ReAct loop and headless browser timeout cascade for known-closed domains saves 15-30 seconds of wall-clock blocking and ~10k tokens per rejected URL.",
-    "incident_context": "Observed repeated 25-second Botasaurus browser timeouts on law.com and ft.com before fallback failure logging.",
-    "timestamp_utc": "2026-09-03 16:35:00 UTC"
+    "generalized_heuristic": "Only true non-content/authentication-gated roots (e.g., law.com, private corporate logins) and unsupported aggregate streams (google.com/search, medium.com/tag/*) should be rejected at pre-flight. Major news and academic paywalls (wsj.com, nytimes.com, ft.com, theinformation.com, economist.com, nature.com, etc.) are recoverable via archive and open-access tools and must NOT be pre-emptively blocked.",
+    "underlying_mechanism": "Pre-flight rejection is reserved for genuinely unrecoverable domains. Commercial news and academic targets now have automated recovery paths (Wayback Machine and Unpaywall APIs) that succeed without triggering headless browser timeout cascades.",
+    "incident_context": "Cleared legacy circuit-breaker heuristics to allow recoverable paywall and academic domains to pass to Spyglass recovery tools.",
+    "timestamp_utc": "2026-09-14 17:00:00 UTC"
   },
   {
     "heuristic_id": "SPYGLASS-HEURISTIC-008",

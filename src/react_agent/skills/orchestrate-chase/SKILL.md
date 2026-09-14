@@ -109,9 +109,15 @@ If Cutlass assigns `PRIMARY_SAIL_LOCKER: DOLDRUMS` (*"I don't know why my boss g
    - Update `chase_status.md` -> Stage 1 Complete.
 3. **STAGE 2: CUTLASS AUDIT (PROMPT-FREE REUSABLE ASSET DOSSIER)**:
    - Update `chase_status.md` -> Stage 2 Initiated.
-   - **PRE-FLIGHT REUSE CHECK**: Before dispatching Cutlass, Pegleg MUST check if `writings/cargo/cargo_{metadata_id}/cutlass_audit.md` already exists:
-     - **IF EXISTS**: Skip dispatch! The asset has already been audited. Reuse the existing dossier immediately with zero token spend.
-     - **IF MISSING**: Proceed with atomic Cutlass dispatch below.
+   - **PRE-FLIGHT SAIL LOCKER & QUARANTINE GATE**:
+     - Pegleg MUST check the database triage status (`get_asset_triage_status`) or `cargo.fleet_enrichments`:
+       - **IF FLOTSAM**: HALT/REJECT asset immediately. Quarantined cargo cannot be analyzed in a chase.
+       - **IF WHERRY**: HALT/REJECT asset immediately. Agent tooling cargo is excluded from manuscript research.
+       - **IF DOLDRUMS**: Trigger **DOLDRUMS Breakout Protocol** and pause for Author guidance.
+   - **PRE-FLIGHT REUSE CHECK (ADR-015)**:
+     - Check if `writings/cargo/cargo_{metadata_id}/cutlass_audit.md` already exists on disk:
+       - **IF EXISTS**: Skip dispatch! The asset has already undergone a full Structural Logic Audit. Pegleg reads the existing dossier with **zero token spend**.
+       - **IF MISSING**: Proceed with atomic Cutlass dispatch below.
    - **ROUND 1 PROMPT ISOLATION & ATOMIC DISPATCH MANDATE**: Pegleg MUST pass **EACH ASSET SEPARATELY** to Cutlass in individual turns. Pegleg MUST pass **ONLY THE TARGET ASSET POINTER** (`acquisitions/[slug].txt`) and the asset's database ID (`cargo_id`). Pegleg is **STRICTLY FORBIDDEN** from passing the Author's inquiry prompt, thesis conclusions, or bundling multiple assets in Round 1.
    - **THREAD BINDING**: Pegleg dispatches Cutlass with `cargo_id={metadata_id}` (thread ID: `cargo_{metadata_id}_cutlass`) to ensure complete context isolation and permanent resuscitability per asset.
    - **MANDATORY DISPATCH PROMPT TEMPLATE**: Pegleg MUST dispatch Cutlass using this exact prompt contract:

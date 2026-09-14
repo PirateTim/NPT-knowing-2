@@ -48,8 +48,8 @@ class AgentEngine:
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
         
-        # Connects to the State DB (agent_state schema) to manage memory checkpoints
-        self.db_conn = self._get_db_connection()
+        # Database connection is acquired on-demand per checkpoint operation to prevent pool exhaustion (ADR-003)
+        self.db_conn = None
         
         # Compiles the cognitive state from local JSON and XML files
         self.memory_vault = self._load_agent_memory_vault()
@@ -58,7 +58,7 @@ class AgentEngine:
         # 1. CLI Override (`model_override`)
         # 2. XML Profile Override (`xml_model_target`)
         # 3. .env Default (`DEFAULT_MODEL`)
-        default_sys_model = os.getenv("DEFAULT_MODEL", "gemini-3.7-flash")
+        default_sys_model = os.getenv("DEFAULT_MODEL", "gemini-3.8-flash")
         xml_model = self.memory_vault.get("xml_model_target")
         self.model_name = model_override or xml_model or default_sys_model
         print(f"  -> [ENGINE BOOT] Routed Cognitive Model: {self.model_name.upper()}")
@@ -90,7 +90,7 @@ class AgentEngine:
         into a unified dictionary representing the agent's complete operational state.
         """
         base_path = os.path.dirname(self.xml_profile_path)
-        profile = {"mandate": "", "lens": {}, "skills": [], "rules": [], "exemplars": [], "requested_tools": {}, "model_target": os.getenv("DEFAULT_MODEL", "gemini-3.7-flash")}
+        profile = {"mandate": "", "lens": {}, "skills": [], "rules": [], "exemplars": [], "requested_tools": {}, "model_target": os.getenv("DEFAULT_MODEL", "gemini-3.8-flash")}
         
         if os.path.exists(self.xml_profile_path):
             tree = ET.parse(self.xml_profile_path)
@@ -384,16 +384,48 @@ class AgentEngine:
             return [types.Tool(function_declarations=bound_tools)]
         return []
 
+    def close(self):
+        """Closes any open cognitive state DB connection to prevent connection pool exhaustion."""
+        if hasattr(self, "db_conn") and self.db_conn:
+            try:
+                self.db_conn.close()
+            except Exception:
+                pass
+            self.db_conn = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()
+
     def get_latest_checkpoint(self, thread_id: str, max_turns: int = 10) -> List[types.Content]:
         """
         Retrieves the conversational history for a specific thread from Postgres.
         Implements a rolling window (truncation) to prevent Token Bloat.
+        Uses on-demand connection handling to prevent connection pool leaks.
         """
-        if not self.db_conn: return []
-        cursor = self.db_conn.cursor()
-        cursor.execute("SELECT state_payload FROM agent_state.checkpoints WHERE thread_id = %s ORDER BY updated_at DESC LIMIT 1", (thread_id,))
-        row = cursor.fetchone()
-        cursor.close()
+        conn = self._get_db_connection()
+        if not conn:
+            return []
+        
+        row = None
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT state_payload FROM agent_state.checkpoints WHERE thread_id = %s ORDER BY updated_at DESC LIMIT 1", (thread_id,))
+            row = cursor.fetchone()
+            cursor.close()
+        except Exception as e:
+            print(f"[CHECKPOINT READ ERROR] {e}", file=sys.stderr)
+            return []
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
         
         history = []
         if row and row[0]:
@@ -410,25 +442,36 @@ class AgentEngine:
         return history
 
     def save_checkpoint(self, thread_id: str, history: List[types.Content]):
-        """Persists the updated conversational history array back to Postgres."""
-        if not self.db_conn: return
+        """Persists the updated conversational history array back to Postgres with on-demand connection handling."""
+        conn = self._get_db_connection()
+        if not conn:
+            return
+            
         serializable_history = []
         for content in history:
             parts = [{"text": part.text} for part in content.parts if part.text]
             if parts: serializable_history.append({"role": content.role, "parts": parts})
                 
-        cursor = self.db_conn.cursor()
-        # Uses UPSERT logic to maintain a single row per thread
-        cursor.execute(
-            """
-            INSERT INTO agent_state.checkpoints (thread_id, state_payload, updated_at)
-            VALUES (%s, %s, NOW())
-            ON CONFLICT (thread_id) DO UPDATE SET state_payload = EXCLUDED.state_payload, updated_at = NOW();
-            """,
-            (thread_id, json.dumps(serializable_history))
-        )
-        self.db_conn.commit()
-        cursor.close()
+        try:
+            cursor = conn.cursor()
+            # Uses UPSERT logic to maintain a single row per thread
+            cursor.execute(
+                """
+                INSERT INTO agent_state.checkpoints (thread_id, state_payload, updated_at)
+                VALUES (%s, %s, NOW())
+                ON CONFLICT (thread_id) DO UPDATE SET state_payload = EXCLUDED.state_payload, updated_at = NOW();
+                """,
+                (thread_id, json.dumps(serializable_history))
+            )
+            conn.commit()
+            cursor.close()
+        except Exception as e:
+            print(f"[CHECKPOINT WRITE ERROR] {e}", file=sys.stderr)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     def start_chat_session(self, thread_id: str):
         """Initializes the SDK Chat Session object using the retrieved history."""

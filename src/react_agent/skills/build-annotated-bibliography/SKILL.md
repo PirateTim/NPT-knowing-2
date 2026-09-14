@@ -19,7 +19,7 @@ This skill enables **GROG (The Quartermaster)** to search the Cargo Hold using `
 
 ### 2. Search Parameters & Index Scope
 * **Query:** Target search phrase
-* **Index Scope:** `all-cargo` or `only-mainsail`
+* **Index Scope:** `mainsail`, `jib`, or `bilge` (strictly matching target Sail Locker)
 * **Total Responsive Assets & Chunks Evaluated:** Count of matching entries
 
 ### 3. Itemized Annotated Bibliography Entries

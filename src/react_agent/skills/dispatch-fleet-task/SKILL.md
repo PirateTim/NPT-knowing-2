@@ -28,7 +28,7 @@ Use dispatch-fleet-task when:
 | Factual Extraction | **Grog** | Extract unstated assumptions, dead reckoning, strict summary, and reference sightings. | cargo_{metadata_id}_grog |
 | Citation / DOI Lookup | **Plank** | Query CrossRef / Landlubber, construct un-truncated vector node. | 	hread_plank_resolution |
 | Manuscript Query | **Bilgeladle** | Search ship.letters_of_marque vector embeddings and evaluate against book chapters. | 	hread_bilgeladle_query |
-| Cold Academic Critique | **Scallywag** | Perform philosophical diagnosis of institutional misanthropy and power dynamics. | 	hread_scallywag_critique |
+| Cold Academic Critique | **Scallywag** | Perform forensic diagnosis of individual misanthropes and human malintent toward knowledge. | `thread_scallywag_critique` |
 
 ---
 

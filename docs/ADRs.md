@@ -145,3 +145,19 @@ sequenceDiagram
   3. *Deterministic Thread Binding:* Asset-level subagent turns are bound to `cargo_{metadata_id}_{agent_name}` (e.g. `cargo_238_cutlass`), ensuring clean ~25k token context windows and perfect resuscitability for subsequent revisions.
 * **Consequences:** Eliminates redundant token expenditure across multi-asset chases. Creates a cumulative, searchable knowledge repository of audited cargo assets. Decouples objective forensic deconstruction from prompt-biased narrative synthesis. Ensures tri-fold alignment across PostgreSQL (`cargo.content_metadata.id`), ReAct cognitive threads (`cargo_{metadata_id}`), and disk storage (`writings/cargo/cargo_{metadata_id}/`).
 
+**ADR-016: Standard Python >=3.12 Runtime and Pure-Python PEP-249 `pg8000.dbapi` Database Driver Mandate**
+
+* **Context:** Inconsistencies emerged across fleet tools, runner entrypoints, and administrative helper scripts regarding Python runtime versions and PostgreSQL client libraries. Specifically:
+  1. *PostgreSQL Driver Fragmentation:* Several scripts inadvertently imported `pg8000.native` (which uses a proprietary `.run(":id", ...)` syntax without standard cursors) while core engine tools used `pg8000.dbapi` (PEP-249 standard). LLM subagents frequently hallucinated broken queries when attempting to emulate `native` syntax, mismanaged connection lifecycles, and left database sockets hanging. Furthermore, legacy entries for `psycopg[binary]` and `psycopg-pool` in `pyproject.toml` introduced compilation and platform wheel conflicts on Windows workstations.
+  2. *Python Runtime Drift:* Agent code occasionally targeted deprecated Python 3.11 syntax or experimental pre-release features of 3.14+, risking syntax errors in production.
+* **Decision:**
+  1. *Python Runtime Version:* Mandate `Python >=3.12` (`3.12.x`) managed via `uv`. Subagents, firmwares, and tools must never target Python 3.11 or unverified 3.14+ pre-releases.
+  2. *Universal Driver Mandate:* All database interactions across tools, entrypoints, and scripts MUST strictly use `import pg8000.dbapi` adhering to PEP-249 (Python Database API Specification 2.0).
+  3. *Query Pattern & Resource Lifecycle:*
+     - Queries must use standard DB-API `%s` placeholders with sequence/tuple parameters (`cursor.execute("SELECT ... WHERE id = %s", (asset_id,))`).
+     - Connections and cursors must be acquired on-demand and enclosed in strict `try: ... finally: cursor.close(); conn.close()` blocks.
+  4. *Explicit Bans:*
+     - **Ban `pg8000.native`**: Prevents broken query syntax, non-standard parameterization, and transaction failures.
+     - **Ban `psycopg` (v3) & `psycopg2`**: Eliminates external C compiler / compiled binary wheel dependencies, ensuring 100% pure-Python cross-platform execution on Windows developer environments.
+* **Consequences:** High LLM code generation reliability (~99% syntax accuracy for PEP-249), zero C-library installation failures across Windows/Linux, consistent transaction and socket cleanup, and unified database connection handling across all tools and scripts.
+

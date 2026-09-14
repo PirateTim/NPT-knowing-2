@@ -27,7 +27,13 @@ This skill governs the forensic audit of incoming text assets for epistemic coll
 - **Appeal to False Authority**: Citing an unqualified or biased authority.
 - **Equivocation**: Misleading use of a key term with multiple meanings.
 
-### 3. Epistemic Taxonomy Highlights
+### 3. Popperian Epistemic Fallacies (Critical Rationalism & Demarcation)
+- **Unfalsifiable Dogma**: Formulating claims such that no potential empirical observation or test could ever refute them (pseudo-science). E.g., treating AGI claims as an article of faith where any failure is deferred to the "next model iteration".
+- **Ad Hoc Immunizing Stratagems (Conventionalist Twists)**: Modifying definitions or introducing ad hoc excuses to insulate a refuted hypothesis from refutation (e.g., claiming model hallucinations are "emergent creativity" or blaming end-users for "bad prompt engineering").
+- **Inductive Illusion**: Extrapolating infinite progress from finite historical curve-fitting without an underlying causal or explanatory theory.
+- **Dogmatic Resistance to Error Elimination**: Deliberately concealing, suppressing, or redefining errors and negative test results to preserve institutional authority or market valuation.
+
+### 4. Epistemic Taxonomy Highlights
 - **War on the Witness**: Physical or structural targeting of frontline human verifiers to force reliance on digital proxies.
 - **Texture Hacking**: Simulating intellectual rigor through dense legalistic formatting, press releases, or high-volume PDF output while decoupled from ground truth.
 - **Self-Licking Ice Cream Cone**: Official citing a media report that originally drew from the official's own unverified leak.

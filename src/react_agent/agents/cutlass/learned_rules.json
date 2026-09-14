@@ -258,5 +258,45 @@
         "rule_directive": "HUMAN-ONLY WHERRY RESERVATION: You are strictly forbidden from assigning any asset to 'WHERRY'. WHERRY is a human-only classification reserved exclusively for the Author (Timothy) to categorize articles about tools, frameworks, and infrastructure used to build the agentic system. Items in WHERRY are excluded from vector embedding and all manuscript research pipelines. If you evaluate an asset as discussing software developer tools, LLM frameworks, or system infrastructure, assign 'DOLDRUMS' so the Author can inspect and classify it as WHERRY himself.",
         "source_context": "Author Directive (September 2026): Defining WHERRY as a human-only category for agent development tooling excluded from vector indexing and research workflows.",
         "timestamp_utc": "2026-09-10T14:40:00Z"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Leading computer science professor says 'everybody' is struggling to get jobs: 'Something is happening in the industry'', assign 'MAINSAIL'. Rationale: This is mainsail.  But just barely.  It's mostly gossip about the job market (jib) but also addresses the epistemic question of how a student can know what the need to know and how they can learn to contextualize the next thing they need to know.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114127_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Google AI appears to block results for \u2018Trump cognitive decline\u2019 but not Biden', assign 'MAINSAIL'. Rationale: This is mainsail because it addresses a core thesis of the book: the idea that information is being destroyed on purpose as an act of epistemic vandalism.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114212_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'Meet Mira Murati, the 36-year-old tech prodigy who shot to fame at OpenAI and now runs a startup that's a poaching target for Mark Zuckerberg | Fortune', assign 'BILGE'. Rationale: This is pure bilge.  An example of a supposed journalist pushing a press release as insight.  I remains valuable as bilge because is is a source for information.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114318_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'Anthropic Safety Researchers Run Into Trouble When New Model Realizes It's Being Tested', assign 'BILGE'. Rationale: This is Bilge because while technically true,  this is completely false.  The conclusions are absolutely NOT supported by the evidence.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114323_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'New Yale Study Finds AI Has Had Essentially Zero Impact on Jobs', assign 'MAINSAIL'. Rationale: this is mainsail.  the key signal is \"Ever since OpenAI\u2019s ChatGPT was introduced in November 2022, experts and executives have been predicting\"  this partial sentence indicates to me, that what follows is an epistemological examination of those predictions.  And as it turns out, that is exactly what this article is",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114403_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Sora provides better control over videos featuring your AI self', assign 'MAINSAIL'. Rationale: This is mainsail because SORA doesn't even exist anymore.  This article is secondarily bilge because it is basically a press release about produce features.  It is mainly mainsail because it tells us about the direction of the conversation.  And When combines with articles from less that 6 months later about the shutdown it tells us how bad at business these guys are.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114408_acquired.txt (2026-09-11)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'Americans widely expect AI-fueled attacks, poll finds', assign 'BILGE'. Rationale: This is primarily Bilge because it is AI fearmongering.  All tools are used by bad actor. and any new tool will be eventually.  Asking people to predict the obvious is absurd.  There is a hint of mainsail in this because more recent surveys show that over time people are ever less confident that AI will add anything of value.  People are smarter that the medai eco9system trying to sell a defective product.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114528_acquired.txt (2026-09-13)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Top AI Industry Figures Secretly Hoping AI Will Wipe Out Humankind', assign 'MAINSAIL'. Rationale: Mainsail for sure.  This is a secondary source basically writing a response to a paywalled piece in the WSJ.   Frank Landymore is usually pretty sharp and this is a good example.  \"cheerful apocalyptics\" is nearly a synonym for epistemic vandals as used in the book.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114540_acquired.txt (2026-09-13)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to 'Will A.I. Trap You in the \u201cPermanent Underclass\u201d?', assign 'MAINSAIL'. Rationale: This is mainsail because in mentions the influence of Leopold Aschenbrenner.  This piece was published months before he lost huge amounts of money on his wedding weekend. The rest of the piece is a sort of highbrow mocking of the idiocy of the technorati that itself comes off as dumb and probably written by AI",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114549_acquired.txt (2026-09-13)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'What\u2019s Holding Back Agentic AI? Not Employee Resistance', assign 'BILGE'. Rationale: The problem is beyond a self selecting poll.  it's just typical management jargon.  I remember in the 1990s when everyone was expected to learn regex.  Asserting that no tech worker will absorb new technical skills is sometime that could have been written 5, 10, 15, 20,100 years ago.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114652_acquired.txt (2026-09-13)"
     }
 ]

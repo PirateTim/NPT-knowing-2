@@ -35,41 +35,60 @@ def _get_genai_client() -> Client:
         raise ValueError("[ERROR] GEMINI_API_KEY environment variable is not set.")
     return Client(api_key=api_key)
 
-def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int] = None) -> str:
+def embed_cargo_index(index_scope: str = "mainsail", batch_limit: Optional[int] = None) -> str:
     """
     Agent Tool & Skill Harness: Cargo Vector Indexer.
     Purpose: Reads acquired cargo text assets from local acquisitions/ or GCS bucket,
-    chunks text into paragraph units, generates 1536-dim embeddings via Google GenAI,
-    and populates cargo.content_vectors under the specified index_scope.
+    chunks text into paragraph units (including Metadata Header Chunk 000), generates
+    1536-dim embeddings via Google GenAI, and populates cargo.content_vectors under
+    the specified index_scope ('mainsail', 'jib', or 'bilge').
+    Logs explicit failure records to cargo.fleet_enrichments if an asset cannot be read.
     Invoked By: GROG (The Quartermaster).
     """
+    scope = (index_scope or "").lower().strip()
+    VALID_SCOPES = {"mainsail", "jib", "bilge"}
+    if scope not in VALID_SCOPES:
+        return f"[ERROR] Invalid index_scope '{index_scope}'. Only 'mainsail', 'jib', and 'bilge' are supported."
+
+    target_locker = scope.upper()
+
     conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Database connection failed."
     genai_client = _get_genai_client()
     cursor = conn.cursor()
 
     try:
-        # 1. Fetch metadata records based on index scope
-        if index_scope == "only-mainsail":
-            query = """
-                SELECT DISTINCT m.id, m.source_url, m.title, m.authors, m.publication_date, m.gcp_bucket_path
-                FROM cargo.content_metadata m
-                JOIN cargo.fleet_enrichments e ON m.id = e.metadata_id
-                WHERE e.payload->>'sail_locker' = 'MAINSAIL';
-            """
-        else: # default: all-cargo (excludes quarantined FLOTSAM)
-            query = """
-                SELECT m.id, m.source_url, m.title, m.authors, m.publication_date, m.gcp_bucket_path
-                FROM cargo.content_metadata m
-                WHERE m.id NOT IN (
-                    SELECT DISTINCT metadata_id
-                    FROM cargo.fleet_enrichments
-                    WHERE payload->>'sail_locker' IN ('FLOTSAM', 'WHERRY')
-                )
-                ORDER BY m.id ASC;
-            """
-            
+        # Fetch metadata records whose latest active triage matches target_locker
+        query = """
+            SELECT 
+                cm.id, 
+                cm.source_url, 
+                cm.title, 
+                cm.authors, 
+                cm.publication_date, 
+                cm.abstract,
+                cm.gcp_bucket_path,
+                UPPER(COALESCE(
+                    (SELECT payload->>'sail_locker' 
+                     FROM cargo.fleet_enrichments 
+                     WHERE metadata_id = cm.id AND enrichment_type IN ('triage', 'triage_quick', 'triage_human_override')
+                     ORDER BY created_at DESC LIMIT 1),
+                    ''
+                )) AS active_locker
+            FROM cargo.content_metadata cm
+            WHERE cm.id IN (
+                SELECT metadata_id 
+                FROM cargo.fleet_enrichments 
+                WHERE enrichment_type IN ('triage', 'triage_quick', 'triage_human_override')
+            )
+            ORDER BY cm.id ASC;
+        """
         cursor.execute(query)
-        metadata_rows = cursor.fetchall()
+        all_triaged_rows = cursor.fetchall()
+
+        # Filter strictly for assets matching target locker
+        metadata_rows = [r for r in all_triaged_rows if r[7] == target_locker]
 
         if batch_limit:
             metadata_rows = metadata_rows[:batch_limit]
@@ -78,11 +97,12 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
         upserted_chunks = 0
         skipped_chunks = 0
         failed_assets = 0
+        failed_asset_ids = []
 
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
         local_acq_dir = os.path.join(project_root, "acquisitions")
 
-        for meta_id, source_url, title, authors, pub_date, gcp_path in metadata_rows:
+        for meta_id, source_url, title, authors, pub_date, abstract, gcp_path, _ in metadata_rows:
             raw_text = None
 
             # Attempt 1: Try reading local file in acquisitions/
@@ -93,47 +113,82 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
                     try:
                         with open(local_path, "r", encoding="utf-8", errors="replace") as f:
                             raw_text = f.read()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"[LOCAL READ ERROR] ID #{meta_id}: {e}")
 
             # Attempt 2: Download from GCS if local not found
-            if not raw_text and gcp_path and gcp_path.startswith("gs://"):
+            if not raw_text and gcp_path:
                 try:
                     from google.cloud import storage
                     storage_client = storage.Client()
-                    bucket_name = "npt-fleet-cargo-hold"
-                    blob_name = gcp_path.replace(f"gs://{bucket_name}/", "").replace("acquisitions/", "")
+                    bucket_name = os.getenv("GCP_BUCKET_NAME", "npt-fleet-cargo-hold")
+                    blob_name = gcp_path
+                    if blob_name.startswith("gs://"):
+                        blob_name = blob_name.replace(f"gs://{bucket_name}/", "")
+                    if blob_name.startswith(f"{bucket_name}/"):
+                        blob_name = blob_name.replace(f"{bucket_name}/", "")
+                    
                     bucket = storage_client.bucket(bucket_name)
-                    blob = bucket.blob(f"acquisitions/{blob_name}")
+                    blob = bucket.blob(blob_name)
                     if blob.exists():
                         raw_text = blob.download_as_text(encoding="utf-8")
                 except Exception as e:
                     print(f"[GCS WARNING] Failed to read GCS blob for ID #{meta_id}: {str(e)}")
 
-            if not raw_text:
+            # Failure Check: Empty or Missing Payload
+            if not raw_text or len(raw_text.strip()) < 50:
                 failed_assets += 1
+                failed_asset_ids.append(meta_id)
+                failure_payload = {
+                    "status": "FAILED",
+                    "reason": "Text payload missing on local disk and GCS, or content is empty (< 50 chars).",
+                    "gcp_bucket_path": gcp_path,
+                    "index_scope": scope,
+                    "action_required": "Push back to Spyglass for re-acquisition or check GCS permissions."
+                }
+                cursor.execute(
+                    """
+                    INSERT INTO cargo.fleet_enrichments (metadata_id, agent_name, enrichment_type, payload, created_at)
+                    VALUES (%s, 'grog', 'vector_index_failure', %s, NOW());
+                    """,
+                    (meta_id, json.dumps(failure_payload))
+                )
+                conn.commit()
                 continue
 
-            # Strip acquisition header boilerplate if present
+            # =================================================================
+            # CHUNKING LOGIC: METADATA HEADER CHUNK (000) + BODY PARAGRAPHS
+            # =================================================================
+            authors_str = ", ".join(authors) if isinstance(authors, list) else (authors or "Unknown")
+            header_chunk_text = (
+                f"TITLE: {title or 'Untitled Asset'}\n"
+                f"AUTHORS: {authors_str}\n"
+                f"PUBLISHED: {pub_date or 'Unknown Date'}\n"
+                f"SOURCE URL: {source_url}\n"
+                f"ABSTRACT: {abstract or 'No abstract provided.'}"
+            )
+
+            # Separate body text from top header if divider exists, otherwise use raw_text
             content_body = raw_text
             if "===========================================================" in raw_text:
                 parts = raw_text.split("===========================================================")
                 content_body = parts[-1].strip()
 
-            # Paragraph chunking logic (~500 - 1500 chars)
-            paragraphs = [p.strip() for p in content_body.split("\n\n") if len(p.strip()) > 80]
-            if not paragraphs:
-                paragraphs = [content_body[i:i+1000] for i in range(0, len(content_body), 1000)]
+            # Split body into distinct non-empty paragraphs
+            body_paragraphs = [p.strip() for p in content_body.split("\n\n") if p.strip()]
+            if not body_paragraphs:
+                body_paragraphs = [content_body[i:i+1000] for i in range(0, len(content_body), 1000)]
 
-            chunk_idx = 0
-            for p_text in paragraphs:
-                chunk_idx += 1
-                chunk_id = f"chunk_{meta_id}_{chunk_idx:03d}"
+            # Combine Chunk 000 (Metadata) with all body paragraphs
+            all_chunks = [(0, header_chunk_text)] + list(enumerate(body_paragraphs, start=1))
 
-                # Check if chunk vector already exists
+            for chunk_idx, p_text in all_chunks:
+                chunk_id = f"chunk_{meta_id}_{scope}_{chunk_idx:03d}"
+
+                # Check if chunk vector already exists under this scope
                 cursor.execute(
                     "SELECT vector_id FROM cargo.content_vectors WHERE chunk_id = %s AND index_scope = %s;",
-                    (chunk_id, index_scope)
+                    (chunk_id, scope)
                 )
                 if cursor.fetchone():
                     skipped_chunks += 1
@@ -151,7 +206,7 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
                     print(f"[EMBED ERROR] Chunk {chunk_id} failed embedding: {str(embed_err)}")
                     continue
 
-                authors_json = json.dumps(authors) if authors else "[]"
+                authors_json = json.dumps(authors) if isinstance(authors, (list, dict)) else json.dumps([authors_str])
                 
                 cursor.execute(
                     """
@@ -159,13 +214,13 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
                         chunk_id, metadata_id, index_scope, source_url, title, authors,
                         publication_date, chunk_index, chunk_text, vector_embedding, gcp_bucket_path
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (chunk_id) DO UPDATE SET
+                    ON CONFLICT (chunk_id, index_scope) DO UPDATE SET
                         chunk_text = EXCLUDED.chunk_text,
                         vector_embedding = EXCLUDED.vector_embedding,
                         created_at = NOW();
                     """,
                     (
-                        chunk_id, meta_id, index_scope, source_url, title, authors_json,
+                        chunk_id, meta_id, scope, source_url, title, authors_json,
                         pub_date, chunk_idx, p_text, str(list(embedding)), gcp_path
                     )
                 )
@@ -175,9 +230,11 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
 
         cursor.close()
         conn.close()
+
+        failure_summary = f" (Failed Assets Logged: {failed_asset_ids})" if failed_asset_ids else ""
         return (
-            f"[INDEXING COMPLETE] Scope: '{index_scope}'. Total Assets Processed: {total_assets}. "
-            f"Upserted Chunks: {upserted_chunks}, Skipped: {skipped_chunks}, Failed Assets: {failed_assets}."
+            f"[INDEXING COMPLETE] Scope: '{scope}' ({target_locker}). Total Eligible Assets: {total_assets}. "
+            f"Upserted Chunks: {upserted_chunks}, Skipped Existing: {skipped_chunks}, Failures: {failed_assets}{failure_summary}."
         )
 
     except Exception as e:
@@ -186,14 +243,18 @@ def embed_cargo_index(index_scope: str = "all-cargo", batch_limit: Optional[int]
         return f"[ERROR] Cargo vector indexer failed: {str(e)}"
 
 
-def query_cargo_vector_index(query: str, index_scope: str = "all-cargo", top_k: int = 10) -> str:
+def query_cargo_vector_index(query: str, index_scope: str = "mainsail", top_k: int = 10) -> str:
     """
     Agent Tool: Cargo Hold Vector & Hybrid Search.
     Purpose: Queries cargo.content_vectors using 1536-dim pgVector cosine similarity
     and keyword matching, returning a JSON array of matching chunks with complete provenance metadata.
+    Supported scopes: 'mainsail', 'jib', 'bilge'.
     Invoked By: GROG (The Quartermaster), CUTLASS, PEGLEG.
     """
+    scope = (index_scope or "mainsail").lower().strip()
     conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Database connection failed."
     genai_client = _get_genai_client()
     cursor = conn.cursor()
 
@@ -217,7 +278,7 @@ def query_cargo_vector_index(query: str, index_scope: str = "all-cargo", top_k: 
             ORDER BY similarity DESC
             LIMIT %s;
         """
-        cursor.execute(sql_vector, (str(query_vector), index_scope, top_k))
+        cursor.execute(sql_vector, (str(query_vector), scope, top_k))
         vector_rows = cursor.fetchall()
 
         # 3. Hybrid Keyword Search Fallback
@@ -233,8 +294,9 @@ def query_cargo_vector_index(query: str, index_scope: str = "all-cargo", top_k: 
             LIMIT %s;
         """
         kw_pattern = f"%{query.lower()}%"
-        cursor.execute(sql_keyword, (index_scope, kw_pattern, kw_pattern, top_k))
+        cursor.execute(sql_keyword, (scope, kw_pattern, kw_pattern, top_k))
         keyword_rows = cursor.fetchall()
+
 
         # Deduplicate & Merge results
         seen_chunks = set()

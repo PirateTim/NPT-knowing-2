@@ -93,9 +93,27 @@ def seed_urls(file_path: str):
         print(f"[ERROR] Target file not found: {file_path}")
         sys.exit(1)
 
-    # Clean the input file, ignoring blank lines and comments
-    with open(file_path, 'r', encoding='utf-8') as f:
-        urls = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    # Extract all valid HTTP/HTTPS URLs from each line, splitting multiple URLs, stripping footnotes, and validating domain
+    import re
+    import urllib.parse
+    urls = []
+    # Pattern extracts valid URLs even if prefixed by footnote markers e.g. [1]\xa0https://...
+    url_pattern = re.compile(r'https?://[^\s\)\]\>\"\'\,\xa0\u200b]+', re.IGNORECASE)
+
+    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            found = url_pattern.findall(line)
+            if found:
+                for u in found:
+                    cleaned_u = u.rstrip('.,;:)]>')
+                    parsed = urllib.parse.urlparse(cleaned_u)
+                    # Must be http/https with a valid domain containing at least one dot
+                    if parsed.scheme in ("http", "https") and parsed.netloc and "." in parsed.netloc:
+                        if cleaned_u not in urls:
+                            urls.append(cleaned_u)
 
     if not urls:
         print("[NOTICE] The provided file contains no valid URLs.")
@@ -117,15 +135,28 @@ def seed_urls(file_path: str):
         """
 
         success_count = 0
+        threads_count = 0
+        threads_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "acquisitions", "threads_links.txt"))
+        os.makedirs(os.path.dirname(threads_file), exist_ok=True)
+
         for target_url in urls:
+            lower_u = target_url.lower()
+            if "threads.net" in lower_u or "threads.com" in lower_u:
+                with open(threads_file, "a", encoding="utf-8") as tf:
+                    tf.write(target_url + "\n")
+                threads_count += 1
+                continue
+
             cursor.execute(insert_query, (target_url,))
             if cursor.rowcount == 1:
                 success_count += 1
 
         print(f"[SUCCESS] Parsed {len(urls)} URLs.")
+        if threads_count > 0:
+            print(f"[THREADS BYPASS] Routed {threads_count} Threads URLs directly to acquisitions/threads_links.txt.")
         print(f"[SUCCESS] Inserted {success_count} new URLs into the PENDING queue.")
-        if success_count < len(urls):
-            print(f"[NOTICE] {len(urls) - success_count} URLs were skipped (already exist in queue).")
+        if (success_count + threads_count) < len(urls):
+            print(f"[NOTICE] {len(urls) - (success_count + threads_count)} URLs were skipped (already exist in queue).")
 
         cursor.close()
         conn.close()

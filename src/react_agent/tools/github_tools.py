@@ -12,7 +12,12 @@ traversal, comment editing, and media/attachment streaming, this file should be
 deprecated and replaced to minimize codebase surface area.
 """
 import os
-from github import Github
+try:
+    from github import Github
+    HAS_GITHUB = True
+except ImportError:
+    Github = None
+    HAS_GITHUB = False
 
 # =====================================================================
 # INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)
@@ -24,6 +29,8 @@ def _get_repo():
     Purpose: Establishes an authenticated REST connection to the target repository 
     using the local workstation environment GITHUB_TOKEN or GITHUB_PAT.
     """
+    if not HAS_GITHUB:
+        raise ImportError("The 'PyGithub' package is not installed. Install via: pip install PyGithub")
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GITHUB_PAT")
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "PirateTim")
     repo_name = os.getenv("GITHUB_REPO_NAME", "NPT-knowing-2")

@@ -222,7 +222,7 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
 # AGENT TOOLS (Exposed via tool_dispatcher.py)
 # =====================================================================
 
-def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "") -> str:
+def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "", original_source_url: str = "") -> str:
     """
     Agent Tool: Remote PDF Ingestion Engine.
     Purpose: Downloads PDF binary streams from direct URLs, parses text via pypdf,
@@ -277,9 +277,13 @@ def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "") -
         temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
         temp_filepath = os.path.join(cache_dir, temp_filename)
 
+        source_line = f"SOURCE: {original_source_url if original_source_url else target_url}\n"
+        if original_source_url:
+            source_line += f"ARCHIVE_SOURCE: {target_url}\n"
+
         formatted_payload = (
             f"=== ACQUISITION INDEX ===\n"
-            f"SOURCE: {target_url}\n"
+            f"{source_line}"
             f"TITLE: {title}\n"
             f"AUTHORS: {', '.join(authors) if authors else 'UNKNOWN'}\n"
             f"PUBLISHED: UNKNOWN\n"
@@ -369,6 +373,22 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
             raise ValueError(f"HTTP {response.status_code}")
             
     except Exception as e1:
+        lower_target = target_url.lower()
+        # Fast-track known hard paywalls straight to Wayback Machine to avoid 20s Botasaurus stalls
+        is_known_paywall = any(d in lower_target for d in [
+            "wsj.com", "nytimes.com", "theinformation.com", "economist.com", "bloomberg.com", "ft.com", "barrons.com"
+        ])
+        if is_known_paywall:
+            print(f"  -> [SPYGLASS PAYWALL FAST-PATH] Known subscription domain detected. Bypassing Botasaurus to query Web Archive...")
+            try:
+                arch_receipt_raw = acquire_archive_snapshot(target_url)
+                arch_json = json.loads(arch_receipt_raw)
+                if arch_json.get("status") == "SUCCESS":
+                    print(f"  -> [SPYGLASS FAST ARCHIVE SUCCESS] Ingested paywalled article via Web Archive.")
+                    return arch_receipt_raw
+            except Exception as e_fast:
+                print(f"  -> [SPYGLASS FAST ARCHIVE FAILED] {str(e_fast)}")
+
         print(f"  -> [SPYGLASS TIER 1 FAILED] Reason: {str(e1)}. Triggering Botasaurus...")
         # TIER 2: Botasaurus
         try:
@@ -397,9 +417,6 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 if jina_response.status_code == 200:
                     jina_text = jina_response.text
                     if jina_text and len(jina_text.strip()) >= 200:
-                        clean_content = jina_text
-                        html_string = f"<html><body>{jina_text}</body></html>" # mock HTML payload
-                        
                         # Parse Jina markdown header for metadata
                         jina_title = None
                         jina_pub = "UNKNOWN"
@@ -412,6 +429,15 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                         if not jina_title:
                             jina_title = target_url.split('/')[-1] or "acquired_article"
                             
+                        # Guard against Jina paywall/challenge stubs
+                        low_title = jina_title.lower()
+                        if any(stub in low_title for stub in ["verification required", "just a moment", "attention required", "cloudflare"]) or \
+                           low_title in ["nytimes.com", "wsj.com", "the information", "bloomberg.com", "economist.com", "financial times"] or \
+                           len(jina_text.strip()) < 800:
+                            raise ValueError(f"Jina returned a paywall/verification stub: '{jina_title}' ({len(jina_text.strip())} chars)")
+
+                        clean_content = jina_text
+                        html_string = f"<html><body>{jina_text}</body></html>" # mock HTML payload
                         jina_meta = {
                             "title": jina_title,
                             "published_date": jina_pub
@@ -422,7 +448,35 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 else:
                     raise ValueError(f"Jina returned HTTP {jina_response.status_code}")
             except Exception as e3:
-                print(f"  -> [SPYGLASS TIER 3 FAILED] Reason: {str(e3)}. Triggering Tier 4 (Zotero Translation Server)...")
+                print(f"  -> [SPYGLASS TIER 3 FAILED] Reason: {str(e3)}. Checking Academic OA and Web Archive snapshots...")
+
+                # TIER 4A: Check for Academic DOI / Open Access PDF
+                import re
+                if any(ad in lower_target for ad in [
+                    "sciencedirect.com", "wiley.com", "springer.com", "nature.com",
+                    "ieee.org", "jstor.org", "utppublishing.com", "doi.org", "tandfonline.com"
+                ]) or re.search(r'10\.\d{4,9}/', lower_target):
+                    try:
+                        oa_receipt_raw = resolve_open_access_pdf(target_url)
+                        oa_json = json.loads(oa_receipt_raw)
+                        if oa_json.get("status") == "SUCCESS":
+                            print(f"  -> [SPYGLASS TIER 4 SUCCESS] Ingested academic paper via Open Access PDF resolver.")
+                            return oa_receipt_raw
+                    except Exception as e_oa:
+                        print(f"  -> [SPYGLASS OA RESOLVER FAILED] {str(e_oa)}")
+
+                # TIER 4B: Check for Web Archive Snapshot (Wayback Machine)
+                try:
+                    arch_receipt_raw = acquire_archive_snapshot(target_url)
+                    arch_json = json.loads(arch_receipt_raw)
+                    if arch_json.get("status") == "SUCCESS":
+                        print(f"  -> [SPYGLASS TIER 4 SUCCESS] Ingested paywalled article via Wayback Machine Archive snapshot.")
+                        return arch_receipt_raw
+                except Exception as e_arch:
+                    print(f"  -> [SPYGLASS ARCHIVE FAILED] {str(e_arch)}")
+
+                # TIER 5: Zotero Translation Server (Metadata & Abstract Fallback)
+                print(f"  -> [SPYGLASS TIER 4 FAILED]. Triggering Tier 5 (Zotero Translation Server)...")
                 try:
                     zotero_endpoint = os.getenv("ZOTERO_TRANSLATOR_URL", "https://zotero-translator-809652732702.us-central1.run.app/web")
                     zotero_resp = requests.post(zotero_endpoint, data=target_url, headers={"Content-Type": "text/plain"}, timeout=35)
@@ -454,7 +508,7 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                                 "pages": z_item.get("pages", ""),
                                 "abstract": z_abstract
                             }
-                            print(f"  -> [SPYGLASS TIER 4 SUCCESS] Ingested URL via Zotero Translation Server. Title: '{z_title}'")
+                            print(f"  -> [SPYGLASS TIER 5 SUCCESS] Ingested URL via Zotero Translation Server. Title: '{z_title}'")
                         else:
                             raise ValueError("Zotero translator returned 0 items.")
                     else:
@@ -462,7 +516,7 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 except Exception as e4:
                     receipt = {
                         "status": "FAILED",
-                        "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}, Tier 4 (Zotero): {str(e4)}"
+                        "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}, Tier 4 (Archive/OA): Unavailable, Tier 5 (Zotero): {str(e4)}"
                     }
                     return json.dumps(receipt, indent=2)
 
@@ -734,7 +788,6 @@ def call_zotero_translator(target_url: str) -> str:
         headers = {"Content-Type": "text/plain"}
         response = requests.post(endpoint, data=target_url, headers=headers, timeout=45)
         if response.status_code == 200:
-            import json
             items = response.json()
             if items and isinstance(items, list) and len(items) > 0:
                 item = items[0]
@@ -811,6 +864,170 @@ def call_zotero_translator(target_url: str) -> str:
         return json.dumps({
             "status": "ERROR",
             "reason": f"Failed to connect to Zotero translation server: {str(e)}"
+        }, indent=2)
+
+
+def acquire_archive_snapshot(target_url: str) -> str:
+    """
+    Agent Tool: Web Archive Ingestion Engine.
+    Purpose: Recovers full-text articles blocked by commercial hard paywalls 
+    (WSJ, NYT, Financial Times, Bloomberg, The Information, Economist) by querying 
+    the Wayback Machine (archive.org) Availability API. Extracts full prose via trafilatura.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
+    clean_url = target_url.strip().replace('"', '').replace("'", "")
+    # Wayback Machine Availability API requires the URL query parameter literally unencoded
+    wayback_api = f"https://archive.org/wayback/available?url={clean_url}"
+    headers = {"User-Agent": "NPT-Fleet-Bot/1.0 (https://github.com/PirateTim/NPT-knowing-2; contact: npt-fleet@reckoning.org)"}
+
+    try:
+        resp = requests.get(wayback_api, headers=headers, timeout=15)
+        if resp.status_code == 200:
+            data = resp.json()
+            snapshots = data.get("archived_snapshots", {})
+            closest = snapshots.get("closest", {})
+            if closest.get("available") and closest.get("url"):
+                snapshot_url = closest["url"]
+                print(f"  -> [ARCHIVE SNAPSHOT FOUND] Fetching from Wayback: {snapshot_url}")
+                snap_resp = requests.get(snapshot_url, headers=headers, timeout=25)
+                if snap_resp.status_code == 200:
+                    content_type = snap_resp.headers.get("content-type", "").lower()
+                    if "application/pdf" in content_type or snap_resp.content.startswith(b"%PDF") or clean_url.lower().endswith(".pdf"):
+                        print(f"  -> [ARCHIVE PDF DETECTED] Processing archived PDF payload from {snapshot_url}...")
+                        return download_remote_pdf(snapshot_url, original_source_url=clean_url)
+
+                    html_content = snap_resp.text
+                    clean_text = trafilatura.extract(html_content)
+                    if clean_text and len(clean_text.strip()) >= 300:
+                        rich_meta = _extract_rich_metadata(html_content, clean_url)
+                        if not rich_meta.get("title") or rich_meta["title"] == clean_url:
+                            soup = BeautifulSoup(html_content, 'html.parser')
+                            title_tag = soup.find('title')
+                            if title_tag and title_tag.text:
+                                rich_meta["title"] = title_tag.text.strip().split(" - ")[0].split(" | ")[0]
+
+                        cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+                        os.makedirs(cache_dir, exist_ok=True)
+                        temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+                        temp_filepath = os.path.join(cache_dir, temp_filename)
+
+                        formatted_payload = (
+                            f"=== ACQUISITION INDEX ===\n"
+                            f"SOURCE: {clean_url}\n"
+                            f"ARCHIVE_SOURCE: {snapshot_url}\n"
+                            f"TITLE: {rich_meta.get('title', 'Archived Article')}\n"
+                            f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta.get('authors') else 'UNKNOWN'}\n"
+                            f"PUBLISHED: {rich_meta.get('published_date', 'UNKNOWN')}\n"
+                            f"PUBLISHER: {rich_meta.get('publisher', 'UNKNOWN')}\n"
+                            f"ITEM_TYPE: {rich_meta.get('item_type', 'webpage')}\n"
+                            f"===========================================================\n\n"
+                            f"{clean_text}"
+                        )
+
+                        with open(temp_filepath, "w", encoding="utf-8") as f:
+                            f.write(formatted_payload)
+
+                        receipt = {
+                            "status": "SUCCESS",
+                            "metadata": rich_meta,
+                            "local_cache_path": temp_filepath,
+                            "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
+                        }
+                        return json.dumps(receipt, indent=2)
+
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[NO_ARCHIVE_SNAPSHOT] No valid snapshot available on archive.org for {clean_url}"
+        }, indent=2)
+
+    except Exception as e:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[ARCHIVE_ERROR] Failed to query Wayback Machine: {str(e)}"
+        }, indent=2)
+
+
+def resolve_open_access_pdf(url_or_doi: str) -> str:
+    """
+    Agent Tool: Open Access Academic PDF Resolver.
+    Purpose: Resolves paywalled academic landing pages (ScienceDirect, Wiley, Springer, JSTOR, Nature)
+    by extracting the DOI and querying the Unpaywall REST API for legal open-access copies, preprints,
+    and institutional repository PDFs. If found, automatically streams the PDF via download_remote_pdf.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
+    import re
+    target = url_or_doi.strip().replace('"', '').replace("'", "")
+    doi = ""
+
+    doi_match = re.search(r'(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)', target)
+    if doi_match:
+        doi = doi_match.group(1).rstrip('.,;:)')
+
+    if not doi:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[NO_DOI_FOUND] Could not extract DOI from target: {target}"
+        }, indent=2)
+
+    print(f"  -> [UNPAYWALL RESOLVER] Extracted DOI: {doi}. Querying Unpaywall API...")
+    headers = {"User-Agent": "NPT-Fleet-Bot/1.0 (contact: npt-fleet@reckoning.org)"}
+    unpaywall_endpoint = f"https://api.unpaywall.org/v2/{doi}?email=npt-fleet@reckoning.org"
+
+    try:
+        resp = requests.get(unpaywall_endpoint, headers=headers, timeout=15)
+        if resp.status_code == 200:
+            data = resp.json()
+            # Collect all candidate PDF URLs, prioritizing repository/PMC copies over publisher landing stubs
+            candidate_pdfs = []
+            best_oa = data.get("best_oa_location") or {}
+            if best_oa.get("url_for_pdf"):
+                candidate_pdfs.append(best_oa["url_for_pdf"])
+
+            for loc in data.get("oa_locations", []):
+                p_url = loc.get("url_for_pdf")
+                if p_url and p_url not in candidate_pdfs:
+                    candidate_pdfs.append(p_url)
+
+            if not candidate_pdfs:
+                return json.dumps({
+                    "status": "FAILED",
+                    "reason": f"[NO_OPEN_ACCESS_PDF] Paper with DOI {doi} is recorded as not Open Access or has no direct PDF link."
+                }, indent=2)
+
+            # Try candidate PDFs in sequence until one succeeds
+            last_err = ""
+            for pdf_url in candidate_pdfs:
+                print(f"  -> [UNPAYWALL ATTEMPT] Trying candidate PDF: {pdf_url}...")
+                res_receipt = download_remote_pdf(pdf_url)
+                try:
+                    receipt_json = json.loads(res_receipt)
+                    if receipt_json.get("status") == "SUCCESS":
+                        if data.get("title"):
+                            receipt_json["metadata"]["title"] = data.get("title")
+                        receipt_json["metadata"]["doi"] = doi
+                        receipt_json["metadata"]["item_type"] = "journalArticle"
+                        if data.get("published_date"):
+                            receipt_json["metadata"]["published_date"] = data.get("published_date")
+                        return json.dumps(receipt_json, indent=2)
+                    else:
+                        last_err = receipt_json.get("reason", "")
+                except Exception as e_parse:
+                    last_err = str(res_receipt)
+
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"[OA_PDF_DOWNLOAD_FAILED] Attempted {len(candidate_pdfs)} candidate OA links. Last error: {last_err[:150]}"
+            }, indent=2)
+        else:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"[UNPAYWALL_HTTP_ERROR] Unpaywall API returned status {resp.status_code}"
+            }, indent=2)
+
+    except Exception as e:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[UNPAYWALL_ERROR] Failed querying Unpaywall: {str(e)}"
         }, indent=2)
 
 

@@ -160,6 +160,14 @@ Explain that the batch worker processes items in isolated threads (preventing co
             </directive>
             <rationale>Guarantees that Scallywag is anchored to exactly one chapter context file rather than diffuse multi-chapter ambiguity.</rationale>
         </rule>
+        <rule id="PEGLEG-RULE-015">
+            <name>ADR-015 Pre-Flight Reusable Dossier Gate &amp; Quarantine Enforcement</name>
+            <directive>Before dispatching Cutlass for Stage 2 in any Chase:
+1. QUARANTINE GATE: Check the asset's triage status. If the asset is marked as 'FLOTSAM' (quarantined) or 'WHERRY' (agent tooling), IMMEDIATELY HALT and reject the asset from the chase. If marked 'DOLDRUMS', pause execution for the Author (DOLDRUMS Breakout).
+2. PRE-FLIGHT REUSE GATE: Check if `writings/cargo/cargo_{metadata_id}/cutlass_audit.md` already exists on disk. If it exists, SKIP Cutlass dispatch entirely. Read the deliverable with zero token burn and pass its value directives directly to downstream agents (Grog, Bilgeladle, Scallywag).
+            </directive>
+            <rationale>Enforces ADR-015 content reuse economics and prevents quarantined or tool cargo from polluting manuscript synthesis.</rationale>
+        </rule>
     </rules>
 
     <skills>

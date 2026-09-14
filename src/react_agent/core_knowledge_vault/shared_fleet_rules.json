@@ -133,5 +133,41 @@
     "underlying_mechanism": "Bundling multiple assets into Stage 2 causes cognitive overload, dropping granular causal-claim and fallacy audits. Mandating the 6-section schema guarantees that logic-audit and epistemic-fallacy-scan cannot be squeezed out by high-level narrative summaries.",
     "incident_context": "Author Directive (/learn): Enforce logic-audit and epistemic-fallacy-scan in Cutlass Stage 2 dispatch and schema.",
     "timestamp_utc": "2026-09-08 21:50:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-016",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "The Anti-Techno-Fetishism Attention Anchor (The Stage 2 Distraction Trap)",
+    "generalized_heuristic": "Never allow fleet attention to be captured or distracted by the shiny technical surface of Stage 2 (model benchmarks, parameter scales, transformer novelties, prompt tricks, or synthetic metrics). Pure technological advancement is almost never the causal origin of epistemic collapse; it is universally deployed by institutions as an exculpatory smoke screen. All agents (Cutlass, Bilgeladle, Scallywag, Grog) must rigorously redirect their diagnostic focus away from 'what the technology did' and anchor it firmly on the human and institutional nexus: (1) What pre-existing decay, credential rot, or financialized disinvestment in verification (Stage 1) set the structural trap? and (2) What proactive corporate liability evasion, labor liquidation, or duty abandonment (Stage 3) is the technology being deployed to rationalize and shield? Treat any institutional claim that 'the AI forced us to do this' as prima facie agnotology.",
+    "underlying_mechanism": "Arguing over whether an algorithmic model is 'accurate' or 'hallucinating' accepts the tech industry's premise that epistemic failure is an engineering bug rather than an intentional human choice. Anchoring strictly on Stages 1 and 3 forces the analysis back to political economy, verification evasion, and individual human misanthropy (malintent toward human knowing).",
+    "incident_context": "Author Directive (/learn): Enforce the Anti-Techno-Fetishism Attention Anchor across fleet triage and chapter synthesis.",
+    "timestamp_utc": "2026-09-14 15:15:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-017",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "The Bilge-Mainsail Dialectic (Crime Scene vs. Forensic Apparatus)",
+    "generalized_heuristic": "Rigorously maintain the dialectical tension between Bilge and Mainsail. Bilge is the empirical crime scene in the wild (cultural effluent, executive stenography, feudal labor floats, agnotological laundering); Mainsail is the forensic apparatus (critical rationalism, political economy, institutional sociology, epistemology). Neither is self-sufficient: Mainsail without Bilge is detached academic pedantry; Bilge without Mainsail is shallow internet outrage. Cutlass must never discard Bilge, but evaluate it as a high-value agnotological specimen, explicitly identifying which Mainsail concepts are needed to autopsy it. Downstream agents (Bilgeladle, Scallywag) must systematically view and dissect the grotesque reality of the Bilge through the authoritative theoretical lenses of the Mainsail.",
+    "underlying_mechanism": "The book's thesis is proven not by asserting abstract philosophical doctrines, but by showing how those doctrines effortlessly predict, deconstruct, and dismantle the real-world intellectual rot (Bilge) emitted by late-capitalist institutions.",
+    "incident_context": "Author Directive (/learn): Codify the Bilge-Mainsail Dialectic as a core fleet research and writing heuristic.",
+    "timestamp_utc": "2026-09-14 15:20:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-018",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Rejection of Machine & Institutional Agency (The Linguistic Ban on Reification)",
+    "generalized_heuristic": "Never attribute intent, decisions, error, or agency to models, algorithms, software, corporations, or institutions. Inanimate constructs do not act; individual human beings do. When vendor PR asserts that 'the AI hallucinated', 'the algorithm biased itself', or 'our agents escaped', treat these assertions as prima facie agnotology. All fleet agents must trace epistemic collapse directly back to the human beings who wrote the software, authorized its unverified deployment, disinvested in human verification, and fabricated narratives of machine agency to launder regulatory and legal liability.",
+    "underlying_mechanism": "Reifying algorithms or institutions as autonomous agents is an ideological smoke screen that conceals individual human malintent and excuses proactive managerial negligence.",
+    "incident_context": "Author Directive (/learn): Enforce Absolute Human Culpability & The Linguistic Ban on Reification across all fleet agents.",
+    "timestamp_utc": "2026-09-14 16:50:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-019",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Runtime Environment & Database Driver Standards (Python 3.12 & pg8000.dbapi)",
+    "generalized_heuristic": "All Python execution environments across the fleet must target Python >=3.12 (managed via uv). All PostgreSQL interactions across tools, subagent scripts, and helper utilities must strictly use 'import pg8000.dbapi' adhering to PEP-249 (standard %s tuple parameterization and on-demand connection lifecycles). Never use 'import pg8000.native' (non-standard .run syntax causes broken LLM SQL generation and connection leaks). Never use 'psycopg' or 'psycopg2' (compiled C/binary dependencies break cross-platform execution on Windows developer environments).",
+    "underlying_mechanism": "Standard PEP-249 interfaces achieve near-perfect (~99%) LLM SQL generation fidelity and clean transaction cleanup, while pure-Python pg8000 eliminates all binary compilation failures on developer machines.",
+    "incident_context": "Author Directive: Codify Python >=3.12 runtime and pure-Python PEP-249 pg8000.dbapi as the sole fleet database driver standard.",
+    "timestamp_utc": "2026-09-14 19:50:00 UTC"
   }
 ]

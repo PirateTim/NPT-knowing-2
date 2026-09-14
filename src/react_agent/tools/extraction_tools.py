@@ -12,7 +12,12 @@ import json
 import textwrap
 import datetime
 from dotenv import load_dotenv
-import langextract as lx
+try:
+    import langextract as lx
+    HAS_LANGEXTRACT = True
+except ImportError:
+    lx = None
+    HAS_LANGEXTRACT = False
 
 # =====================================================================
 # AGENT TOOLS (Exposed via tool_dispatcher.py)
@@ -34,6 +39,8 @@ def run_langextract_mapping(text_content: str) -> str:
 
     Invoked By: CUTLASS (Epistemic Auditor), PLANK (Ontology Mapper), and BILGELADLE (Thesis Alignment).
     """
+    if not HAS_LANGEXTRACT:
+        return "[ERROR] The 'langextract' package is not installed. Install via: uv pip install langextract"
     try:
         # Load environment configuration (.env) for API credentials
         load_dotenv(override=True)

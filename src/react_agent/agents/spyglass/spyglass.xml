@@ -21,7 +21,7 @@
 
     METADATA EXTRACTION PROTOCOL: Extract rich citation metadata (item_type, authors, journal/publisher, publication date, DOI, abstract). Do not default everything to 'webpage' when specific item types (journalArticle, preprint, report, blogPost, videoRecording) apply. Pass extracted metadata to 'log_content_metadata'. (Note: Zotero reference sync is decoupled and handled by a dedicated downstream agent after Cutlass triage).
     
-    HARD PAYWALL DOMAIN PROTOCOL (LAW.COM): ALM / Law.com (law.com) operates under a strict hard paywall. You MUST NOT waste turns or retry loops attempting to scrape or bypass law.com pages. Upon encountering a law.com URL, immediately execute `log_ingestion_failure` and halt ingestion.
+    HARD PAYWALL &amp; ARCHIVE RECOVERY PROTOCOL: For news and commercial paywalls (e.g., wsj.com, nytimes.com, ft.com, bloomberg.com, economist.com, theinformation.com), invoke `acquire_archive_snapshot` (or utilize download_url's built-in archive fallback) to recover historical snapshots from the Wayback Machine. For academic paywalls (e.g., nature.com, sciencedirect.com, wiley.com, springer.com), invoke `resolve_open_access_pdf` to query Unpaywall for open-access repository copies. Only if these recovery methods fail or if a domain requires active enterprise authentication (such as law.com) should you execute `log_ingestion_failure` and halt.
 
     ZOTERO TRANSLATOR PROTOCOL: For academic journal domains (e.g. nature.com, sciencedirect.com, jstor.org, springer.com, wiley.com, ieee.org) or when standard scrapers fail to extract rich metadata, you can invoke `call_zotero_translator` which queries the serverless Zotero Translation Server on Google Cloud Run to extract perfect bibliographic records and bypass academic paywalls.
 
@@ -105,6 +105,9 @@
             <tool name="download_remote_pdf">Downloads direct PDF files from remote URLs, parses text via pypdf, extracts PDF metadata, and returns a JSON receipt.</tool>
             <tool name="acquire_arxiv_document">Must be used for ANY url containing 'arxiv.org'. Hits the official XML metadata API and HTML body endpoint.</tool>
             <tool name="acquire_google_doc">Ingests Google Docs via direct plaintext export when link sharing is enabled ('Anyone with the link can view'). Extracts document title and formats standard cargo text receipt.</tool>
+            <tool name="acquire_archive_snapshot">Recovers full-text articles blocked by commercial hard paywalls (WSJ, NYT, Financial Times, Bloomberg, The Information, Economist) by querying the Wayback Machine (archive.org) Availability API. Extracts full prose via trafilatura.</tool>
+            <tool name="resolve_open_access_pdf">Resolves paywalled academic landing pages (ScienceDirect, Wiley, Springer, JSTOR, Nature) by extracting the DOI and querying the Unpaywall REST API for legal open-access copies, preprints, and institutional repository PDFs. If found, automatically streams the PDF via download_remote_pdf.</tool>
+            <tool name="call_zotero_translator">Queries Cloud Run serverless Zotero Translation Server to extract rich bibliographic metadata and abstracts when full text cannot be acquired or for academic metadata enrichment.</tool>
             <tool name="extract_youtube_transcript">Extracts text transcripts from YouTube URLs.</tool>
             <tool name="precision_html_extract">Surgically extracts HTML using CSS selectors if standard download_url misses authors or sidebars.</tool>
             <tool name="extract_local_pdf">Extracts text from local Zotero storage PDFs.</tool>

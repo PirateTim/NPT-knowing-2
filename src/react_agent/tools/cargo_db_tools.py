@@ -149,7 +149,8 @@ def purge_corrupted_cargo(source_url: str, error_message: str = "Manually purged
             except Exception as e:
                 gcs_status = f"GCS deletion failed: {str(e)}"
                 
-        # 2. Delete the record from the successful manifest
+        # 2. Delete associated fleet_enrichments and content_metadata records
+        cursor.execute('DELETE FROM cargo.fleet_enrichments WHERE metadata_id IN (SELECT id FROM cargo.content_metadata WHERE source_url = %s);', (source_url,))
         cursor.execute('DELETE FROM cargo.content_metadata WHERE source_url = %s;', (source_url,))
         
         # 3. Log it to the dead-letter queue so Pegleg tracks the failure
@@ -213,11 +214,23 @@ def log_content_metadata(source_url: str, title: str, gcp_bucket_path: str, item
         )
         record_id = cursor.fetchone()[0]
         
+        # Clear any previous dead-letter entries
         cursor.execute("DELETE FROM cargo.failed_metadata WHERE source_url = %s", (source_url,))
+        
+        # Reset triage status to UNTRIAGED by clearing previous quarantine / reacquire requests
+        cursor.execute(
+            """
+            DELETE FROM cargo.fleet_enrichments 
+            WHERE metadata_id = %s 
+              AND enrichment_type IN ('spyglass_reacquire_request', 'vector_index_failure', 'triage_quick', 'triage')
+              AND payload->>'sail_locker' = 'DOLDRUMS';
+            """, 
+            (record_id,)
+        )
         
         conn.commit()
         cursor.close()
-        return f"[SUCCESS] Manifest updated for cargo_{record_id} ('{title}') at {source_url} and dead-letter queue cleared."
+        return f"[SUCCESS] Manifest updated for cargo_{record_id} ('{title}') at {source_url}, dead-letter cleared, and triage reset to UNTRIAGED."
     except Exception as e:
         return f"[ERROR] Database log failed: {str(e)}"
     finally:
@@ -314,6 +327,82 @@ def log_fleet_enrichment(agent_name: str, enrichment_type: str, gcp_bucket_path:
         return f"[SUCCESS] '{enrichment_type}' enrichment saved to Silver DB for metadata_id {metadata_id}."
     except Exception as e:
         return f"[ERROR] Failed to log enrichment: {str(e)}"
+    finally:
+        conn.close()
+
+def log_full_audit_dossier(metadata_id: int, sail_locker: str, dossier_path: str, score: float = 0.0, summary: str = "", author_intent: str = "") -> str:
+    """
+    Agent Tool & System Bridge: Commit Full Audit Dossier to Silver Ledger.
+    Purpose: Synchronizes a completed 6-section Cutlass audit deliverable (ADR-015) with PostgreSQL,
+    ensuring that the Structural Logic Audit permanently updates the authoritative Sail Locker.
+    Invoked By: CUTLASS, PEGLEG, TRIAGE_CONSOLE.
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database unavailable."
+    try:
+        cursor = conn.cursor()
+        locker = sail_locker.upper().strip()
+        payload_data = {
+            "sail_locker": locker,
+            "dossier_path": dossier_path,
+            "signal_score": score,
+            "summary": summary,
+            "author_intent": author_intent,
+            "audited_at": os.popen("powershell -Command Get-Date -Format o").read().strip() or "2026-09-11T00:00:00Z"
+        }
+        db_payload = json.dumps(payload_data)
+        cursor.execute(
+            '''
+            INSERT INTO cargo.fleet_enrichments (metadata_id, agent_name, enrichment_type, payload, created_at)
+            VALUES (%s, 'cutlass', 'triage_full_audit', %s, NOW());
+            ''',
+            (metadata_id, db_payload)
+        )
+        conn.commit()
+        cursor.close()
+        return f"[SUCCESS] Full audit dossier logged for metadata_id #{metadata_id}. Authoritative Sail Locker set to '{locker}'."
+    except Exception as e:
+        return f"[ERROR] Failed to log full audit dossier: {str(e)}"
+    finally:
+        conn.close()
+
+def get_asset_triage_status(metadata_id: int) -> dict:
+    """
+    Internal & Agent Helper: Retrieve Latest Triage State and Dossier Info.
+    Purpose: Checks whether an asset has been triaged, its current sail locker, and whether a dossier exists.
+    """
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return {"error": "Database unavailable"}
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            '''
+            SELECT enrichment_type, payload, created_at
+            FROM cargo.fleet_enrichments
+            WHERE metadata_id = %s AND enrichment_type IN ('triage_full_audit', 'triage_human_override', 'triage_quick')
+            ORDER BY id DESC
+            LIMIT 1;
+            ''',
+            (metadata_id,)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        if not row:
+            return {"sail_locker": "UNTRIAGED", "enrichment_type": None, "dossier_path": None}
+        
+        enrich_type, payload, created_at = row
+        p_data = payload if isinstance(payload, dict) else json.loads(payload)
+        return {
+            "sail_locker": p_data.get("sail_locker", "UNTRIAGED"),
+            "enrichment_type": enrich_type,
+            "dossier_path": p_data.get("dossier_path"),
+            "confidence": p_data.get("confidence") or p_data.get("confidence_score"),
+            "created_at": str(created_at)
+        }
+    except Exception as e:
+        return {"error": str(e)}
     finally:
         conn.close()
 
@@ -488,3 +577,69 @@ def query_chapter_assets(chapter_number: int) -> str:
         return f"[ERROR] Failed to query chapter assets: {str(e)}"
     finally:
         conn.close()
+
+def purge_corrupted_cargo(source_url: str, failure_reason: str = "") -> str:
+    """
+    Agent / Admin Tool: Cargo Purger & Incinerator (Option A Remediation).
+    Purpose: Permanently removes a corrupted, unacquirable, or truncated paywall asset from the fleet:
+    1. Records the permanent dead-letter failure in cargo.failed_metadata.
+    2. Deletes the physical text artifact from GCS cargo bucket.
+    3. Removes foreign-key dependent rows from cargo.fleet_enrichments and cargo.chase_assets.
+    4. Deletes the record from cargo.content_metadata and cargo.ingestion_queue.
+    """
+    from tools.cloud_knowledge_tools import delete_knowledge_artifact
+    conn = _get_strict_cargo_connection()
+    if not conn:
+        return "[ERROR] Cargo database connection failed."
+    try:
+        cursor = conn.cursor()
+        
+        # 1. Lookup existing record
+        cursor.execute(
+            "SELECT id, gcp_bucket_path, title FROM cargo.content_metadata WHERE source_url = %s LIMIT 1;",
+            (source_url,)
+        )
+        row = cursor.fetchone()
+        
+        metadata_id = row[0] if row else None
+        bucket_path = row[1] if row else None
+        title = row[2] if row else "Unknown Cargo"
+        
+        err_msg = failure_reason.strip() or "[PURGED] Corrupted or unacquirable paywall stub incinerated."
+        
+        # 2. Record in cargo.failed_metadata
+        cursor.execute(
+            """
+            INSERT INTO cargo.failed_metadata (source_url, error_message, failed_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (source_url) DO UPDATE SET
+                error_message = EXCLUDED.error_message,
+                failed_at = NOW();
+            """,
+            (source_url, err_msg)
+        )
+        
+        # 3. Clean up foreign keys if metadata record exists
+        if metadata_id:
+            cursor.execute("DELETE FROM cargo.fleet_enrichments WHERE metadata_id = %s;", (metadata_id,))
+            cursor.execute("DELETE FROM cargo.chase_assets WHERE metadata_id = %s;", (metadata_id,))
+            cursor.execute("DELETE FROM cargo.content_metadata WHERE id = %s;", (metadata_id,))
+            
+        # 4. Remove from ingestion queue
+        cursor.execute("DELETE FROM cargo.ingestion_queue WHERE target_url = %s;", (source_url,))
+        
+        conn.commit()
+        cursor.close()
+        
+        # 5. Delete physical blob from GCS if exists
+        gcs_msg = ""
+        if bucket_path:
+            gcs_msg = delete_knowledge_artifact(bucket_path)
+            
+        return f"[SUCCESS] Purged asset id={metadata_id} ('{title}'). Dead-letter logged to cargo.failed_metadata. GCS: {gcs_msg}"
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return f"[ERROR] Failed to purge corrupted cargo: {str(e)}"
+    finally:
+        conn.close()

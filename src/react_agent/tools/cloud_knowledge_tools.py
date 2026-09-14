@@ -108,3 +108,28 @@ def upsert_knowledge_artifact(artifact_name: str, content: str = "", local_cache
         
     except Exception as e:
         return f"[ERROR] Upload stream rejected: {str(e)}"
+
+
+def delete_knowledge_artifact(artifact_name: str) -> str:
+    """
+    Agent Tool: The GCS Blob Purger.
+    Purpose: Permanently deletes a knowledge artifact from the cloud bucket (e.g. when
+    incinerating truncated paywall stubs or corrupted assets).
+    """
+    try:
+        bucket = _get_bucket()
+        clean_name = (artifact_name or "").strip()
+        if clean_name.startswith("gs://"):
+            clean_name = clean_name[5:]
+        if bucket.name and clean_name.startswith(f"{bucket.name}/"):
+            clean_name = clean_name[len(bucket.name) + 1:]
+        elif clean_name.startswith("npt-fleet-cargo-hold/"):
+            clean_name = clean_name[len("npt-fleet-cargo-hold/"):]
+
+        blob = bucket.blob(clean_name)
+        if blob.exists():
+            blob.delete()
+            return f"[SUCCESS] Artifact '{clean_name}' deleted from GCS."
+        return f"[NOTICE] Artifact '{clean_name}' does not exist in GCS."
+    except Exception as e:
+        return f"[ERROR] Failed to delete artifact '{artifact_name}': {str(e)}"

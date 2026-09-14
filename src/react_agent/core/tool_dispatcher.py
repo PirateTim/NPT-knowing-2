@@ -19,8 +19,15 @@ import sys
 import subprocess
 from google.genai import types
 import asyncio
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+try:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    HAS_MCP = True
+except ImportError:
+    ClientSession = None
+    StdioServerParameters = None
+    stdio_client = None
+    HAS_MCP = False
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # SOP-04, Step 1: Import all external tool modules here.
@@ -28,12 +35,12 @@ from tools.file_io_tools import read_local_file, write_local_file, delete_local_
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
 from tools.subagent_tools import dispatch_subagent_turn
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator, acquire_google_doc
+from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator, acquire_google_doc, acquire_archive_snapshot, resolve_open_access_pdf
 from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
 from tools.memory_tools import record_learned_rule, record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens, conduct_learned_rules_audit, compile_rules_to_turtle_ontology
-from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, reseed_failed_cargo_queue
+from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, log_full_audit_dossier, reseed_failed_cargo_queue
 from tools.extraction_tools import run_langextract_mapping
 from tools.agent_logger import log_agent_action
 from tools.youtube_tools import extract_youtube_transcript
@@ -74,6 +81,8 @@ def call_landlubber(query: str) -> str:
 
 def execute_mcp_tool(mcp_tool_name: str, args: dict) -> str:
     """Synchronous bridge to the Node.js MCP Filesystem Server."""
+    if not HAS_MCP:
+        return f"[ERROR] The 'mcp' Python package is not installed. Use local file tools (read_local_file, write_local_file) instead."
     async def _run():
         # Using npx.cmd ensures subprocess compatibility on Windows
         server_params = StdioServerParameters(
@@ -149,6 +158,7 @@ class ToolDispatcher:
             elif call.name == "log_ingestion_failure": return log_ingestion_failure(**args)
             elif call.name == "purge_corrupted_cargo": return purge_corrupted_cargo(**args)
             elif call.name == "log_fleet_enrichment": return log_fleet_enrichment(**args)
+            elif call.name == "log_full_audit_dossier": return log_full_audit_dossier(**args)
             elif call.name == "reseed_failed_cargo_queue": return reseed_failed_cargo_queue()
             elif call.name == "embed_cargo_index": return embed_cargo_index(**args)
             elif call.name == "query_cargo_vector_index": return query_cargo_vector_index(**args)
@@ -161,6 +171,8 @@ class ToolDispatcher:
             elif call.name == "acquire_arxiv_document": return acquire_arxiv_document(**args)
             elif call.name == "call_zotero_translator": return call_zotero_translator(**args)
             elif call.name == "acquire_google_doc": return acquire_google_doc(**args)
+            elif call.name == "acquire_archive_snapshot": return acquire_archive_snapshot(**args)
+            elif call.name == "resolve_open_access_pdf": return resolve_open_access_pdf(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
@@ -318,6 +330,22 @@ class ToolDispatcher:
                 }
             ),
             types.FunctionDeclaration(
+                name="log_full_audit_dossier",
+                description="Synchronizes a completed 6-section Cutlass audit deliverable (ADR-015) with PostgreSQL, permanently updating the authoritative Sail Locker based on the Structural Logic Audit.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "metadata_id": {"type": "INTEGER", "description": "The cargo metadata ID (e.g. 24)."},
+                        "sail_locker": {"type": "STRING", "description": "The authoritative Sail Locker determined by the audit (MAINSAIL, BILGE, JIB, or DOLDRUMS)."},
+                        "dossier_path": {"type": "STRING", "description": "The relative path to the written audit markdown file (e.g. writings/cargo/cargo_24/cutlass_audit.md)."},
+                        "score": {"type": "NUMBER", "description": "Epistemic signal score (0.0 to 10.0)."},
+                        "summary": {"type": "STRING", "description": "Brief 1-2 sentence analytical summary of the audit findings."},
+                        "author_intent": {"type": "STRING", "description": "Deconstructed Author acquisition intent hypothesis."}
+                    },
+                    "required": ["metadata_id", "sail_locker", "dossier_path"]
+                }
+            ),
+            types.FunctionDeclaration(
                 name="reseed_failed_cargo_queue",
                 description="Reads all failed URLs from cargo.failed_metadata, disaggregates YouTube playlists, and resets status to PENDING in cargo.ingestion_queue.",
                 parameters={"type": "OBJECT", "properties": {}}
@@ -369,6 +397,16 @@ class ToolDispatcher:
                 name="acquire_google_doc",
                 description="Ingests Google Docs via direct plaintext export when link sharing is enabled ('Anyone with the link can view'). Automatically parses document title and formats standard cargo text receipt.",
                 parameters={"type": "OBJECT", "properties": {"url": {"type": "STRING", "description": "The full Google Docs URL."}}, "required": ["url"]}
+            ),
+            types.FunctionDeclaration(
+                name="acquire_archive_snapshot",
+                description="Recovers full-text articles blocked by commercial hard paywalls (WSJ, NYT, Financial Times, Bloomberg, The Information, Economist) by querying the Wayback Machine (archive.org) Availability API. Extracts full prose via trafilatura.",
+                parameters={"type": "OBJECT", "properties": {"target_url": {"type": "STRING", "description": "The paywalled web article URL to recover from archive snapshots."}}, "required": ["target_url"]}
+            ),
+            types.FunctionDeclaration(
+                name="resolve_open_access_pdf",
+                description="Resolves paywalled academic landing pages (ScienceDirect, Wiley, Springer, JSTOR, Nature) by extracting the DOI and querying the Unpaywall REST API for legal open-access copies, preprints, and institutional repository PDFs. If found, automatically streams the PDF via download_remote_pdf.",
+                parameters={"type": "OBJECT", "properties": {"url_or_doi": {"type": "STRING", "description": "The academic URL or DOI string to resolve to an open-access PDF."}}, "required": ["url_or_doi"]}
             ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
             types.FunctionDeclaration(

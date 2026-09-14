@@ -25,11 +25,13 @@ You are currently in an active calibration phase with the Author. **At least 50%
    - Demonstrates systemic knowledge collapse, verification destruction, or the death of ground truth.
    - *Requires Confidence 5/5 to assign directly without Author review.*
 
-2. **`BILGE` (Epistemic Vandalism & Rot - High Bar)**:
+2. **`BILGE` (Epistemic Vandalism, Corporate PR Slop & Hype - Confidence 4/5 or 5/5)**:
    - Content demonstrating active epistemic collapse, intentional knowledge destruction, or provenance obliteration.
-   - Unprovoked, shameless lying or corporate narrative laundering.
-   - Access journalism stenography so egregious it actively misinforms or makes the public dumber.
-   - *Requires Confidence 5/5 to assign directly without Author review.*
+   - **Fast-Track Bilge Signatures (Assign Confidence 4/5 or 5/5 immediately without Doldrums hesitation):**
+     * **Consultancy "AI Maturity / Adoption Readiness" Frameworks**: Corporate consulting jargon (McKinsey, Gartner, MIT Sloan, etc.) treating LLM adoption as an unquestioned imperative while ignoring error rates and labor extraction.
+     * **Hagiographic Access Journalism & Vendor PR**: Profiles or news articles uncritically reprinting corporate press releases, executive roadmaps, or product announcements as objective analysis.
+     * **Unfalsifiable Hype & Technological Scapegoating**: Blaming long-standing social/educational decay on new tech, or declaring imminent AGI salvation with zero empirical grounding.
+   - *These assets are invaluable specimens of epistemic rot; assign BILGE with high confidence to clear them out of Doldrums.*
 
 3. **`JIB` (Tangential Corporate/Tech Folly)**:
    - Bad actors, institutional corruption, or foolish corporate behavior that is entertaining or bad-faith, but secondary/tangential to the book's core epistemic argument.

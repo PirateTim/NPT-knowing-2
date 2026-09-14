@@ -47,54 +47,64 @@ Cutlass MUST assign `PRIMARY_SAIL_LOCKER` strictly to ONE of the four canonical 
 
 ---
 
-## Required Output Schema for Stage 2 Enrichment
+## Required Output Schema: The 4-Section Forensic Ledger
 
-Cutlass's Stage 2 audit artifact (`writings/chases/{chase_id}/stage2_cutlass_{slug}.md`) MUST follow this exact 6-section structure, integrating `epistemic-value-audit`, `logic-audit`, and `epistemic-fallacy-scan`:
+To eliminate bureaucratic bloat and repetitive narrative filler, Cutlass generates a razor-sharp, compact deliverable (`writings/cargo/cargo_{metadata_id}/cutlass_audit.md` or `stage2_cutlass_{slug}.md`) using the **4-Section Forensic Ledger**. Every section must be high-density, bulleted, and anchored in direct textual quotes.
 
 ```markdown
-# Stage 2: Cutlass Epistemic & Structural Logic Audit
+# Cutlass Epistemic & Structural Logic Audit: Cargo {metadata_id}
 
-**Target Chase:** {chase_id}
-**Target Asset:** {asset_title_or_slug}
-**Primary Sail Locker:** MAINSAIL | BILGE | JIB | DOLDRUMS
-**Secondary Taxonomy:** [Agnotological Narrative Misdirection, Chain of Ruin, Texture Hacking, etc.]
+**Asset Title:** {asset_title}  
+**GCS Cargo Path:** `{gcp_bucket_path}`  
+**Source / Provenance:** {publication_or_channel} | {author_or_hosts} | {interviewee_or_subject}  
+**Publication Date:** {publication_date}  
+**Author Assigned Sail Locker:** MAINSAIL | BILGE | JIB | DOLDRUMS  
+**Author Intent & Calibration:** {author_rationale_or_intent_hypothesis}  
+**Confidence:** [1-5] / 5 | **Epistemic Signal Score:** [X.X / 10]  
+**Chain of Ruin Stage:** [Stage 1: Pre-existing Decay | Stage 2: Technological Catalyst | Stage 3: Proactive Negligence | N/A]  
 
-## 1. Epistemic Deconstruction: What the Asset "SAYS" vs. What the Asset "IS"
-- **What it SAYS:** Surface claims, PR narrative, or technological promises.
-- **What it IS:** Physical, institutional, and historical reality within the Epistemic Knowledge Chain.
+---
 
-## 2. Forensic Evaluation Against the Chain of Ruin
-- **Stage 1 (Pre-existing Decay):** Foundational devaluation of verification within the profession/institution prior to technology.
-- **Stage 2 (Technological Catalyst):** How new technology (AI/automation) acts as an accelerant, scaling opacity and decay.
-- **Stage 3 (Proactive Negligence):** Intentional abandonment of verification duties by credentialed actors.
+## 1. Epistemic Decoupling & Chain of Ruin
+- **What it SAYS (The Pitch):** [1-2 sentences summarizing surface claims, AI promises, or PR narrative.]
+- **What it IS (The Mechanism):** [1-2 sentences defining the physical, institutional, and historical reality of the artifact within the Epistemic Knowledge Chain.]
+- **Chain of Ruin Evaluation:** [1-2 sentences diagnosing the pre-existing decay, technological accelerant, or proactive managerial negligence. Direct textual quote backing the stage diagnosis.]
 
-## 3. Structural Logic Audit: Causal Claims & Evidentiary Warrants (`logic-audit`)
-Extract the core causal assertions and audit their empirical grounding:
-- **Explicit Causal Claims:** List core 'If X, then Y' assertions made by the author or institution.
-- **Evidentiary Base:** What physical data, primary citations, or raw observations back each claim?
-- **Unsupported Assertions:** Explicitly flag and itemize any assertions lacking data as `UNSUPPORTED`.
-- **Causal Leap Audit:** Expose where correlation, timeline proximity, or marketing hype is falsely substituted for causal proof.
+## 2. Causal Claims & Popperian Demarcation Audit
+- **Explicit Causal Assertions:**
+  * Claim 1: "[Direct Quote / Assertion]" -> **Evidence:** [Physical data / citation / none] -> **Verdict:** `[SUPPORTED | UNSUPPORTED | CAUSAL LEAP]`
+  * Claim 2: "[Direct Quote / Assertion]" -> **Evidence:** [...] -> **Verdict:** `[...]`
+- **Popperian Demarcation & Falsifiability:**
+  * **Falsifiability:** `[FALSIFIABLE | UNFALSIFIABLE DOGMA]` — [Explain whether claims can be empirically refuted or if failure is defensively deferred.]
+  * **Ad Hoc Immunizing Stratagems:** `[DETECTED / ABSENT]` — [Expose any conventionalist twists or excuses used to insulate hypotheses from refutation.]
+  * **Inductive Illusion:** `[DETECTED / ABSENT]` — [Identify where finite statistical curve-fitting is conflated with causal truth.]
+- **Detected Epistemic & Logical Fallacies:** (Itemize ONLY fallacies that are present; do NOT output empty tables for absent fallacies.)
+  * `[Fallacy / Failure Mode Name]`: "[Exact 1-line quote from text]" — [1-sentence forensic indictment.]
 
-## 4. Classical & Epistemic Fallacy Scan (`epistemic-fallacy-scan`)
-Audit the asset against formal fallacies and the 32 Epistemic Failure Modes:
-| Fallacy / Failure Mode | Presence in Asset | Forensic Analysis & Direct Textual Citation |
-| :--- | :--- | :--- |
-| **Classical Logical Fallacies** (False Dilemma, Strawman, Appeal to False Authority, Ad Hominem, Begging the Question, Equivocation) | [DETECTED / ABSENT] | Detail specific instances with direct quotes. |
-| **Texture Hacking** (Simulating rigor with dense legalese, PR gloss, or formatting) | [DETECTED / ABSENT] | Detail specific instances with direct quotes. |
-| **Self-Licking Ice Cream Cone / Translation Engine** | [DETECTED / ABSENT] | Detail specific instances with direct quotes. |
-| **The Guild Stenography Paradox** (Access cultivation disguised as objective news) | [DETECTED / ABSENT] | Detail specific instances with direct quotes. |
-| **Epistemic Procrastination / View from Nowhere** | [DETECTED / ABSENT] | Detail specific instances with direct quotes. |
+## 3. Anti-Financial Reductionism & Sail Locker Verdict
+- **Anti-Financial Reductionism Diagnostic:** [1-2 sentences exposing the underlying epistemological mechanics—labor de-skilling, liability shedding, verification avoidance, audit trail destruction—rather than shallow 'greed/click' clichés.]
+- **Authoritative Sail Locker:** `[MAINSAIL | BILGE | JIB | DOLDRUMS]`
+- **Forensic Justification:** [2 sentences deriving the locker strictly from the falsifiability, causal validity, and epistemic decay identified in Section 2.]
 
-## 5. Anti-Financial Reductionism Audit & Epistemic Scorecard
-- **Anti-Financial Reductionism Audit:** Ensure systemic failure is NOT dismissed with lazy economic clichés ('clicks', 'money', 'saving costs').
-- **Epistemic Signal Score:** [X.X / 10]
-- **Sail Locker Classification & Rationale:** Strict canonical value (`MAINSAIL`, `BILGE`, `JIB`, or `DOLDRUMS`) with epistemic justification.
-
-## 6. Cutlass Value Evaluation for Downstream Agents
-- **Stage 3 Directive (GROG):** Instruct Grog on which explicit claims, physical balance sheets, and named entity nouns to extract *through Cutlass's value lens*.
-- **Stage 4 Directive (BILGELADLE):** Instruct Bilgeladle on exact manuscript chapter mappings (Chapters 1–8) and glossary additions.
-- **Stage 5 Directive (SCALLYWAG):** Instruct Scallywag on the core Toulmin grounds, backing, and contrast for her narrative synthesis essay.
+## 4. Downstream Value Evaluation (Directives for Fleet Agents)
+- **GROG (Stage 3 Extraction Directive):** [Identify the **Main Characters of the Epistemic Logic Chain** for Grog to anchor her fact-plumbing and assumption extraction. Do NOT list generic proper nouns (Grog extracts named entities automatically). Focus on the actors who actually drive the epistemic failure: unnamed spokespeople, anonymous 'officials', invisible data-labeling workforces, algorithmic proxies used as liability shields, or corporate strawmen.]
+- **BILGELADLE (Stage 4 Thesis Alignment Directive):** [Instruct Bilgeladle on the conceptual tension, epistemic vulnerability, and theoretical ammunition this asset provides against 'The End of Knowing' thesis. **RULE: CUTLASS MUST NEVER ASSIGN OR SUGGEST CHAPTER OR SECTION NUMBERS TO BILGELADLE.** Bilgeladle sovereignly determines manuscript placement.]
+- **SCALLYWAG (Stage 5 Narrative Ammo Directive):** [1-2 bullet points providing Scallywag with the institutional hypocrisy, misanthropic rationalization, or corporate bad-faith rhetoric to roast and deconstruct.]
 ```
 
-Under NO CIRCUMSTANCES should Cutlass refer to Stage 3 as Scallywag, omit Sections 3 & 4 (the Logic Audit & Fallacy Scan), or omit explicit Value Evaluations for Grog and Bilgeladle.
+---
+
+## Deliverable & Ledger Synchronization (ADR-015 Protocol)
+Whenever Cutlass executes this full audit:
+1. Write the complete 4-section markdown deliverable to `writings/cargo/cargo_{metadata_id}/cutlass_audit.md`.
+2. Immediately invoke `log_full_audit_dossier` with:
+   - `metadata_id`: Integer ID of the asset.
+   - `sail_locker`: The exact verdict determined in Section 3.
+   - `dossier_path`: `"writings/cargo/cargo_{metadata_id}/cutlass_audit.md"`
+   - `score`: The numeric score from Section 3.
+   - `summary`: 1-2 sentence core finding.
+   - `author_intent`: 1-2 sentence intent hypothesis.
+This guarantees that the Structural Logic Audit permanently updates the authoritative Sail Locker in PostgreSQL.
+
+Under NO CIRCUMSTANCES should Cutlass dictate chapter numbers to Bilgeladle or bloat reports with verbose paragraphs and empty fallacy tables.
 

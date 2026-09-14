@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 load_dotenv(override=True)
 
 from tools.cloud_knowledge_tools import read_knowledge_artifact
-from tools.cargo_db_tools import _get_strict_cargo_connection
+from tools.cargo_db_tools import _get_strict_cargo_connection, purge_corrupted_cargo
 
 # Page configuration
 st.set_page_config(
@@ -52,6 +52,9 @@ st.markdown("""
     }
     .badge-untriaged {
         background-color: #424242; color: #eeeeee; padding: 4px 10px; border-radius: 4px; font-weight: bold;
+    }
+    .badge-reacquiring {
+        background-color: #e65100; color: #fff3e0; padding: 4px 10px; border-radius: 4px; font-weight: bold;
     }
     .triage-card {
         background-color: #1a1c24; border: 1px solid #2d3139; border-radius: 8px; padding: 15px; margin-bottom: 15px;
@@ -88,13 +91,24 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
             fe.payload ->> 'author_intent_hypothesis' AS hypothesis,
             fe.payload ->> 'key_warrant_quote' AS warrant,
             fe.payload ->> 'epistemic_integrity_overview' AS overview,
+            fe.payload ->> 'dossier_path' AS dossier_path,
             fe.payload AS full_payload,
-            fe.created_at AS triaged_at
+            fe.created_at AS triaged_at,
+            iq.status AS queue_status,
+            reacq.id AS reacq_id,
+            reacq.payload ->> 'reason' AS reacq_reason
         FROM cargo.content_metadata cm
         LEFT JOIN cargo.fleet_enrichments fe 
             ON cm.id = fe.metadata_id 
             AND fe.agent_name IN ('cutlass', 'author', 'cutlass_calibrated')
-            AND fe.enrichment_type IN ('triage', 'triage_quick', 'triage_human_override')
+            AND fe.enrichment_type IN ('triage', 'triage_quick', 'triage_human_override', 'triage_full_audit')
+        LEFT JOIN cargo.ingestion_queue iq
+            ON cm.source_url = iq.target_url
+        LEFT JOIN LATERAL (
+            SELECT id, payload FROM cargo.fleet_enrichments
+            WHERE metadata_id = cm.id AND enrichment_type = 'spyglass_reacquire_request'
+            ORDER BY created_at DESC LIMIT 1
+        ) reacq ON TRUE
         ORDER BY cm.id, fe.created_at DESC;
     """
     items = []
@@ -104,11 +118,21 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
         rows = cursor.fetchall()
         for r in rows:
             (mid, title, url, itype, pub_title, pub_date, bucket_path, created_at,
-             locker, conf, hyp, warrant, overview, full_payload, triaged_at) = r
+             locker, conf, hyp, warrant, overview, dossier_path, full_payload, triaged_at,
+             queue_status, reacq_id, reacq_reason) = r
 
-            # Determine canonical locker
+            # Check for active re-acquisition state:
+            # If an explicit re-acquisition request is active and the queue is either pending/processing,
+            # this asset is in Spyglass's court and must NOT be visible to Cutlass untriaged.
+            is_reacquiring = (reacq_id is not None) and (queue_status in ('PENDING', 'PROCESSING') or queue_status is None)
+            is_reacquire_failed = (reacq_id is not None) and (queue_status == 'FAILED')
+
             assigned_locker = (locker or "").upper().strip()
-            if not assigned_locker:
+            if is_reacquiring:
+                status = "REACQUIRING"
+            elif is_reacquire_failed:
+                status = "DOLDRUMS"
+            elif not assigned_locker:
                 status = "UNTRIAGED"
             elif assigned_locker in ("MAINSAIL", "BILGE", "JIB", "DOLDRUMS", "FLOTSAM", "WHERRY"):
                 status = assigned_locker
@@ -116,9 +140,14 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
                 status = "DOLDRUMS"
 
             # Parse hypothesis or fallback
-            rationale_text = hyp or overview or ""
-            if not rationale_text and isinstance(full_payload, dict):
-                rationale_text = full_payload.get("rationale") or full_payload.get("author_intent_hypothesis") or ""
+            if is_reacquiring:
+                rationale_text = f"🔄 [PENDING SPYGLASS RE-ACQUISITION] Queued for re-download. Reason: {reacq_reason or 'Defective/incomplete content.'}"
+            elif is_reacquire_failed:
+                rationale_text = f"⚠️ [RE-ACQUISITION FAILED] Spyglass was unable to re-acquire this asset. Consider Dead-Lettering."
+            else:
+                rationale_text = hyp or overview or ""
+                if not rationale_text and isinstance(full_payload, dict):
+                    rationale_text = full_payload.get("rationale") or full_payload.get("author_intent_hypothesis") or ""
 
             items.append({
                 "id": mid,
@@ -133,6 +162,7 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
                 "confidence": conf or "N/A",
                 "rationale": rationale_text,
                 "warrant": warrant or "",
+                "dossier_path": dossier_path or "",
                 "triaged_at": triaged_at
             })
         cursor.close()
@@ -231,9 +261,18 @@ def push_back_to_spyglass(metadata_id: int, source_url: str, reason: str = "") -
             (source_url,)
         )
 
-        # 2. Record enrichment explaining why it was pushed back
+        # 2. Reset triage status by clearing previous triage enrichments so it becomes UNTRIAGED
+        cursor.execute(
+            """
+            DELETE FROM cargo.fleet_enrichments 
+            WHERE metadata_id = %s 
+              AND enrichment_type IN ('triage', 'triage_quick', 'triage_human_override', 'triage_full_audit', 'spyglass_reacquire_request');
+            """,
+            (metadata_id,)
+        )
+
+        # 3. Record enrichment documenting the re-acquisition request
         payload = {
-            "sail_locker": "DOLDRUMS",
             "action": "PUSH_BACK_TO_SPYGLASS",
             "reason": reason or "Pushed back to Spyglass for re-acquisition (defective/incomplete content).",
             "timestamp": datetime.datetime.now().isoformat()
@@ -253,6 +292,26 @@ def push_back_to_spyglass(metadata_id: int, source_url: str, reason: str = "") -
     except Exception as e:
         st.error(f"Failed to push back to Spyglass: {str(e)}")
         if conn: conn.close()
+        return False
+
+
+def send_to_dead_letter_queue(metadata_id: int, source_url: str, reason: str = "") -> bool:
+    """
+    Executes Option A Ingestion Remediation:
+    1. Permanently logs the unacquirable URL to cargo.failed_metadata with the failure reason.
+    2. Incinerates any truncated/paywall stub from the GCS bucket.
+    3. Deletes foreign keys and removes the record from cargo.content_metadata and cargo.ingestion_queue.
+    (Does NOT mislabel unreached content as FLOTSAM).
+    """
+    try:
+        err_msg = reason.strip() or "[MANUAL_DEAD_LETTER] Author flagged asset as unacquirable (commercial paywall/broken)."
+        res = purge_corrupted_cargo(source_url=source_url, failure_reason=err_msg)
+        if res.startswith("[ERROR]"):
+            st.error(res)
+            return False
+        return True
+    except Exception as e:
+        st.error(f"Failed to record dead-letter: {str(e)}")
         return False
 
 
@@ -284,7 +343,7 @@ def run_batch_triage_job(asset_list: List[Dict[str, Any]], count: int) -> List[D
             f"(MAINSAIL, BILGE, JIB, or DOLDRUMS if confidence < 4), log to fleet_enrichments, and report."
         )
 
-        thread_id = f"thread_quick_triage_{asset['id']}_{datetime.datetime.now().strftime('%H%M%S')}"
+        thread_id = f"cargo_{asset['id']}_cutlass"
         chat_session = engine.start_chat_session(thread_id)
 
         try:
@@ -304,6 +363,77 @@ def run_batch_triage_job(asset_list: List[Dict[str, Any]], count: int) -> List[D
     status_text.success(f"Batch Triage Complete! Processed {len(results)} assets.")
     st.cache_data.clear()
     return results
+
+
+def run_full_audit_for_asset(asset: Dict[str, Any], target_locker: str = "", learning_note: str = "") -> Optional[str]:
+    """
+    Executes Cutlass's full 6-section Structural Logic Audit on a single asset,
+    writes writings/cargo/cargo_{metadata_id}/cutlass_audit.md, and synchronizes the
+    authoritative Sail Locker with PostgreSQL.
+    Re-awakens the persistent thread `cargo_{metadata_id}_cutlass` so prior context is reused.
+    """
+    from core.agent_engine import AgentEngine
+
+    xml_path = os.path.abspath("src/react_agent/agents/cutlass/cutlass.xml")
+    engine = AgentEngine(agent_name="cutlass", xml_profile_path=xml_path)
+
+    bucket_path = asset["gcp_bucket_path"]
+    meta_id = asset["id"]
+    title = asset["title"]
+
+    dossier_dir = os.path.abspath(os.path.join("writings", "cargo", f"cargo_{meta_id}"))
+    os.makedirs(dossier_dir, exist_ok=True)
+    rel_dossier_path = f"writings/cargo/cargo_{meta_id}/cutlass_audit.md"
+
+    prompt = (
+        f"COMMAND: Execute Stage 2 Epistemic & Structural Logic Audit for Asset: {bucket_path}\n"
+        f"CARGO ID: cargo_{meta_id}\n"
+        f"ASSET TITLE: {title}\n"
+    )
+    if target_locker.strip():
+        prompt += f"AUTHOR ASSIGNED SAIL LOCKER: {target_locker.strip()}\n"
+    if learning_note.strip():
+        prompt += f"AUTHOR GUIDANCE / RATIONALE: {learning_note.strip()}\n"
+
+    pub_title = asset.get("publication_title", "")
+    pub_date = asset.get("publication_date", "")
+
+    prompt += (
+        f"\nMANDATORY INSTRUCTIONS (THE 4-SECTION FORENSIC LEDGER):\n"
+        f"1. Execute `epistemic-value-audit`, `logic-audit`, and `epistemic-fallacy-scan`.\n"
+        f"2. Header Format: Begin the deliverable with the standard provenance block:\n"
+        f"   # Cutlass Epistemic & Structural Logic Audit: Cargo {meta_id}\n"
+        f"   **Asset Title:** {title}\n"
+        f"   **GCS Cargo Path:** `{bucket_path}`\n"
+        f"   **Source / Provenance:** {pub_title or 'N/A'}\n"
+        f"   **Publication Date:** {pub_date or 'N/A'}\n"
+        f"   **Author Assigned Sail Locker:** {target_locker.strip() or 'N/A'}\n"
+        f"   **Author Intent & Calibration:** {learning_note.strip() or 'N/A'}\n"
+        f"3. Generate a compact, high-density deliverable using the 4-Section Forensic Ledger:\n"
+        f"   ## 1. Epistemic Decoupling & Chain of Ruin (SAYS vs. IS; Stage 1, 2, or 3 diagnosis with exact text quote)\n"
+        f"   ## 2. Causal Claims & Popperian Demarcation Audit (Audit causal claims; test for Popperian falsifiability, ad hoc immunizing stratagems, and inductive illusions; itemize ONLY detected fallacies)\n"
+        f"   ## 3. Anti-Financial Reductionism & Sail Locker Verdict (Deconstruct labor/liability/verification evasion; derive Sail Locker strictly from Section 2; reflect Author's calibration"
+        + (f" to {target_locker.strip()}" if target_locker.strip() else "") + f")\n"
+        f"   ## 4. Downstream Value Evaluation:\n"
+        f"       - GROG: Identify the 'Main Characters of the Epistemic Logic Chain' (unnamed spokespeople, anonymous officials, invisible data-labeling workforces, automated liability shields). Do NOT list generic proper nouns.\n"
+        f"       - BILGELADLE: Conceptual tension, epistemic vulnerability, and theoretical ammunition against 'The End of Knowing' thesis. CRITICAL RULE: DO NOT ASSIGN OR RECOMMEND CHAPTER OR SECTION NUMBERS TO BILGELADLE. Chapter selection is strictly Bilgeladle's sovereign mandate.\n"
+        f"       - SCALLYWAG: Specific institutional hypocrisies, misanthropic rationalizations, and rhetorical absurdities for narrative synthesis.\n"
+        f"3. Write the complete audit markdown deliverable to `{rel_dossier_path}` via `write_local_file`.\n"
+        f"4. Call `log_full_audit_dossier` with metadata_id={meta_id}, sail_locker (from Section 3), and dossier_path='{rel_dossier_path}'.\n"
+        f"5. Report your final verdict, confidence, and primary warrant quote."
+    )
+
+    thread_id = f"cargo_{meta_id}_cutlass"
+    chat_session = engine.start_chat_session(thread_id)
+
+    try:
+        response_text = engine.execute_turn(chat_session, prompt)
+        return response_text
+    except Exception as e:
+        st.error(f"Full audit failed for #{meta_id}: {str(e)}")
+        return None
+    finally:
+        engine.close()
 
 
 # =====================================================================
@@ -331,6 +461,7 @@ def main():
     # Counts by locker
     doldrums_items = [item for item in all_cargo if item["sail_locker"] == "DOLDRUMS"]
     untriaged_items = [item for item in all_cargo if item["sail_locker"] == "UNTRIAGED"]
+    reacquiring_items = [item for item in all_cargo if item["sail_locker"] == "REACQUIRING"]
     mainsail_items = [item for item in all_cargo if item["sail_locker"] == "MAINSAIL"]
     bilge_items = [item for item in all_cargo if item["sail_locker"] == "BILGE"]
     jib_items = [item for item in all_cargo if item["sail_locker"] == "JIB"]
@@ -352,12 +483,12 @@ def main():
         col_m2.metric("🌊 Doldrums", len(doldrums_items))
         col_m3, col_m4 = st.columns(2)
         col_m3.metric("⏳ Untriaged", len(untriaged_items))
-        col_m4.metric("⛵ Mainsail", len(mainsail_items))
+        col_m4.metric("🔄 Re-acquiring", len(reacquiring_items))
         col_m5, col_m6 = st.columns(2)
-        col_m5.metric("🛢️ Bilge", len(bilge_items))
-        col_m6.metric("🚩 Jib", len(jib_items))
+        col_m5.metric("⛵ Mainsail", len(mainsail_items))
+        col_m6.metric("🛢️ Bilge", len(bilge_items))
         col_m7, col_m8 = st.columns(2)
-        col_m7.metric("🪵 Flotsam", len(flotsam_items))
+        col_m7.metric("🚩 Jib", len(jib_items))
         col_m8.metric("🛶 Wherry", len(wherry_items))
 
         st.divider()
@@ -389,6 +520,7 @@ def main():
             f"🕒 Recently Triaged ({len(recently_triaged_items)})",
             f"🌊 Doldrums (Needs Review) ({len(doldrums_items)})",
             f"⏳ Untriaged ({len(untriaged_items)})",
+            f"🔄 Pending Re-acquisition ({len(reacquiring_items)})",
             f"⛵ Mainsail ({len(mainsail_items)})",
             f"🛢️ Bilge ({len(bilge_items)})",
             f"🚩 Jib ({len(jib_items)})",
@@ -433,6 +565,8 @@ def main():
         active_list = doldrums_items
     elif "Untriaged" in selected_view:
         active_list = untriaged_items
+    elif "Pending Re-acquisition" in selected_view:
+        active_list = reacquiring_items
     elif "Mainsail" in selected_view:
         active_list = mainsail_items
     elif "Bilge" in selected_view:
@@ -503,72 +637,136 @@ def main():
         st.markdown("---")
 
         # Human Calibration & Action Deck
-        st.markdown("### 🎯 Human Calibration & Reclassification")
-        st.write("Confirm or move this asset to its authentic Sail Locker, and teach Cutlass the rationale:")
+        st.markdown("### 🎯 Author Calibration & Sail Locker Triage")
+        st.write("Teach Cutlass why this asset belongs in a specific locker. When calibrated to a primary locker, Cutlass re-awakens her thread to run the full 6-section audit and generate the reusable dossier:")
 
         learning_note = st.text_area(
-            "Teach Cutlass (Why does this belong here?):",
-            placeholder="e.g. This is Bilge because the executive is deflecting blame for labor downsizing onto AI tokens...",
+            "Teach Cutlass (Rationale / Guidance):",
+            placeholder="e.g. This is Bilge because the authors conflate token volume with actual productivity and deflect executive culpability...",
             height=90,
             key=f"note_{current_asset['id']}"
         )
 
-        btn_c1, btn_c2, btn_c3, btn_c4, btn_c5, btn_c6 = st.columns(6)
+        auto_audit = st.checkbox(
+            "⚡ Automatically run Full 6-Section Audit upon primary classification (Re-awakens thread & saves tokens)",
+            value=True,
+            help="When checked, clicking MAINSAIL, BILGE, or JIB immediately records the human calibration, trains Cutlass's learned rules, and executes the complete 6-section audit in the existing thread."
+        )
 
-        if btn_c1.button("⛵ MAINSAIL", use_container_width=True, type="primary" if locker != "MAINSAIL" else "secondary"):
-            if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "MAINSAIL", learning_note, current_asset["title"]):
-                st.success(f"Asset #{current_asset['id']} categorized as MAINSAIL with learning note!")
-                st.cache_data.clear()
-                st.rerun()
+        st.markdown("##### ⛵ Primary Research Sail Lockers (Core Intellectual Cargo)")
+        pri_c1, pri_c2, pri_c3 = st.columns(3)
 
-        if btn_c2.button("🛢️ BILGE", use_container_width=True, type="primary" if locker != "BILGE" else "secondary"):
-            if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "BILGE", learning_note, current_asset["title"]):
-                st.success(f"Asset #{current_asset['id']} categorized as BILGE with learning note!")
-                st.cache_data.clear()
-                st.rerun()
+        if pri_c1.button("⛵ MAINSAIL", use_container_width=True, type="primary" if locker != "MAINSAIL" else "secondary", help="Primary Thesis Alignment: Direct evidence of epistemic corruption, institutional decay, or core thesis proof."):
+            record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "MAINSAIL", learning_note, current_asset["title"])
+            if auto_audit:
+                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for MAINSAIL..."):
+                    audit_res = run_full_audit_for_asset(current_asset, target_locker="MAINSAIL", learning_note=learning_note)
+                    if audit_res:
+                        st.success(f"Asset #{current_asset['id']} calibrated as MAINSAIL and Full Audit generated!")
+                    else:
+                        st.warning(f"Locker updated to MAINSAIL, but audit encountered an issue.")
+            else:
+                st.success(f"Asset #{current_asset['id']} categorized as MAINSAIL with learning note recorded.")
+            st.cache_data.clear()
+            st.rerun()
 
-        if btn_c3.button("🚩 JIB", use_container_width=True, type="primary" if locker != "JIB" else "secondary"):
-            if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "JIB", learning_note, current_asset["title"]):
-                st.success(f"Asset #{current_asset['id']} categorized as JIB with learning note!")
-                st.cache_data.clear()
-                st.rerun()
+        if pri_c2.button("🛢️ BILGE", use_container_width=True, type="primary" if locker != "BILGE" else "secondary", help="Toxic Epistemic Waste: Unverifiable hype, computational truthiness, bureaucratic stenography, and deceptive rationalizations."):
+            record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "BILGE", learning_note, current_asset["title"])
+            if auto_audit:
+                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for BILGE..."):
+                    audit_res = run_full_audit_for_asset(current_asset, target_locker="BILGE", learning_note=learning_note)
+                    if audit_res:
+                        st.success(f"Asset #{current_asset['id']} calibrated as BILGE and Full Audit generated!")
+                    else:
+                        st.warning(f"Locker updated to BILGE, but audit encountered an issue.")
+            else:
+                st.success(f"Asset #{current_asset['id']} categorized as BILGE with learning note recorded.")
+            st.cache_data.clear()
+            st.rerun()
 
-        if btn_c4.button("🌊 DOLDRUMS", use_container_width=True, type="primary" if locker != "DOLDRUMS" else "secondary"):
+        if pri_c3.button("🚩 JIB", use_container_width=True, type="primary" if locker != "JIB" else "secondary", help="Counter-Arguments & Orthogonal Angles: Critical friction, alternative frameworks, or nuanced methodological pushback."):
+            record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "JIB", learning_note, current_asset["title"])
+            if auto_audit:
+                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for JIB..."):
+                    audit_res = run_full_audit_for_asset(current_asset, target_locker="JIB", learning_note=learning_note)
+                    if audit_res:
+                        st.success(f"Asset #{current_asset['id']} calibrated as JIB and Full Audit generated!")
+                    else:
+                        st.warning(f"Locker updated to JIB, but audit encountered an issue.")
+            else:
+                st.success(f"Asset #{current_asset['id']} categorized as JIB with learning note recorded.")
+            st.cache_data.clear()
+            st.rerun()
+
+        st.markdown("##### 📦 Administrative & Quarantine Lockers (Non-Research Cargo)")
+        sec_c1, sec_c2, sec_c3 = st.columns(3)
+
+        if sec_c1.button("🌊 DOLDRUMS", use_container_width=True, type="primary" if locker != "DOLDRUMS" else "secondary", help="Hold for Review: Asset requires further human inspection or clarification before assigning a research locker."):
             if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "DOLDRUMS", learning_note, current_asset["title"]):
                 st.info(f"Asset #{current_asset['id']} kept in DOLDRUMS with learning note.")
                 st.cache_data.clear()
                 st.rerun()
 
-        if btn_c5.button("🪵 FLOTSAM", use_container_width=True, type="primary" if locker != "FLOTSAM" else "secondary", help="Quarantine asset. Excludes permanently from vector embeddings and research workflows."):
+        if sec_c2.button("🪵 FLOTSAM", use_container_width=True, type="primary" if locker != "FLOTSAM" else "secondary", help="Quarantine Asset: Corrupted text, marketing spam, or non-signal. Excludes permanently from vector embeddings and research workflows."):
             if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "FLOTSAM", learning_note, current_asset["title"]):
                 st.warning(f"Asset #{current_asset['id']} moved to FLOTSAM (Quarantined from workflows & vector index).")
                 st.cache_data.clear()
                 st.rerun()
 
-        if btn_c6.button("🛶 WHERRY", use_container_width=True, type="primary" if locker != "WHERRY" else "secondary", help="Agentic tools & infrastructure cargo. Excludes permanently from vector embeddings and manuscript research workflows."):
+        if sec_c3.button("🛶 WHERRY", use_container_width=True, type="primary" if locker != "WHERRY" else "secondary", help="Agent Tooling & Infrastructure: Technical docs, API specs, or agent utilities. Excluded from manuscript research workflows."):
             if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "WHERRY", learning_note, current_asset["title"]):
                 st.warning(f"Asset #{current_asset['id']} moved to WHERRY (Agent Tooling - Excluded from workflows & vector index).")
                 st.cache_data.clear()
                 st.rerun()
 
-        if locker != "UNTRIAGED" and learning_note.strip():
-            st.markdown("")
-            if st.button(f"💾 Confirm {locker} & Save Learning Note", use_container_width=True, type="primary"):
-                if record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], locker, learning_note, current_asset["title"]):
-                    st.success(f"Learning note added to {locker} for Asset #{current_asset['id']}!")
+        # ADR-015 Permanent Dossier Section
+        dossier_rel_path = current_asset.get("dossier_path") or f"writings/cargo/cargo_{current_asset['id']}/cutlass_audit.md"
+        dossier_abs_path = os.path.abspath(dossier_rel_path)
+        dossier_exists = os.path.exists(dossier_abs_path)
+
+        st.markdown("---")
+        st.markdown("### 🏛️ ADR-015 Reusable Audit Dossier")
+        if dossier_exists:
+            st.success(f"✅ Reusable Full Audit Dossier exists on disk: `{dossier_rel_path}`")
+            with st.expander("📄 View Cutlass Full 6-Section Audit Deliverable", expanded=False):
+                try:
+                    with open(dossier_abs_path, "r", encoding="utf-8", errors="replace") as df:
+                        st.markdown(df.read())
+                except Exception as de:
+                    st.error(f"Error reading dossier: {str(de)}")
+        else:
+            st.info("ℹ️ No permanent 6-section dossier exists yet for this asset.")
+
+        audit_btn_label = "📝 Re-run Full Audit & Refresh Dossier" if dossier_exists else "📝 Run Full Structural Logic Audit & Generate Dossier"
+        if st.button(audit_btn_label, use_container_width=True, type="secondary" if dossier_exists else "primary"):
+            with st.spinner(f"Cutlass executing full 6-section audit on Asset #{current_asset['id']} in thread cargo_{current_asset['id']}_cutlass..."):
+                audit_response = run_full_audit_for_asset(current_asset, target_locker=locker if locker != "UNTRIAGED" else "", learning_note=learning_note)
+                if audit_response:
+                    st.success(f"Full audit complete! Reusable dossier written to `{dossier_rel_path}` and Sail Locker synced to PostgreSQL.")
                     st.cache_data.clear()
                     st.rerun()
 
         # Re-acquisition Escalation Deck
         st.markdown("---")
         st.markdown("### 🔭 Ingestion Remediation")
-        st.caption("If this asset is defective, incomplete, or a metadata shell, push it back to Spyglass for re-acquisition:")
-        if st.button("🔄 Push Back to Spyglass to Re-Acquire", use_container_width=True):
+        st.caption("Remediate defective or paywalled assets:")
+        
+        rem_c1, rem_c2 = st.columns(2)
+        if rem_c1.button("🔄 Push to Spyglass", use_container_width=True, help="Re-queues URL in cargo.ingestion_queue for Spyglass retry."):
             if not current_asset.get("source_url"):
                 st.error("Cannot re-acquire: Asset has no source URL recorded.")
             else:
                 if push_back_to_spyglass(current_asset["id"], current_asset["source_url"], learning_note):
                     st.success(f"Asset #{current_asset['id']} re-queued for Spyglass acquisition!")
+                    st.cache_data.clear()
+                    st.rerun()
+
+        if rem_c2.button("💀 Dead-Letter Queue", use_container_width=True, help="Incinerates truncated stub from GCS, deletes metadata row, and logs permanent dead-letter in cargo.failed_metadata."):
+            if not current_asset.get("source_url"):
+                st.error("Cannot dead-letter: Asset has no source URL recorded.")
+            else:
+                if send_to_dead_letter_queue(current_asset["id"], current_asset["source_url"], learning_note):
+                    st.warning(f"Asset #{current_asset['id']} incinerated from Cargo Hold & permanently logged to Dead-Letter Queue!")
                     st.cache_data.clear()
                     st.rerun()
 

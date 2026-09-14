@@ -23,3 +23,17 @@ This directory is the authorized physical storage sink for finalized analytical 
 
 ### 3. Standalone Deliverables (Ad-Hoc / Non-Chase Invocations)
 - When agents (particularly Scallywag, Bilgeladle, or Cutlass) are prompted to write standalone articles, essays, or critical commentaries outside an orchestrated chase, deliverables are saved directly in `writings/` using descriptive kebab-case or snake-case filenames.
+
+---
+
+## 🧭 The Bilge-Mainsail Writing Dialectic (`SHARED-HEURISTIC-017`)
+
+All deliverables published in this directory operate on a central thesis principle: **The entire book is an autopsy of Bilge, conducted through the heavy intellectual artillery of the Mainsail**:
+* **The Bilge Specimen:** The empirical crime scene in the wild (cultural effluent, corporate PR stenography, uncritical media hype, feudal labor proposals).
+* **The Mainsail Apparatus:** The theoretical counter-warrants (Karl Popper's demarcation, cybernetic feedback collapse, institutional sociology, credentialing cartels).
+* **The Downstream Synergy:**
+  - `cutlass_audit.md` isolates the agnotological crime scene and identifies the missing Mainsail lenses.
+  - `stage4_bilgeladle_alignment.md` weaves the specimen into the book's manuscript architecture.
+  - `stage5_scallywag_essay.md` uses Mainsail theories as a scalpel to rip apart the cheerful institutional sociopathy documented in the Bilge.
+* **Anti-Techno-Fetishism Anchor (`SHARED-HEURISTIC-016`):** Essays and audits published here must never be distracted by Stage 2 technical novelties (benchmarks, prompt tricks); they must anchor strictly on Stage 1 (pre-existing institutional rot) and Stage 3 (proactive corporate negligence and liability evasion).
+
