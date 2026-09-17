@@ -56,10 +56,11 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
   - Multi-stage chase publications & satirical essays: `writings/chases/{chase_id}/` (Prompt-bound synthesis: `stage4_bilgeladle_alignment.md`, `stage5_scallywag_essay.md`, `stage6_peer_reviews.md`)
 
 ### C. The Ship Tier Architecture (Bilgeladle's Training Ground)
-The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be the authentic voice of the book manuscript (*The End of Knowing*). It processes the 120-page context file into distinct pedagogical tiers so Bilgeladle can parse, challenge, and discuss any piece of incoming external cargo against the book's thesis:
+The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be the authentic voice of the book manuscript (*The End of Knowing*). It structures the 120-page context file into clean, grounded tiers so Bilgeladle can parse, challenge, and discuss any piece of incoming external cargo against the book's thesis:
 - **`ship/bronze/`**: Raw section-level text sliced directly from the manuscript monolith (`ship/bronze/chapters/chXX/chXX_secX.Y_bronze.md`).
 - **`ship/bronze_plus/`**: Section-level text containing exhaustive, un-truncated reference vector nodes (`ship/bronze_plus/chapters/chXX/chXX_secX.Y_bronze_plus.md`) and master reference indices (`chXX_references.md`). **This tier is the exclusive source for populating the Vector Database (`ship.letters_of_marque`).**
-- **`ship/silver/`**: Output files from the **Expand-Map-Reduce workflow** (deep chapter structural expansions, forensic matrices, argumentative arcs, and operational decision maps).
+- **`ship/CHAPTER_BACKBONES.md` & `chapter_backbones.json`**: The **Master Cognitive Compass** (13 calibrated Chapter Backbones and Section Ribs). Formally supersedes the legacy "Silver" Map-Expand-Reduce experiment. Provides the lean, structured 13-node coordinate system used by Bilgeladle and Scallywag to diagnose external cargo against the book's thesis.
+- **`ship/silver/`**: **Formally Deprecated & Archived** (`archive/legacy_silver_pipeline/`). The legacy Map-Expand-Reduce pedagogical expansions were retired in September 2026.
 - **`ship/gold/`**: **Does not exist and never will.** (Gold-tier synthesis deliverables exist only as finalized articles and essays in `writings/`).
 
 ### D. Receipt-Based Ingestion Economics (ADR-007)

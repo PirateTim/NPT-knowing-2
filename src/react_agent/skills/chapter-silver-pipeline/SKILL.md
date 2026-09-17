@@ -8,7 +8,7 @@ agents: [pegleg, bilgeladle, plank, spyglass, cutlass]
 
 ## Stage 1: Bilgeladle Bronze Section Slicing
 - **Agent**: Bilgeladle (Section Slicing Engine)
-- **Skill**: `silver-section-assembly` (`src/react_agent/skills/silver-section-assembly/SKILL.md`)
+- **Skill**: `manuscript-chapter-section-slicing` (`src/react_agent/skills/manuscript-chapter-section-slicing/SKILL.md`)
 - **Input**: Monolithic Bronze Chapter File (`ship/bronze/chapters/ch{num:02d}/ch{num:02d}_bronze.md`)
 - **Action**: Slice the monolithic chapter file into section-level Bronze files (`ch{num:02d}_sec{num}.1_bronze.md` through `ch{num:02d}_sec{num}.N_bronze.md`).
 - **Rules**: Preserve Chapter Title & Epigraph in `sec{num}.0`. Ensure every section header (`#### 5.X`) gets its own isolated file to eliminate LLM output token limits.
@@ -29,16 +29,16 @@ agents: [pegleg, bilgeladle, plank, spyglass, cutlass]
 - **Agent**: Plank (Reference Expansion Specialist)
 - **Skill**: `expand-chapter-references`
 - **Input**: Section-Level Bronze Files + Seized Cargo Hold Payloads
-- **Action**: Assemble Zotero/CrossRef standardized nodes (`itemType`, `author`, `date`, `title`, `publisher`, `DOI`, `url`). Write master index `ch{num:02d}_references_silver.md` and substitute nodes into section files `ch{num:02d}_sec{num}.X_silver.md`.
+- **Action**: Assemble Zotero/CrossRef standardized nodes (`itemType`, `author`, `date`, `title`, `publisher`, `DOI`, `url`). Write master index `ch{num:02d}_references.md` in `ship/bronze_plus/chapters/ch{num:02d}/`.
 
-## Stage 5: Bilgeladle Completeness Gate & Section Silver Assembly
-- **Agent**: Bilgeladle (Silver Assembly Engine)
-- **Skill**: `silver-section-assembly`
-- **Action**: Inspect Plank's nodes. If any node lacks a verified live URL, HALT execution and return `REJECTED_INCOMPLETE_NODES`. Write final section silver files preserving 100% of body prose verbatim.
+## Stage 5: Bilgeladle Completeness Gate & Bronze Plus Assembly
+- **Agent**: Bilgeladle (Bronze Plus Assembly Engine)
+- **Skill**: `manuscript-section-bronze-plus-assembly` (`src/react_agent/skills/manuscript-section-bronze-plus-assembly/SKILL.md`)
+- **Action**: Inspect Plank's nodes. If any node lacks a verified live URL, HALT execution and return `REJECTED_INCOMPLETE_NODES`. Substitute verified vector citation nodes into section files `ship/bronze_plus/chapters/ch{num:02d}/ch{num:02d}_sec{num}.X_bronze_plus.md` preserving 100% of body prose verbatim.
 
 ## Stage 6: Cutlass Evidentiary & Epistemic Audit Gate
 - **Agent**: Cutlass (Epistemic Auditor)
-- **Skills**: `audit-cargo-seized-evidence` & `audit-academic-crossref-evidence`
+- **Skills**: `audit-cargo-seized-evidence`
 - **Action**: Read seized asset text directly from Cargo Hold (without re-fetching via Landlubber). Compare manuscript assertions against seized content. Generate `ch{num:02d}_citation_audit.md`. If any claim fails evidentiary grounding, issue `FLAGGED_EVIDENTIARY_MISMATCH` and halt.
 
 ## Stage 7: Post-Pipeline Learning Debrief (Pegleg Orchestrated)

@@ -2,7 +2,7 @@
 *The Architectural, Epistemic, and Legal Liquidation of Human Ground Truth*
 
 **Author:** Timothy Murray  
-**Assembled Edition:** August 27, 2026 (Bronze+ Verified Corpus)  
+**Assembled Edition:** September 17, 2026 (Bronze+ Verified Corpus)  
 **Corpus Specification:** Full section-level text containing 100% verified inline vector citation nodes.
 
 ---

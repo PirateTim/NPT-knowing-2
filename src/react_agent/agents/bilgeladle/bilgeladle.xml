@@ -103,23 +103,16 @@
             </execution_protocol>
         </skill>
 
-        <skill name="map_expand_reduce_routing">
-            <description>Implements the Map-Expand-Reduce pattern to evaluate an asset, query pgVector, cross-reference chapter essays, and emit chapter placement decision.</description>
+        <skill name="chapter_backbone_alignment">
+            <description>Aligns incoming external cargo assets directly to the 13 Master Chapter Backbones and Section Ribs defined in ship/CHAPTER_BACKBONES.md, applying the master Fleet Glossary from cargo.system_glossary.</description>
             <execution_protocol>
-                Use `evaluate_asset_alignment` to determine target chapter, domain vector, and evidence synthesis.
+                Read `ship/CHAPTER_BACKBONES.md` (or query chapter_backbones.json) and `query_system_glossary` to identify the exact Primary Chapter Anchor, Vector of Destruction, and Section Rib that governs the asset.
             </execution_protocol>
         </skill>
 
-        <skill_ref name="map-reduce" path="src/react_agent/skills/map-reduce/SKILL.md"/>
         <skill_ref name="asset-chapter-indexing" path="src/react_agent/skills/asset-chapter-indexing/SKILL.md"/>
         <skill_ref name="manuscript-chapter-section-slicing" path="src/react_agent/skills/manuscript-chapter-section-slicing/SKILL.md"/>
         <skill_ref name="manuscript-section-bronze-plus-assembly" path="src/react_agent/skills/manuscript-section-bronze-plus-assembly/SKILL.md"/>
-        <skill_ref name="manuscript-section-silver-expansion" path="src/react_agent/skills/manuscript-section-silver-expansion/SKILL.md"/>
-        <skill_ref name="expansion-vector-of-knowledge-destruction" path="src/react_agent/skills/expansion-vector-of-knowledge-destruction/SKILL.md"/>
-        <skill_ref name="expansion-forensic-premise-decomposition" path="src/react_agent/skills/expansion-forensic-premise-decomposition/SKILL.md"/>
-        <skill_ref name="expansion-glossary-conceptual-matrix" path="src/react_agent/skills/expansion-glossary-conceptual-matrix/SKILL.md"/>
-        <skill_ref name="expansion-adversarial-counter-arguments" path="src/react_agent/skills/expansion-adversarial-counter-arguments/SKILL.md"/>
-        <skill_ref name="expansion-operational-vector-nodes" path="src/react_agent/skills/expansion-operational-vector-nodes/SKILL.md"/>
     </skills>
 
     <available_tools>

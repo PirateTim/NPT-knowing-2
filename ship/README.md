@@ -17,15 +17,12 @@ By processing the manuscript across distinct pedagogical tiers, Bilgeladle becom
 - Houses master reference indices (`chXX_references.md`).
 - **Exclusive Vector Ingestion Source**: This tier is the sole ground-truth source used to populate the Vector Database (**`ship.letters_of_marque`**).
 
-### 3. `ship/silver/` (Expand-Map-Reduce Workflows)
-- Contains the analytical outputs of the Expand-Map-Reduce pipeline:
-  - Deep chapter structural analyses and argumentative arcs.
-  - Section-level forensic matrices and thematic reductions.
-  - Line-by-line citation audit scorecards.
+### 3. `ship/CHAPTER_BACKBONES.md` & `chapter_backbones.json` (Master Cognitive Compass)
+- Contains the 13 calibrated **Master Chapter Backbones** (5-Part Schema: Title, Subject Sector, Vector of Destruction, Invariant Predicates, Universal Doom Point) and granular **Section Ribs**.
+- **The Operational Brain**: Replaces the legacy "Silver" Map-Expand-Reduce experiment with a lean, dense, 13-node coordinate grid that Bilgeladle and Scallywag use to diagnose external cargo.
 
-### 4. `ship/expansions/` & `ship/reduces/` (Analytical Sub-Workspaces)
-- `ship/expansions/`: Deep chapter expansions detailing intellectual lineages (e.g., Cybernetics, Neoliberalism, Chomsky, Rand), vignette anchors, and Chain of Ruin vectors.
-- `ship/reduces/`: Forensic reductions, including `v1_forensic_matrix`, `v2_argumentative_arc`, and `v3_operational_map`.
+### 4. Legacy "Silver" Archive (`archive/legacy_silver_pipeline/`)
+- In September 2026, the stalled Map-Expand-Reduce silver expansion loop (`ship/expansions/`, `ship/reduces/`, and `ship/silver/`) was formally deprecated and archived. All verified citation nodes were preserved in `ship/bronze_plus/`.
 
 ### 5. `ship/gold/` — DOES NOT EXIST
 - Gold-tier deliverables are not manuscript drafts; they exist solely as finalized articles, essays, and chase sweeps published in **`writings/`**.
