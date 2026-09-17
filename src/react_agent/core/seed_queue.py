@@ -97,8 +97,8 @@ def seed_urls(file_path: str):
     import re
     import urllib.parse
     urls = []
-    # Pattern extracts valid URLs even if prefixed by footnote markers e.g. [1]\xa0https://...
-    url_pattern = re.compile(r'https?://[^\s\)\]\>\"\'\,\xa0\u200b]+', re.IGNORECASE)
+    # Pattern extracts valid URLs even if prefixed by footnote markers or concatenated without whitespace
+    url_pattern = re.compile(r'https?://(?:(?!https?://)[^\s\)\]\>\"\'\,\xa0\u200b])+', re.IGNORECASE)
 
     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
         for line in f:

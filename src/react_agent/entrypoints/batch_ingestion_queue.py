@@ -4,6 +4,7 @@ Architecture: Headless Agent Orchestration via Postgres Queue with Mechanical Pr
 """
 import os
 import sys
+import re
 import time
 import uuid
 from urllib.parse import urlparse
@@ -163,10 +164,29 @@ def run_worker_loop(max_items: int = 5):
             print("[QUEUE EMPTY] No pending URLs found. Shutting down worker.")
             break
             
+        # Check for multiple concatenated URLs in a single string (e.g. https://...https://...)
+        all_matched_urls = re.findall(r'https?://(?:(?!https?://)[^\s\)\]\>\"\'\,\xa0\u200b])+', target_url, re.IGNORECASE)
+        if len(all_matched_urls) > 1:
+            print(f"  -> [CONCATENATED URLS DETECTED] Split composite URL into {len(all_matched_urls)} targets. Re-queuing components...")
+            cursor = conn.cursor()
+            for extra_u in all_matched_urls[1:]:
+                clean_extra = extra_u.rstrip('.,;:)]>')
+                cursor.execute("""
+                    INSERT INTO cargo.ingestion_queue (target_url, status, source_requestor)
+                    VALUES (%s, 'PENDING', 'deconcat_split')
+                    ON CONFLICT (target_url) DO NOTHING;
+                """, (clean_extra,))
+            conn.commit()
+            cursor.close()
+            target_url = all_matched_urls[0].rstrip('.,;:)]>')
+            print(f"  -> Proceeding with first URL: {target_url}")
+        else:
+            target_url = target_url.rstrip('.,;:)]>')
+
         domain = _extract_domain(target_url)
         items_processed += 1
         is_reacquire = (source_requestor == "triage_console_reacquire")
-        is_retry = is_reacquire or (source_requestor in ("reseed_archive_oa_retry", "reseed_from_failed_metadata", "footnote_recovery")) or (domain in RECOVERABLE_DOMAINS)
+        is_retry = is_reacquire or (source_requestor in ("reseed_archive_oa_retry", "reseed_from_failed_metadata", "footnote_recovery", "deconcat_remedy_c", "deconcat_split")) or (domain in RECOVERABLE_DOMAINS)
         reacq_tag = " [RE-ACQUISITION]" if is_reacquire else ""
         print(f"\n[{items_processed}] Dequeued ID {queue_id}{reacq_tag}: {target_url}")
 

@@ -298,5 +298,17 @@
     {
         "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'What\u2019s Holding Back Agentic AI? Not Employee Resistance', assign 'BILGE'. Rationale: The problem is beyond a self selecting poll.  it's just typical management jargon.  I remember in the 1990s when everyone was expected to learn regex.  Asserting that no tech worker will absorb new technical skills is sometime that could have been written 5, 10, 15, 20,100 years ago.",
         "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114652_acquired.txt (2026-09-13)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When evaluating assets similar to '90% of science is lost. This new AI just found it', assign 'MAINSAIL'. Rationale: This tool, while imperfect, attempts to solve a real problem.  One that I was personally engaged with When Working at the American Institute of Physics and again working for Atypon.  This is a serious attempt.  Will it succeed?  probably not.  but zotero and orcid and CLOCKSS have turned out to be useful even with only partial adoption.",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114656_acquired.txt (2026-09-14)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'Microsoft AI announces first image generator created in-house', assign 'BILGE'. Rationale: This is bilge.  It's interesting because it is a particular date and type of announcement of a product that  as far as I can tell didn't even last 6 months",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/20260618114706_acquired.txt (2026-09-14)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'OpenAI Teases Option to Create 'Erotica for Adults' Using ChatGPT', assign 'BILGE'. Rationale: This is bilge.  but it is also important as it shows that the Scalers have no business model and not morals and no idea what they are doing",
+        "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/openai-teases-option-to-create-erotica-for-adults-using-chatgpt.txt (2026-09-14)"
     }
 ]

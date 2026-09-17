@@ -90,10 +90,21 @@ Therefore, if you want **true zero cost** during an idle period, you must:
 ### F. Cloud Scheduler Automated Start/Stop Jobs (Idle Cost Control)
 * **Location**: `us-east1`
 * **Monthly Cost**: **$0.00** (Within GCP 3 free jobs/month tier)
+* **Deployment Script**: [`helper_scripts/deploy_scheduler.py`](file:///c:/Users/timot/NPT-knowing-2/helper_scripts/deploy_scheduler.py)
 * **Active Jobs**:
   1. `start-cloud-sql-morning`: Runs `0 8 * * 1-5` (8:00 AM ET Monday–Friday) $\rightarrow$ PATCH `activationPolicy: ALWAYS`.
   2. `stop-cloud-sql-nightly`: Runs `0 20 * * *` (8:00 PM ET Daily) $\rightarrow$ PATCH `activationPolicy: NEVER`.
 * **Cost Impact**: Reduces Cloud SQL idle compute cost to **$0.00** during nights and weekends, reducing idle day costs to **5.6¢ / day**.
+* **Dormancy Management**:
+  ```bash
+  # Pause jobs during planned dormancy (so they don't fire against deleted/frozen DB):
+  gcloud scheduler jobs pause start-cloud-sql-morning --location=us-east1
+  gcloud scheduler jobs pause stop-cloud-sql-nightly --location=us-east1
+
+  # Resume jobs when returning to active work:
+  gcloud scheduler jobs resume start-cloud-sql-morning --location=us-east1
+  gcloud scheduler jobs resume stop-cloud-sql-nightly --location=us-east1
+  ```
 
 ---
 
@@ -192,13 +203,19 @@ gsutil rm -r gs://npt-reckoning-1_cloudbuild/
 gcloud sql instances delete npt-instance-postgressql --quiet
 ```
 
-#### Step 6: Delete Service Accounts & Invalidate All Private Keys
+#### Step 6: Delete Cloud Scheduler Automated Start/Stop Jobs
+```bash
+gcloud scheduler jobs delete start-cloud-sql-morning --location=us-east1 --quiet
+gcloud scheduler jobs delete stop-cloud-sql-nightly --location=us-east1 --quiet
+```
+
+#### Step 7: Delete Service Accounts & Invalidate All Private Keys
 ```bash
 gcloud iam service-accounts delete npt-fleet-manager@npt-reckoning-1.iam.gserviceaccount.com --quiet
 gcloud iam service-accounts delete vertex-express@npt-reckoning-1.iam.gserviceaccount.com --quiet
 ```
 
-#### Step 7: Disable Enabled Google APIs (Optional)
+#### Step 8: Disable Enabled Google APIs (Optional)
 ```bash
 gcloud services disable drive.googleapis.com docs.googleapis.com
 ```

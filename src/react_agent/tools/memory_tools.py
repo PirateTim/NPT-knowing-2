@@ -16,6 +16,9 @@ from urllib.parse import urlparse
 import pg8000.dbapi
 import json
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 # =====================================================================
 # INTERNAL HELPER FUNCTIONS (Not directly callable by Agents)

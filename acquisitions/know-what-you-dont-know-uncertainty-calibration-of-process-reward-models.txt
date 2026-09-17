@@ -1,0 +1,87 @@
+Title: Know What You Don’t Know: Uncertainty Calibration of Process Reward Models
+Authors: Young-Jin Park, Kristjan Greenewald, Kaveh Alim, Hao Wang, Navid Azizan
+Source: https://arxiv.org/abs/2506.09338
+ArXiv ID: 2506.09338
+
+Abstract:
+Process reward models (PRMs) play a central role in guiding inference-time scaling algorithms for large language models (LLMs). However, we observe that even state-of-the-art PRMs can be poorly calibrated. Specifically, they tend to overestimate the success probability that a partial reasoning step will lead to a correct final answer, particularly when smaller LLMs are used to complete the reasoning trajectory. To address this, we present a calibration approach—performed via quantile regression—that adjusts PRM outputs to better align with true success probabilities. Leveraging these calibrated success estimates and their associated confidence bounds, we introduce an instance-adaptive scaling (IAS) framework that dynamically adjusts the compute budget based on the estimated likelihood that a partial reasoning trajectory will yield a correct final answer. Unlike conventional methods that allocate a fixed number of reasoning trajectories per query, this approach adapts to each instance and reasoning step when using our calibrated PRMs. Experiments on mathematical reasoning benchmarks show that (i) our PRM calibration method achieves small calibration error, outperforming the baseline methods, (ii) calibration is crucial for enabling effective IAS, and (iii) the proposed IAS strategy reduces inference costs while maintaining final answer accuracy, utilizing less compute on more confident problems as desired.
+
+=== FULL TEXT ===
+
+Know What You Don’t Know:
+Uncertainty Calibration of Process Reward Models
+
+Young-Jin Park (MIT)
+Kristjan Greenewald (MIT-IBM Watson AI Lab)
+Kaveh Alim (MIT)
+Hao Wang (MIT-IBM Watson AI Lab, Red Hat AI Innovation)
+Navid Azizan (MIT)
+
+Project Page: http://young-j-park.github.io/know-what-you-dont-know
+
+1 Introduction
+Inference-time scaling is an emerging paradigm that improves the output quality of LLMs by trading off inference speed. Just as humans approach complex problems by breaking them down, reasoning through each step, and revising their thoughts, LLMs can also benefit from being given more time to “think” during inference [1]. While a myriad of inference-time scaling approaches have emerged, they often involve prompting the model with explicit reasoning instructions to encourage a structured thought process [51, 24]. Recent studies extend this idea by generating multiple candidate reasoning paths or answers and aggregating them to improve robustness [43]. Such strategies allow small-sized LLMs to achieve comparable (or even better) performance with large models when tackling challenging tasks, such as advanced mathematics or complex coding [20, 31].
+
+An important component in many inference-time scaling algorithms is the chosen process reward model (PRM). PRMs are trained to quantify, as a reward, how good or desirable a model’s intermediate-step outputs are with respect to a given task and/or to alignment with human preferences [6, 48, 30]. When normalized, reward scores are often interpreted as the probability that continuing from the current output will lead to a desirable outcome (e.g., producing a correct final answer in a math problem) [28]. In our experiments, we find, however, that even state-of-the-art PRMs can be miscalibrated, assigning overly optimistic scores—particularly on challenging, out-of-distribution problems. This is perhaps unsurprising since the probability of success depends on factors such as choice of model and inference method, which are not input into the PRM.
+
+Miscalibration and overconfidence of PRMs can limit their utility beyond simply ranking partial reasoning steps. We highlight three important applications where calibrated PRMs are desirable: (1) providing interpretable uncertainty estimates to monitor LLM outputs during generation [58], (2) identifying when to say “I don’t know” [46, 7] or backtrack based on a low predicted probability of success, and (3) assessing the current problem difficulty or likelihood of success to adaptively adjust the inference-time compute budget. These applications motivate a fundamental question: Can we calibrate off-the-shelf PRMs and leverage them to enhance inference-time scaling methods?
+
+In this paper, we introduce a pipeline for improving the calibration of any off-the-shelf PRMs, allowing their scores to more accurately reflect the uncertainty that a given LLM will reach the correct answer. We begin by showing that standard calibration techniques, such as temperature scaling [16], are inadequate for calibrating PRMs. To address this, we introduce a quantile regression [22] based scheme that reduces the calibration error of PRM scores. The resulting model predicts success probabilities, together with confidence bounds, for every query and intermediate reasoning step. Our method collects intermediate reasoning steps generated by a given LLM and completes them by independently rolling out full responses. This Monte Carlo rollout provides an empirical estimate of the true success probability for each prefix trajectory. Given this data, we fine-tune the PRM after replacing its prediction head with a quantile regression model. The resulting model produces reliable success probability estimates when evaluating intermediate steps in multi-step reasoning tasks.
+
+We use these now-calibrated PRMs to enable instance-adaptive scaling (IAS), a framework where test-time compute is adaptively scaled based on the calibrated PRM’s assessment of difficulty/likelihood of success. Beyond saving compute, this concept has the potential to reduce overall latency for the user waiting for a response. The intuition mirrors how humans solve problems: we spend more time on difficult questions and allocate more effort to promising solution paths. Similarly, IAS guides LLMs to invest more computation in challenging or high-potential reasoning paths. We focus on two widely used inference-time scaling methods: best-of-N (BoN) and beam search (BS). We prove that, for any given query and reasoning trajectory, the calibrated reward score can estimate the minimum number of additional trajectories required to produce at least one correct answer.
+
+In short, our key contributions are:
+• We address the overestimation of success probabilities in existing PRMs by introducing a calibration approach using quantile regression.
+• We propose an instance-adaptive inference-time scaling strategy that dynamically allocates compute budgets by leveraging calibrated PRMs.
+• We empirically validate our methods by: 1) demonstrating low calibration error, and 2) enhancing best-of-N and beam search through instance-adaptive scaling, leading to improved efficiency.
+
+1.1 Related Work
+Inference-time scaling: LLM performance can be improved through multi-stage reasoning, which breaks problems into simpler subtasks [51, 24, 1]. Although more computationally expensive, techniques such as sampling multiple outputs and aggregating them substantially improve performance and robustness [57, 43]. Methods such as majority voting, verifier-based selection [6, 30, 4], and reward-based Monte Carlo search [48, 50, 15] show strong gains in complex reasoning tasks. Yet, most focus on performance gains, with limited attention to its reliability and cost-effective utilization of computational resources.
+
+Process reward models: Process reward models are specialized tools used in inference-time scaling that provide a step-by-step verification of LLMs’ reasoning process, rather than evaluating only the final outcome [62]. Typically, PRMs are trained on datasets labeled at each reasoning step, either by humans or automated approaches like Monte Carlo rollouts and LLM-based judges. For example, Qwen-PRM [55] utilizes consensus-filtered labels from combined human and automated sources, achieving state-of-the-art accuracy [44], while Shepherd-PRM [50] effectively relies on purely automated labeling despite lower precision in detecting errors.
+
+Adaptive sampling for efficient state estimation: Puri et al. [37] propose viewing LLM reasoning as a probabilistic state estimation problem. Note that the classical state estimation literature has explored methods for dynamically adjusting sample sizes based on state uncertainty [12, 13, 45, 10]. Similarly, information-driven adaptive strategies have been studied in the context of planning algorithms [18, 5, 29]. However, to the best of our knowledge, prior work has not proposed instance-adaptive sampling strategies within the context of LLM inference-time scaling.
+
+2 Preliminaries and Notation: Inference-Time Scaling with PRMs
+Let LLM denote a language model that generates responses, and let PRM denote a process reward model used to evaluate the quality of the outputs produced by LLM. Given a query q, LLM generates a multi-step reasoning trajectory x = (x_1, x_2, ..., x_T), where x_i represents the i-th reasoning step and T is the total length of the trajectory. Prefix up to step t is x_{0:t}.
+
+Best-of-N (BoN): Given query q, generate N complete trajectories x^(i) ~ LLM(q). PRM assigns score r^(i) = PRM(q, x^(i)). Final output is argmax r^(i).
+Beam Search (BS): Iteratively builds trajectories by alternating generation and evaluation. At step t, each surviving prefix is extended with M candidates. PRM evaluates N = K * M candidates and top K are retained.
+
+3 Calibration and Process Rewards
+Definition 1 (Success Probability): Given query q and partial trajectory x_{0:t}, success probability p is:
+p = Pr(x_{t+1:T} generated by LLM yields a correct answer | q, x_{0:t})
+
+The inherent calibration challenge of off-the-shelf PRMs: Off-the-shelf PRMs lack calibration guarantees because their training depends on a specific policy model (e.g., Qwen-Math-Instruct). When paired with a weaker model (e.g., 1B), the PRM overestimates success probabilities, causing inflated confidence.
+
+3.1 Calibration Data Collection Methodology
+Stage 1: Initial Trajectory Generation (N_val = 8 independent trajectories per question).
+Stage 2: Prefix Extraction and Monte Carlo Rollouts (N_MC = 8 rollouts per prefix).
+Stage 3: Success Probability Estimation (p_tilde = Z / N_MC).
+Calibration datasets publicly available at https://huggingface.co/datasets/young-j-park/prm_calibration.
+
+3.2 Uncertainty-Aware Calibration through Quantile Regression
+Rather than predicting conditional mean (which overestimates 50% of the time), predict a lower quantile beta (e.g. 10th percentile) to provide a conservative lower bound.
+Loss: weighted quantile loss (wQL):
+wQL(r_hat, p_tilde) = (1/N_q) sum [beta_n * max(0, p_tilde - r_hat^(beta_n)) + (1 - beta_n) * max(0, r_hat^(beta_n) - p_tilde)]
+
+4 Instance-Adaptive Inference-Time Scaling (IAS)
+Definition 2: Independent-sampling sample-complexity N*(p, C) = min {n in N : Pr(at least one correct out of n) >= C}.
+Proposition 1: For every p in (0, 1) and C in (0, 1), set N_IAS(p, C) = log(1 - C) / log(1 - p), then ceil(N_IAS(p, C)) >= N*(p, C).
+
+BoN+IAS: N_IAS = min { ceil(N_IAS(r_hat^(beta), C)), N_max }.
+BS+IAS-of-M (fixed K): M_IAS = min { ceil(N_IAS(r_hat_min^(beta), C) / K), M_max }.
+BS+IAS-of-K (fixed M): K_IAS = min({K_max} union {k | N_IAS(r_hat_k^(beta), C) <= k * M, 1 <= k <= K_max}).
+Theorem 1 proves that under split conformal quantile regression, the guaranteed success probability holds at level C * (1 - beta_tilde).
+
+5 Numerical Experiments
+Evaluated on MATH500 and AIME24-25 across 6 models: Llama-3.2-1B, Llama-3.1-8B-Instruct, Qwen2.5-Math-1.5B, Qwen2.5-7B-Instruct, DeepSeek-R1-Distill-Llama-8B, DeepSeek-R1-Distill-Qwen-8B. Primary PRM: Qwen2.5-Math-PRM-7B (also ReasonEval-7B, Math-Shepherd-Mistral-7B, and Qwen-PRM-72B).
+
+Key findings:
+1. Native PRMs consistently overestimate success probabilities, skewing heavily to the right.
+2. Quantile regression fine-tuning reduces Brier score and calibration errors dramatically across in-distribution (MATH500) and out-of-distribution (AIME24-25) datasets.
+3. IAS with calibrated PRMs reduces inference costs by up to 75% while preserving final answer accuracy. Uncalibrated PRMs downsample overly aggressively, causing accuracy collapse.
+4. Scale alone does not fix calibration: uncalibrated 72B PRMs still suffer significant overestimation, whereas calibrated 7B PRMs outperform uncalibrated 72B models.
+
+6 Conclusion
+Introduces quantile regression calibration for PRMs and instance-adaptive inference-time scaling (IAS) dynamically allocating compute budgets according to problem difficulty.

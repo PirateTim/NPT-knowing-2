@@ -17,7 +17,7 @@ def _extract_video_id(url: str) -> str:
     Helper to extract the 11-character YouTube video ID from various URL formats.
     """
     patterns = [
-        r'(?:v=|\/v\/|embed\/|youtu\.be\/|\/embeds\/|shorts\/|^)([a-zA-Z0-9_-]{11})'
+        r'(?:v=|\/v\/|embed\/|youtu\.be\/|\/embeds\/|shorts\/|live\/|^)([a-zA-Z0-9_-]{11})'
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
