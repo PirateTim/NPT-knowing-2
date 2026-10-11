@@ -1,0 +1,11 @@
+[SPYGLASS CAPTURE RECEIPT]
+SOURCE_URL: https://www.cato.org/downsizing-government-essay/cutting-federal-aid-k-12-education?utm_source=hootsuite&utm_medium=threads&utm_term=&utm_content=&utm_campaign=
+CANONICAL_PATH: acquisitions/cutting-federal-aid-for-k-12-education.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/cutting-federal-aid-for-k-12-education.txt
+TITLE: Cutting Federal Aid for K-12 Education
+AUTHORS: Neal McCluskey
+PUBLISHER: Cato Institute
+PUBLICATION_DATE: 2026-01-29
+ITEM_TYPE: report
+ABSTRACT: While federal intrusion has increased over the decades, standardized tests reveal that public school performance remains mediocre.
+STATUS: COMPLETED

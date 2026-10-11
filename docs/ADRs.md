@@ -161,3 +161,46 @@ sequenceDiagram
      - **Ban `psycopg` (v3) & `psycopg2`**: Eliminates external C compiler / compiled binary wheel dependencies, ensuring 100% pure-Python cross-platform execution on Windows developer environments.
 * **Consequences:** High LLM code generation reliability (~99% syntax accuracy for PEP-249), zero C-library installation failures across Windows/Linux, consistent transaction and socket cleanup, and unified database connection handling across all tools and scripts.
 
+**ADR-017: Two-Step Manuscript Thesis Navigation: Macro-Structural Triage via Ship Deck Plans and On-Demand Bronze+ Chapter Ingestion**
+
+* **Context:** Historically, Bilgeladle's system prompt was pre-loaded with the complete ~120-page manuscript monolith (`ship/bronze_plus/End-of-Knowing-latest.md`, ~100k tokens). While this preserved global thesis context, it saturated Bilgeladle's context window, degraded reasoning agility during multi-asset chases, and caused cognitive indiscriminate drift where the model anchored to minor anecdotes rather than the core vector of destruction. Conversely, relying strictly on traditional micro-chunk RAG resulted in narrative fragmentation, loss of authorial voice, and amnesia regarding chapter-length argumentative build.
+* **Decision:**
+  1. *Replace Monolith Prompt Dump with Ship Deck Plans:* In `AgentEngine`, replace the ~100k monolith injection with `ship/SHIP_DECK_PLANS.md` (~18k tokens). Bilgeladle holds the 13 Master Chapter Backbones (5-Part Schema: Title/Sector, Vector of Destruction, Invariant Predicates, Universal Doom Point, and 140 calibrated Section Ribs) as permanent working memory.
+  2. *Step 1: Macro-Structural Triage:* Bilgeladle evaluates incoming cargo against the Ship Deck Plans in working memory to triage and lock EXACTLY ONE Primary Chapter Anchor (integer 0–12, Guardrail-006) and candidate Section Ribs without burning token overhead on full prose.
+  3. *Step 2: On-Demand Grounded Verification (Dual-Tool Execution):*
+     - **Standard Path (`read_manuscript_chapter`):** When the primary chapter anchor is identified with high confidence, Bilgeladle invokes `read_manuscript_chapter(chapter_number)` to stream the complete, un-truncated Bronze+ chapter prose (~2k–12k tokens) to harvest exact opening vignettes, verbatim author quotes, and Toulmin warrants.
+     - **Cross-Cutting Fallback (`vector_search_manuscript`):** When cargo touches ambiguous or multi-chapter phenomena, Bilgeladle invokes `vector_search_manuscript(query, chapter_number=None)` across `ship.letters_of_marque` (868 embedded 1536-dim paragraph chunks) to discover specific high-similarity section ribs before locking the primary chapter.
+  4. *Deprecation of Monolithic Injection:* Monolithic full-book prompt injection is permanently retired.
+* **Consequences:** Reduces Bilgeladle's baseline turn footprint by ~82,000 tokens per turn (~82% reduction), frees massive context space for multi-asset synthesis, prevents chunk fragmentation by loading complete chapters on demand, guarantees grounded author quotes, and equips Bilgeladle with both macro-structural foresight and micro-semantic retrieval.
+
+**ADR-018: Financial Circuit Breakers, Safe Batch Defaults, and Context Cache Lifecycle Management**
+
+* **Context:** In September 2026, an unmonitored batch execution (`batch_reprocess_cargo.py --locker BILGE` and `--locker DOLDRUMS`) iterated through 160 cargo assets in 90 minutes across 760 LLM turns without a `--limit` constraint. Because Bilgeladle's prompt injects 152KB (`SHIP_DECK_PLANS.md`, ~55k tokens) on every call without caching, the run consumed over 22 million input tokens in a single evening. Furthermore, user-specified prompt constraints like `"spending cap of $0.50"` were unparsed text, as `AgentEngine` lacked financial accumulators, dollar rate tables, and hard cost circuit breakers.
+* **Decision:**
+  1. *Safe Defaults on Batch Entrypoints:* Batch scripts must never default to unbounded database sweeps. `--limit` defaults strictly to 5 assets. Iterating over the full backlog requires `--all` plus an interactive confirmation prompt (`[y/N]`) unless overridden with `--yes`.
+  2. *Real-Time Token Telemetry & Financial Governor (`CostTracker`):* Bind a central `CostTracker` into `AgentEngine`. Extract exact `usage_metadata` from every API response, compute running USD spend based on model rate tiers, and print real-time telemetry to the CLI.
+  3. *Immutable Spending Cap Circuit Breaker:* Automatically parse spending caps from CLI arguments (`--spending-cap 0.50`) and user prompts (e.g. `spending cap of $X.XX`). When cumulative run spend reaches 100% of the cap, immediately raise `SpendingCapExceededException` and abort execution before launching subsequent turns or tools.
+  4. *Gemini Context Cache Lifecycle & Teardown Protocol:* Static prompt payloads exceeding 10k tokens (e.g. Bilgeladle's `SHIP_DECK_PLANS.md`) will leverage Gemini Explicit Context Caching (`client.caches.create`), reducing input token costs by 75-80%. All caches must carry a strict maximum TTL of 1 hour (`ttl="3600s"`). Workflows must register a cleanup handler (`client.caches.delete(cache.name)`) in `finally:` blocks, and `helper_scripts/purge_gemini_caches.py` is established as the manual teardown tool documented in the Fleet Manual.
+* **Consequences:** Completely eliminates runaway batch spending. Guarantees that declared spending caps are hard physical boundaries. Cuts repeated Bilgeladle input token billing by 75-80%. Ensures no lingering cache storage costs on Google Cloud after task completion.
+
+**ADR-019: Retirement of External Cargo pgVector Indexing in Favor of Managed Vertex AI Search & Macro Folksonomy**
+
+* **Context:**
+  1. *Cargo Vector Overhead & API Costs:* The fleet initially provisioned `cargo.content_vectors` in Cloud SQL to store 1536-dimensional embeddings (`gemini-embedding-001`) of external cargo paragraph chunks. With over 4,000 full-text acquisitions in `gs://npt-fleet-cargo-hold/acquisitions/`, embedding every article paragraph created substantial API token expense, hit provider rate limits and credit quotas, and imposed compute and storage strain on the Cloud SQL PostgreSQL instance (requiring large memory allocations for HNSW/IVFFlat indexes).
+  2. *Redundancy with Vertex AI Search:* The fleet deployed a managed GCP Vertex AI Search data store (`npt-cargo-poc`) and search engine (`npt-cargo-search-app`) directly over `gs://npt-fleet-cargo-hold/acquisitions/*.txt`. Vertex AI Search provides native hybrid search (BM25 exact keyword matching + dense semantic vector search) and extractive snippet generation directly from raw files without requiring custom chunking or database embedding pipelines. It operates under Google Cloud's generous free tier (10,000 search queries/month free).
+  3. *Macro Navigation Needs:* Browsing and categorical orientation across the cargo hold are best served by relational SQL queries, metadata facets, and the Level 1/Level 2 emergent Folksonomy outlined in GitHub Issue #120, making a secondary vector database in PostgreSQL redundant for external cargo.
+
+* **Decision:**
+  1. *Retire Cargo Vector Indexing Pipeline:* Cease all ongoing and automated vector embedding generation and chunk ingestion into `cargo.content_vectors`. Remove vector indexing from ingestion loops and batch worker paths.
+  2. *Preserve Existing Cargo Vectors (Frozen State):* Existing rows already computed and loaded into `cargo.content_vectors` (3,711 chunks across 151 assets) are retained in place and will **not** be purged or dropped at this time. They remain accessible for historical queries, but no new embedding spend will be incurred.
+  3. *Uncompromised Preservation of Manuscript Vectors (`ship.letters_of_marque`):* The manuscript Vector Database (`ship.letters_of_marque`, containing 868 embedded paragraph chunks of *The End of Knowing*) remains 100% active and supported. It is strictly separate from external cargo and is essential for Bilgeladle's micro-semantic chapter cross-examinations.
+  4. *Division of Retrieval Labor:*
+     - *Macro Landscape & Thematic Slicing:* Handled via PostgreSQL metadata + Folksonomy (Issue #120 / `cargo.v_cargo_landscape`) at $0.00 cost.
+     - *Micro Cargo Full-Text & Semantic Search:* Handled via Vertex AI Search (`npt-cargo-search-app` / `search_cargo_vertex`) directly indexing raw GCS text files.
+     - *Manuscript Thesis Anchoring:* Handled via `ship.letters_of_marque` in PostgreSQL.
+
+* **Consequences:** Eliminates ongoing embedding API token expenditures and quota exhaustion for external cargo. Offloads chunking, indexing, and hybrid search maintenance to Vertex AI Search while keeping already-paid-for vectors safe in PostgreSQL. Clarifies architectural separation between macro categorical exploration, full-text cargo discovery, and sacred manuscript thesis alignment.
+
+
+
+

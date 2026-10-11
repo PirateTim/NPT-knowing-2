@@ -1,7 +1,6 @@
 ---
 name: formulate-acquisition-heuristic
 description: Structured protocol for Spyglass to analyze acquisition failures, classify domain access barriers, and formulate standardized domain routing heuristics in learned_rules.json.
-agents: [spyglass]
 ---
 
 # SKILL: Formulate Acquisition Domain Heuristics

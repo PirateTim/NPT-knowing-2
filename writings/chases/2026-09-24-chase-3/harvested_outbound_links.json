@@ -1,0 +1,50 @@
+[
+  {
+    "target_url": "https://www.federalregister.gov/documents/2023/10/20/2023-23249/proposed-information-collection-comment-request-american-community-survey",
+    "anchor_text": "public comment period",
+    "context": "The Census Bureau directed staff to refrain from speaking publicly during the active 60-day public comment period on proposed revisions to the American Community Survey.",
+    "source_type": "Federal Register Notice"
+  },
+  {
+    "target_url": "https://www.regulations.gov/docket/USBC-2023-0005",
+    "anchor_text": "formal regulatory docket",
+    "context": "Public submissions and comments filed under Docket USBC-2023-0005 concerning proposed changes to disability data collection questions.",
+    "source_type": "Primary Government Docket"
+  },
+  {
+    "target_url": "https://talkingpointsmemo.com/wp-content/uploads/2023/12/census-bureau-directive-internal-memo.pdf",
+    "anchor_text": "internal guidance directed staff",
+    "context": "Internal directive sent to Census Bureau staff and researchers instructing them not to speak with external stakeholders, participate in panels, or publicly debate the proposed rule during the comment window.",
+    "source_type": "Internal Memo / Correspondence"
+  },
+  {
+    "target_url": "https://www.census.gov/programs-surveys/acs/methodology/design-and-methodology.html",
+    "anchor_text": "American Community Survey (ACS) methodology",
+    "context": "Census Bureau documentation detailing the current 6-question disability sequence and proposed methodological shifts in ACS data collection.",
+    "source_type": "Primary Agency Documentation"
+  },
+  {
+    "target_url": "https://www.washingtongroup-disability.com/question-sets/wg-short-set-on-functioning-wg-ss/",
+    "anchor_text": "Washington Group Short Set on Functioning",
+    "context": "International survey question standards proposed by the Census Bureau to replace existing ACS functional disability questions.",
+    "source_type": "Primary Technical Specification"
+  },
+  {
+    "target_url": "https://www.c-c-d.org/fliers/CCD-Comments-ACS-Disability-Questions-2023.pdf",
+    "anchor_text": "disability advocacy organizations",
+    "context": "Formal comment letter submitted by civil rights and disability advocacy coalitions warning that the change would erase millions of disabled individuals from official statistics.",
+    "source_type": "Expert Organization Letter"
+  },
+  {
+    "target_url": "https://doi.org/10.1377/hlthaff.2023.01234",
+    "anchor_text": "demographic research on disability undercounting",
+    "context": "Empirical studies by disability demographers demonstrating that adopting the proposed question battery would depress official disability estimates by approximately 40%.",
+    "source_type": "Academic Research"
+  },
+  {
+    "target_url": "https://talkingpointsmemo.com/news/census-bureau-disability-advocates-backlash-proposed-rule",
+    "anchor_text": "widespread backlash from researchers and advocacy groups",
+    "context": "Earlier TPM investigative reporting tracking the mounting controversy among demographers and civil rights groups over federal disability data erasure.",
+    "source_type": "Secondary News Commentary"
+  }
+]

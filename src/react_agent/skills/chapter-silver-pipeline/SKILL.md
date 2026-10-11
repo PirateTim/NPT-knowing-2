@@ -1,7 +1,6 @@
 ---
 name: chapter-silver-pipeline
 description: Executes the 6-Stage ReAct Multi-Agent Chapter Silver Production Pipeline (Stage 1 through Stage 6).
-agents: [pegleg, bilgeladle, plank, spyglass, cutlass]
 ---
 
 # WORKFLOW: Chapter Silver Production Pipeline

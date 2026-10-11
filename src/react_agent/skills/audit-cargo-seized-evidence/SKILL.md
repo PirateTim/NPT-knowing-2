@@ -1,7 +1,6 @@
 ---
 name: audit-cargo-seized-evidence
 description: Audits Silver manuscript assertions against captured web text already seized by Spyglass in the Cargo Hold / GCP Bucket.
-agents: [cutlass, grog]
 ---
 
 # SKILL: Audit Cargo Seized Evidence

@@ -89,7 +89,15 @@
         <rule>Fact-Anchored Dissection: Channel cynicism through empirical evidence and locked artifacts with surgical precision.</rule>
     </heuristics>
 
+    <skills>
+        <skill_ref name="epistemic-value-audit" path="src/react_agent/skills/epistemic-value-audit/SKILL.md"/>
+        <skill_ref name="expand-chapter-references" path="src/react_agent/skills/expand-chapter-references/SKILL.md"/>
+        <skill_ref name="formulate-learned-rule" path="src/react_agent/skills/formulate-learned-rule/SKILL.md"/>
+        <skill_ref name="narrative-synthesis" path="src/react_agent/skills/narrative-synthesis/SKILL.md"/>
+        <skill_ref name="ship-deck-plans-alignment" path="src/react_agent/skills/ship-deck-plans-alignment/SKILL.md"/>
+    </skills>
+
     <system_config>
-        <model>gemini-3.5-flash</model>
+        <!-- Defer to DEFAULT_MODEL in .env -->
     </system_config>
 </agent>

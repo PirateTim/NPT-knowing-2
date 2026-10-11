@@ -114,12 +114,36 @@ def extract_youtube_transcript(url: str) -> str:
         }, indent=2)
         
     try:
+        import requests
+        import http.cookiejar
+        from youtube_transcript_api.proxies import GenericProxyConfig
+
+        # Create session with realistic browser headers
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+
+        # Load session cookies if provided (ADR-003 & Security Best Practice)
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        cookie_path = os.getenv("YOUTUBE_COOKIE_FILE") or os.path.join(root_dir, "youtube_cookies.txt")
+        if os.path.exists(cookie_path):
+            try:
+                jar = http.cookiejar.MozillaCookieJar(cookie_path)
+                jar.load(ignore_discard=True, ignore_expires=True)
+                session.cookies = jar
+                print(f"[YOUTUBE TOOLS] Loaded authenticated session cookies from {os.path.basename(cookie_path)}")
+            except Exception as c_err:
+                print(f"[YOUTUBE WARN] Could not parse cookie file {cookie_path}: {c_err}")
+
+        # Configure proxy if available
         proxy_url = os.getenv("YOUTUBE_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
+        proxy_config = None
         if proxy_url:
-            proxies = {"https": proxy_url, "http": proxy_url}
-            ytt_api = YouTubeTranscriptApi(proxies=proxies)
-        else:
-            ytt_api = YouTubeTranscriptApi()
+            proxy_config = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+
+        ytt_api = YouTubeTranscriptApi(proxy_config=proxy_config, http_client=session)
 
         transcript_list = ytt_api.fetch(video_id)
         if not transcript_list:

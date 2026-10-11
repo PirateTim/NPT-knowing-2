@@ -103,3 +103,11 @@ Silver Dispatch: Pegleg immediately passes the bucket_path to Cutlass for episte
 
 Dead-Letter Routing: If Spyglass fails across all fallback tiers, Pegleg updates the queue status to FAILED, halting downstream routing for that specific artifact.
 
+## SOP-08: Dense Lexical Envelope Generation (Semantic Neighborhoods)
+**Purpose:** Define the interfacial translation protocol that bridges the vocabulary gap between the author's philosophical prose (*The End of Knowing*) and external empirical documentation (cargo in the wild) for Phase 1 of Graph Genesis.
+* **Full Specification:** See [`docs/DENSE_LEXICAL_ENVELOPE_PROTOCOL.md`](file:///c:/Users/timot/NPT-knowing-2/docs/DENSE_LEXICAL_ENVELOPE_PROTOCOL.md).
+* **Granularity:** Strictly paragraph-level scoping (Step 1.0).
+* **Multi-Polar Decomposition:** Strictly 2–3 orthogonal conceptual poles (Step 1.1) with core concept definitions (Step 1.2).
+* **The Metaphor Translation Bridge (Step 1.3):** Non-negotiable translation of the author's literary metaphors to real-world investigative, audit, and regulatory vocabulary using explicit `→` arrow notation.
+* **Downstream Delivery:** Produces dense vector clusters (Step 1.4) and executable Boolean queries (Step 1.5) for Discovery Engine matching without token waste.
+

@@ -1,0 +1,10 @@
+ACQUISITION_STATUS: SUCCESS
+SOURCE_URL: https://arxiv.org/abs/2508.20186?hl=en-US
+CANONICAL_PATH: acquisitions/ai-propaganda-factories-with-language-models.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/ai-propaganda-factories-with-language-models.txt
+ITEM_TYPE: preprint
+TITLE: AI Propaganda factories with language models
+AUTHORS: Lukasz Olejnik
+PUBLISHED: 2025-08-01
+PUBLISHER: arXiv
+ABSTRACT: AI-powered influence operations can now be executed end-to-end on commodity hardware. We show that small language models produce coherent, persona-driven political messaging and can be evaluated automatically without human raters. Two behavioural findings emerge. First, persona-over-model: persona design explains behaviour more than model identity. Second, engagement as a stressor: when replies must counter-arguments, ideological adherence strengthens and the prevalence of extreme content increases. We demonstrate that fully automated influence-content production is within reach of both large and small actors. Consequently, defence should shift from restricting model access towards conversation-centric detection and disruption of campaigns and coordination infrastructure. Paradoxically, the very consistency that enables these operations also provides a detection signature.

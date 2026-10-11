@@ -1,7 +1,6 @@
 ---
 name: orchestrate-learning-debrief
 description: Pegleg's universal post-mission review protocol to check for stage failures and dispatch debrief instructions for worker agents to formulate learned heuristics.
-agents: [pegleg]
 ---
 
 # SKILL: Orchestrate Learning Debrief & Heuristic Generation

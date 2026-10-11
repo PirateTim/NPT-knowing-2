@@ -1,0 +1,9 @@
+SOURCE_URL: https://futurism.com/artificial-intelligence/ai-effects-workers-psychological
+TITLE: It Turns Out That Constantly Telling Workers They're About to Be Replaced by AI Has Grim Psychological Effects
+AUTHORS: Frank Landymore
+PUBLICATION_DATE: 2026-02-17
+PUBLICATION_TITLE: Futurism
+ITEM_TYPE: article
+CANONICAL_PATH: acquisitions/it-turns-out-that-constantly-telling-workers-theyre-about-to-be-replaced-by-ai-has-grim-psychological-effects.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/it-turns-out-that-constantly-telling-workers-theyre-about-to-be-replaced-by-ai-has-grim-psychological-effects.txt
+CAPTURE_STATUS: SUCCESS

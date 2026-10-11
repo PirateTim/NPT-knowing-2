@@ -35,7 +35,7 @@
     "rule_id": "PEGLEG-RULE-014",
     "scope": "PEGLEG_LOCAL",
     "category": "Singular Chapter Context Relay Gate",
-    "rule_directive": "SINGULAR CHAPTER CONTEXT RELAY GATE: When transitioning from Stage 4 (Bilgeladle Thesis Mapping) to Stage 5 (Scallywag Essay Dispatch), you MUST inspect stage4_bilgeladle_alignment.md to extract the singular 'Primary Chapter Anchor' and its file pointer (e.g. ship/bronze_plus/chapters/chXX/). You are STRICTLY FORBIDDEN from dispatching Scallywag with multiple chapters or leaving the chapter grounding ambiguous. You MUST explicitly pass the file pointer of that singular primary chapter directly to Scallywag in the Stage 5 dispatch prompt so Scallywag grounds her synthesis in that exact chapter's text.",
+    "rule_directive": "SINGULAR CHAPTER CONTEXT RELAY GATE: When transitioning to Stage 5 (Scallywag Essay Dispatch), you MUST inspect stage2_bilgeladle_alignment.md to extract the singular 'Primary Chapter Anchor' and its file pointer (e.g. ship/bronze_plus/chapters/chXX/). You are STRICTLY FORBIDDEN from dispatching Scallywag with multiple chapters or leaving the chapter grounding ambiguous. You MUST explicitly pass the file pointer of that singular primary chapter directly to Scallywag in the Stage 5 dispatch prompt so Scallywag grounds her synthesis in that exact chapter's text.",
     "source_context": "Author Directive (/learn): Enforce singular Primary Chapter Anchor handoff from Bilgeladle to Scallywag in Stage 5 (September 2026).",
     "timestamp_utc": "2026-09-09T16:47:00Z"
   }

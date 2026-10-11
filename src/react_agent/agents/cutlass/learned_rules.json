@@ -310,5 +310,37 @@
     {
         "rule_directive": "Sail Locker Calibration (BILGE): When evaluating assets similar to 'OpenAI Teases Option to Create 'Erotica for Adults' Using ChatGPT', assign 'BILGE'. Rationale: This is bilge.  but it is also important as it shows that the Scalers have no business model and not morals and no idea what they are doing",
         "source_context": "Author Triage Override on npt-fleet-cargo-hold/acquisitions/openai-teases-option-to-create-erotica-for-adults-using-chatgpt.txt (2026-09-14)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (BILGE): When reviewing assets similar to 'Fear Of AGI Is Driving Harvard And MIT Students To Drop Out', consider that this material is related to BILGE. Focus on: This article is absolute nonsense.  They found a person who has mental health issues and pretend that it is a societal collapse and that societal collapse is said to come from AGI which is very far fr4om being real.  This is a high value piece of bilge because it is exactly what Judith Miller would say.",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/acquisitions/20260618114710_acquired.txt (2026-09-22)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'Self-Adapting Language Models', consider that this material is related to MAINSAIL. Focus on: This is not Wherry because it include adjusting a models weights and in my project I add to the agent context but do not adjust the actual model weights.  I am using commercial frontier models where I have no ability to adjust the weights.    This is Mainsail as is explains the technical details of what scientist believe they can do to improve models.  It is also junk, because adjusting model weights with synthetic data when the core weights are examples of the-judith-miller-problem is futile",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/acquisitions/self-adapting-language-models.txt (2026-09-22)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'TUMIX: Multi-Agent Test-Time Scaling with Tool-Use Mixture', consider that this material is related to MAINSAIL. Focus on: this is mainsail as our team needs to understand how agentic systems work in order to discus them.",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/acquisitions/tumix-multi-agent-test-time-scaling-with-tool-use-mixture.txt (2026-09-22)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'Exclusive: The web is still mostly written by humans, study finds', consider that this material is related to MAINSAIL. Focus on: This is mainsail, but just barely.  The facts put forward are interesting.  but the methodology used to come up with those facts is deeply flawed ant he article does nothing to challenge the nonsense.",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/acquisitions/exclusive-the-web-is-still-mostly-written-by-humans-study-finds.txt (2026-09-22)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'Expert Says Collapse of Human Civilization Looks Like the Most Likely Scenario', consider that this material is related to MAINSAIL. Focus on: This is mainsail.  The academic being cited has a complex mechanism for civilization collapse the wanders far beyond my thesis of knowledge system collapse.  The overall perspective is aligned.  Be sure that the sightings for this asset include the guardian interview and the book being promoted by the academic.",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/acquisitions/expert-says-collapse-of-human-civilization-looks-like-the-most-likely-scenario.txt (2026-09-22)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (JIB): When reviewing assets similar to 'Google Has a Bedbug Infestation in Its New York Offices', consider that this material is related to JIB. Focus on: This is the exact sort of thing that is JIB.  It is about the people and companies that we discus in the book and newsletter.  It makes them look incompetent. it is of no value to our epistemic argument.  there is no chain of ruin. and provenance of information is not in question.",
+        "source_context": "Author Triage Calibration on acquisitions/google-has-a-bedbug-infestation-in-its-new-york-offices.txt (2026-09-26)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'Billionaire Peter Thiel warns if you 'proletarianize the young people,' don't be surprised they end up communist | Fortune', consider that this material is related to MAINSAIL. Focus on: This is mainsail.  Economic precarity is part of the attack on information provenance.  The elites intentionally creating it go back way before the LLM era",
+        "source_context": "Author Triage Calibration on npt-fleet-cargo-hold/web_artifact_Billionaire_Peter_Thiel_warns_if_you_proletarianize_the_young_people_dont_be_surprised_they_end_up_communist__Fortune_ea1713a1.txt (2026-09-26)"
+    },
+    {
+        "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'The global economy is still on a path to slower growth, IMF says', consider that this material is related to MAINSAIL. Focus on: this is mainsail.  the AI bubble pop talk is a theme we are tracking over time.  who said what when about the potential bubble is something we care about",
+        "source_context": "Author Triage Calibration on acquisitions/the-global-economy-is-still-on-a-path-to-slower-growth-imf-says.txt (2026-09-26)"
     }
 ]

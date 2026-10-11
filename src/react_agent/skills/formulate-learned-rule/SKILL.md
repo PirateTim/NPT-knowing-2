@@ -1,7 +1,6 @@
 ---
 name: formulate-learned-rule
 description: Inductive learning protocol. Extracts durable, generalized heuristics and architectural principles from specific operational incidents, corrections, or discoveries.
-agents: [hook, pegleg, cutlass, grog, plank, bilgeladle, scallywag, spyglass]
 ---
 
 # SKILL: Formulate Generalized Fleet Learning & Heuristic

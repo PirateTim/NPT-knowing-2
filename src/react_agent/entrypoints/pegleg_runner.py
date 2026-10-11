@@ -30,6 +30,52 @@ def run_pegleg_agent(prompt: str, thread_id: str = None, model_override: str = N
     engine.save_checkpoint(thread_id, chat_session.get_history())
     return response_text
 
+def print_pegleg_avatar():
+    """Renders the Pegleg dragon emoticon banner in full color to the terminal."""
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    ansi_file = os.path.join(base_dir, "agents", "pegleg", "pegleg_avatar.ansi")
+    img_file = os.path.join(base_dir, "agents", "pegleg", "pegleg_emoticon_transparent.png")
+    
+    art = None
+    if os.path.exists(ansi_file):
+        try:
+            with open(ansi_file, "r", encoding="utf-8") as f:
+                art = f.read()
+        except Exception:
+            pass
+            
+    if not art and os.path.exists(img_file):
+        try:
+            from PIL import Image
+            img = Image.open(img_file).convert("RGBA")
+            width = 42
+            target_height = int(width * (img.size[1] / img.size[0]) * 0.5) * 2
+            img = img.resize((width, target_height), Image.Resampling.LANCZOS)
+            pixels = img.load()
+            lines = []
+            for y in range(0, target_height, 2):
+                line = []
+                for x in range(width):
+                    top_r, top_g, top_b, top_a = pixels[x, y]
+                    bot_r, bot_g, bot_b, bot_a = pixels[x, y + 1]
+                    if top_a < 40 and bot_a < 40:
+                        line.append("\x1b[0m ")
+                    elif top_a < 40:
+                        line.append(f"\x1b[0m\x1b[38;2;{bot_r};{bot_g};{bot_b}m▄")
+                    elif bot_a < 40:
+                        line.append(f"\x1b[0m\x1b[38;2;{top_r};{top_g};{top_b}m▀")
+                    else:
+                        line.append(f"\x1b[38;2;{top_r};{top_g};{top_b}m\x1b[48;2;{bot_r};{bot_g};{bot_b}m▀")
+                line.append("\x1b[0m")
+                lines.append("".join(line))
+            art = "\n".join(lines)
+        except Exception:
+            pass
+            
+    if art:
+        print()
+        print(art)
+
 def run_pegleg_cli():
     parser = argparse.ArgumentParser(description="NPT Fleet Terminal: Pegleg (Mission Commander)")
     parser.add_argument("--thread-id", "--thread", type=str, default=None, help="Thread ID or session key")
@@ -60,9 +106,10 @@ def run_pegleg_cli():
 
     chat_session = engine.start_chat_session(thread_id=thread_id)
 
+    print_pegleg_avatar()
     print("=========================================================")
-    print(" NPT FLEET TERMINAL: PEGLEG (MISSION COMMANDER) ")
-    print(f" ACTIVE THREAD: {thread_id}")
+    print("         NPT FLEET TERMINAL: PEGLEG (MISSION COMMANDER)  ")
+    print(f"         ACTIVE THREAD: {thread_id}")
     print("=========================================================")
 
     if args.silver_chapter:
@@ -74,6 +121,14 @@ def run_pegleg_cli():
         return
 
     if args.prompt:
+        parts = args.prompt.strip().split()
+        if parts and parts[0].lower() == "man":
+            topic = parts[1].lower() if len(parts) > 1 else None
+            from tools.manual_tools import display_fleet_manual
+            print(f"\n[AUTHOR -> PEGLEG] ({thread_id}) -> {args.prompt}\n")
+            print(f"\n[NPT FLEET MANUAL]:\n{display_fleet_manual(topic)}\n")
+            return
+
         print(f"\n[AUTHOR -> PEGLEG] ({thread_id}) -> {args.prompt}\n")
         output = engine.execute_turn(chat_session, args.prompt)
         print(f"\n[PEGLEG AGENT RESPONSE]:\n{output}\n")
@@ -87,6 +142,14 @@ def run_pegleg_cli():
                 print(f"\n[SYSTEM] Terminating Pegleg session ({thread_id}). State saved.")
                 break
             if not user_input.strip():
+                continue
+
+            # Instant UNIX 'man' fast-path intercept (Zero latency / Zero token cost)
+            parts = user_input.strip().split()
+            if parts and parts[0].lower() == "man":
+                topic = parts[1].lower() if len(parts) > 1 else None
+                from tools.manual_tools import display_fleet_manual
+                print(f"\n{display_fleet_manual(topic)}\n")
                 continue
 
             output = engine.execute_turn(chat_session, user_input)

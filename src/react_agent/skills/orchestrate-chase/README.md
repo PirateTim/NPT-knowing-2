@@ -23,19 +23,19 @@ The Chase workflow operates across discrete rounds and stages. Each agent writes
 | - Seizes full-text web asset & preserves publication date metadata.               |
 | - Output: acquisitions/[slug].txt & writings/chases/{thread_id}/stage1_spyglass_capture.txt |
 |                                                                                   |
-| STAGE 2: CUTLASS FORENSIC AUDIT                                                   |
-| - Evaluates Chain of Ruin & applies heuristics (Rules 022, 023, 024, 025).       |
+| STAGE 2: BILGELADLE THESIS ALIGNMENT                                              |
+| - Maps evidence to manuscript chapters (Chapters 0-12) & Toulmin arguments.        |
+| - Designates Primary Chapter Anchor & Section Ribs.                               |
+| - Output: writings/cargo/cargo_{id}/bilgeladle_alignment.md & stage2_bilgeladle.md |
+|                                                                                   |
+| STAGE 3: CUTLASS FORENSIC AUDIT                                                   |
+| - Evaluates Chain of Ruin, SAYS vs IS, Warrants & Fallacies (Informed by Anchor).|
 | - Assigns strict Sail Locker category (MAINSAIL, BILGE, JIB, or DOLDRUMS).        |
-| - Output: writings/chases/{thread_id}/stage2_cutlass_enrichment.md               |
+| - Output: writings/cargo/cargo_{id}/cutlass_audit.md & stage3_cutlass_audit.md     |
 |                                                                                   |
-| STAGE 3: GROG CORE SUMMARIZATION & EXTRACTION                                     |
-| - Strictly summarizes content; injects Dead Reckoning provenance, Fact Plumbing    |
-|   assertions/assumptions, and Sightings. Single asset per prompt.                  |
-| - Output: writings/chases/{thread_id}/stage3_grog_extraction.md                   |
-|                                                                                   |
-| STAGE 4: BILGELADLE THESIS MAPPING                                                |
-| - Maps evidence to manuscript chapters (Chapters 1-8) & Toulmin arguments.        |
-| - Output: writings/chases/{thread_id}/stage4_bilgeladle_thesis_map.md             |
+| STAGE 4: GROG FACT PLUMBING & EXTRACTION                                          |
+| - Dead Reckoning provenance, Fact Plumbing, Summary, and Primary Sightings.       |
+| - Output: writings/cargo/cargo_{id}/grog_extraction.md & stage4_grog_extraction.md|
 +-----------------------------------------------------------------------------------+
                                        |
                                        v
@@ -54,9 +54,9 @@ Every Chase produces a dedicated physical directory under `writings/chases/{chas
 |---|---|---|---|
 | **Status Tracking** | Pegleg | Master Status & Agent Thread Mapping | `writings/chases/{chase_id}/chase_status.md` |
 | **Stage 1** | Spyglass | Content Acquisition & Date Preservation | `acquisitions/[slug].txt` & `writings/chases/{chase_id}/stage1_spyglass_capture.txt` |
-| **Stage 2** | Cutlass | Epistemic Audit & Sail Locker Rating | `writings/chases/{chase_id}/stage2_cutlass_enrichment.md` |
-| **Stage 3** | Grog | The Summarizer: Dead Reckoning, Fact Plumbing, Summary, & Sightings | `writings/chases/{chase_id}/stage3_grog_extraction.md` |
-| **Stage 4** | Bilgeladle | Thesis Alignment & Chapter Mapping (Ch. 1–8) | `writings/chases/{chase_id}/stage4_bilgeladle_thesis_map.md` |
+| **Stage 2** | Bilgeladle | Thesis Alignment & Chapter Mapping (Ch. 0–12) | `writings/cargo/cargo_{metadata_id}/bilgeladle_alignment.md` & `stage2_bilgeladle_alignment.md` |
+| **Stage 3** | Cutlass | Epistemic Audit & Sail Locker Rating (Anchor Informed) | `writings/cargo/cargo_{metadata_id}/cutlass_audit.md` & `stage3_cutlass_audit.md` |
+| **Stage 4** | Grog | Fact Plumbing, Summary, & Sightings | `writings/cargo/cargo_{metadata_id}/grog_extraction.md` & `stage4_grog_extraction.md` |
 | **Stage 5** | Scallywag | Narrative Synthesis Essay | `writings/chases/{chase_id}/stage5_scallywag_essay.md` |
 | **Stage 6a** | Bilgeladle | Peer Audit Review of Scallywag Essay | `writings/chases/{chase_id}/stage6_bilgeladle_review.md` |
 | **Stage 6b** | Cutlass | Peer Audit Review of Scallywag Essay | `writings/chases/{chase_id}/stage6_cutlass_review.md` |

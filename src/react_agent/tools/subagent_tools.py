@@ -70,6 +70,75 @@ def dispatch_subagent_turn(
             "error": f"XML definition for agent '{agent_name_lower}' not found at {xml_abs_path}"
         })
 
+    # =========================================================================
+    # ZERO-TOKEN GATEKEEPER: PRE-FLIGHT TARGET ASSET INTEGRITY AUDIT
+    # Prevents runaway 20-tool thrashing loops and token spend if target asset is unreadable
+    # =========================================================================
+    workspace_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    target_asset = None
+
+    if agent_name_lower in ["bilgeladle", "cutlass", "grog", "scallywag"]:
+        import re
+        match = re.search(r"acquisitions/[a-zA-Z0-9_\-\.]+\.txt", prompt)
+        if match:
+            target_asset = match.group(0)
+        elif cargo_id is not None:
+            try:
+                from tools.cargo_db_tools import _get_db_connection
+                conn = _get_db_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT gcp_bucket_path FROM cargo.content_metadata WHERE id = %s", (cargo_id,))
+                row = cur.fetchone()
+                if row and row[0]:
+                    target_asset = row[0]
+                cur.close()
+                conn.close()
+            except Exception:
+                pass
+
+        if target_asset:
+            local_asset_path = os.path.abspath(os.path.join(workspace_root, target_asset))
+            needs_recovery = False
+            if not os.path.exists(local_asset_path):
+                needs_recovery = True
+            else:
+                file_size = os.path.getsize(local_asset_path)
+                if file_size < 500:
+                    needs_recovery = True
+                else:
+                    try:
+                        with open(local_asset_path, "r", encoding="utf-8", errors="replace") as f:
+                            head = f.read(200)
+                            if "cargo_cache/temp_acquire_" in head:
+                                needs_recovery = True
+                    except Exception:
+                        needs_recovery = True
+
+            if needs_recovery:
+                print(f"  -> [ZERO-TOKEN GATEKEEPER] Target asset '{target_asset}' is missing or invalid on local disk. Attempting auto-recovery from GCS...")
+                recovered = False
+                try:
+                    from tools.cloud_knowledge_tools import read_knowledge_artifact
+                    gcs_content = read_knowledge_artifact(target_asset)
+                    if gcs_content and not gcs_content.startswith("[ERROR]") and len(gcs_content) >= 500 and "cargo_cache/temp_acquire_" not in gcs_content[:200]:
+                        os.makedirs(os.path.dirname(local_asset_path), exist_ok=True)
+                        with open(local_asset_path, "w", encoding="utf-8") as f:
+                            f.write(gcs_content)
+                        print(f"  -> [ZERO-TOKEN GATEKEEPER] Successfully auto-recovered '{target_asset}' ({len(gcs_content)} bytes) from GCS into local workspace.")
+                        recovered = True
+                except Exception as rec_err:
+                    print(f"  -> [ZERO-TOKEN GATEKEEPER] GCS auto-recovery failed: {rec_err}")
+
+                if not recovered:
+                    print(f"  -> [ZERO-TOKEN GATEKEEPER] FATAL PRE-FLIGHT FAILURE: '{target_asset}' could not be resolved from local disk or GCS. Aborting dispatch before cognitive token spend.")
+                    return json.dumps({
+                        "status": "PREFLIGHT_ABORT",
+                        "agent_name": agent_name_lower,
+                        "thread_id": thread_id,
+                        "chase_id": chase_id,
+                        "error": f"PRE-FLIGHT GATE FAILURE: Target asset '{target_asset}' is missing, empty (< 500 bytes), or contains an invalid ghost pointer on local disk and could not be recovered from GCS. Subagent dispatch aborted to prevent runaway tool loops and token spend."
+                    }, indent=2)
+
     try:
         from core.agent_engine import AgentEngine
         engine = AgentEngine(agent_name=agent_name_lower, xml_profile_path=xml_abs_path)
@@ -78,6 +147,64 @@ def dispatch_subagent_turn(
         chat_session = engine.start_chat_session(thread_id)
         response_text = engine.execute_turn(chat_session, prompt)
         engine.save_checkpoint(thread_id, chat_session.get_history())
+
+        # =========================================================================
+        # ZERO-TOKEN GATEKEEPER: POST-FLIGHT SPYGLASS & SUBAGENT VALIDATION
+        # =========================================================================
+        if agent_name_lower == "spyglass":
+            import re
+            staged_asset = None
+            match = re.search(r"acquisitions/[a-zA-Z0-9_\-\.]+\.txt", response_text)
+            if not match:
+                match = re.search(r"acquisitions/[a-zA-Z0-9_\-\.]+\.txt", prompt)
+            if match:
+                staged_asset = match.group(0)
+            elif chase_id:
+                cap_file = os.path.abspath(os.path.join(workspace_root, "writings", "chases", chase_id, "stage1_spyglass_capture.txt"))
+                if os.path.exists(cap_file):
+                    try:
+                        with open(cap_file, "r", encoding="utf-8") as f:
+                            cap_content = f.read()
+                            m = re.search(r"acquisitions/[a-zA-Z0-9_\-\.]+\.txt", cap_content)
+                            if m:
+                                staged_asset = m.group(0)
+                    except Exception:
+                        pass
+
+            if staged_asset:
+                staged_abs = os.path.abspath(os.path.join(workspace_root, staged_asset))
+                if not os.path.exists(staged_abs) or os.path.getsize(staged_abs) < 500:
+                    return json.dumps({
+                        "status": "POSTFLIGHT_VERIFICATION_FAILED",
+                        "agent_name": agent_name_lower,
+                        "thread_id": thread_id,
+                        "chase_id": chase_id,
+                        "error": f"POST-FLIGHT GATE FAILURE: Spyglass did not stage a valid acquisitions file at '{staged_asset}'. File is missing or under 500 bytes.",
+                        "response": response_text
+                    }, indent=2)
+                else:
+                    with open(staged_abs, "r", encoding="utf-8", errors="replace") as f:
+                        head = f.read(200)
+                        if "cargo_cache/temp_acquire_" in head:
+                            return json.dumps({
+                                "status": "POSTFLIGHT_VERIFICATION_FAILED",
+                                "agent_name": agent_name_lower,
+                                "thread_id": thread_id,
+                                "chase_id": chase_id,
+                                "error": f"POST-FLIGHT GATE FAILURE: Staged acquisition '{staged_asset}' contains a dead ghost pointer string instead of authentic text payload.",
+                                "response": response_text
+                            }, indent=2)
+
+        # Check for fail-fast error output from subagents
+        if "[FATAL: TARGET_ASSET_UNREADABLE]" in response_text:
+            return json.dumps({
+                "status": "SUBAGENT_HALT_UNREADABLE_ASSET",
+                "agent_name": agent_name_lower,
+                "thread_id": thread_id,
+                "chase_id": chase_id,
+                "error": "Subagent halted immediately on Turn 1 due to unreadable target asset.",
+                "response": response_text
+            }, indent=2)
 
         return json.dumps({
             "status": "SUCCESS",

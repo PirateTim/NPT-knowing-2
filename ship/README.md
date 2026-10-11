@@ -17,9 +17,9 @@ By processing the manuscript across distinct pedagogical tiers, Bilgeladle becom
 - Houses master reference indices (`chXX_references.md`).
 - **Exclusive Vector Ingestion Source**: This tier is the sole ground-truth source used to populate the Vector Database (**`ship.letters_of_marque`**).
 
-### 3. `ship/CHAPTER_BACKBONES.md` & `chapter_backbones.json` (Master Cognitive Compass)
+### 3. `ship/SHIP_DECK_PLANS.md` & `ship_deck_plans.json` (Master Cognitive Compass)
 - Contains the 13 calibrated **Master Chapter Backbones** (5-Part Schema: Title, Subject Sector, Vector of Destruction, Invariant Predicates, Universal Doom Point) and granular **Section Ribs**.
-- **The Operational Brain**: Replaces the legacy "Silver" Map-Expand-Reduce experiment with a lean, dense, 13-node coordinate grid that Bilgeladle and Scallywag use to diagnose external cargo.
+- **The Operational Brain**: Replaces the legacy "Silver" Map-Expand-Reduce experiment with a lean, dense, 13-node coordinate grid that Bilgeladle and Scallywag use to diagnose external cargo. Bilgeladle holds this structure directly in system prompt context and calls `read_manuscript_chapter(chapter_number)` for complete prose context or `vector_search_manuscript` for semantic retrieval.
 
 ### 4. Legacy "Silver" Archive (`archive/legacy_silver_pipeline/`)
 - In September 2026, the stalled Map-Expand-Reduce silver expansion loop (`ship/expansions/`, `ship/reduces/`, and `ship/silver/`) was formally deprecated and archived. All verified citation nodes were preserved in `ship/bronze_plus/`.

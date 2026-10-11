@@ -19,7 +19,10 @@
     </system_config>
 
     <skills>
+        <skill_ref name="formulate-few-shot-exemplar" path="src/react_agent/skills/formulate-few-shot-exemplar/SKILL.md"/>
+        <skill_ref name="formulate-learned-rule" path="src/react_agent/skills/formulate-learned-rule/SKILL.md"/>
         <skill_ref name="github-backlog-management" path="src/react_agent/skills/github-backlog-management/SKILL.md"/>
+        <skill_ref name="update-fleet-manual" path="src/react_agent/skills/update-fleet-manual/SKILL.md"/>
     </skills>
 
     <environment_context>

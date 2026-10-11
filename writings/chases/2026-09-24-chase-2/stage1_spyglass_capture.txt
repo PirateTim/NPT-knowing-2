@@ -1,0 +1,9 @@
+CANONICAL_ASSET_PATH: acquisitions/dont-be-fooled-by-this-summer-of-ai-hype.txt
+METADATA_ID: cargo_1239
+TITLE: Don't be fooled by this summer of AI hype
+AUTHORS: Timnit Gebru, Emily M. Bender
+PUBLICATION_DATE: 2026-09-22
+PUBLISHER: MIT Technology Review
+ITEM_TYPE: journalArticle
+SOURCE_URL: https://www.technologyreview.com/2026/09/22/1144867/dont-be-fooled-summer-ai-hype/?utm_source=the_download&utm_medium=email&utm_campaign=the_download.unpaid.engagement&utm_term&utm_content=09-22-2026&mc_cid=cedfc84f5b&mc_eid=1b6ec02c98
+STATUS: COMPLETED

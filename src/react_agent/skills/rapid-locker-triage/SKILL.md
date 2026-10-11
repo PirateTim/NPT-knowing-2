@@ -1,7 +1,6 @@
 ---
 name: rapid-locker-triage
 description: Rapid, low-token Sail Locker classification skill. Performs a fast-pass evaluation of an acquired asset to slot it into MAINSAIL, BILGE, JIB, or default DOLDRUMS.
-agents: [cutlass]
 ---
 
 # SKILL: Rapid Sail Locker Triage

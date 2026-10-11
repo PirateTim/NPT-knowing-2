@@ -1,0 +1,301 @@
+https://www.geeky-gadgets.com/google-gemini-3-0-ai-features/
+
+https://shaeomonijo.substack.com/p/ais-hidden-crisis-the-industry-is?r=2ptp7i&utm_medium=ios&triedRedirect=true
+
+
+Cory Doctorow argues that copyright law is not the right tool to address the challenges posed by generative AI and that attempts to rewrite it will not protect creators. Instead, he advocates for solutions based on labor law and competition law. [1, 2, 3, 4, 5]  
+Key Positions on Copyright and AI: • Training Data and Fair Use: Doctorow believes that training AI models on existing works generally constitutes fair use and is not copyright infringement. He compares a machine's statistical analysis of works to how human artists learn from and synthesize the works they admire. 
+• AI-Generated Output: He points out that works generated entirely by AI in the US currently cannot be copyrighted because they lack a human author. This means AI-generated content is in the public domain. 
+• A Pyrrhic Victory for Artists: Doctorow argues that a requirement for AI companies to license all training data would not benefit individual artists. Instead, it would create a "pyrrhic victory" where licensing fees would primarily flow to large tech and media corporations that already own vast catalogs of IP, reinforcing monopolies and disadvantaging independent creators. 
+• Focus on Labor Rights: Doctorow's central argument is that the issue isn't one of copyright, but rather a labor problem. He suggests that the focus should be on new labor laws that give creators collective bargaining power to negotiate fair compensation and working conditions in an AI-driven economy. 
+• The "Reverse-Centaur": He coined the term "reverse-centaur" to describe a human worker employed to add minimal "human touch" to nearly finished AI-generated content, solely to bypass the non-copyrightable status of AI-only works and shed liabilities for their employers. 
+• AI as a Tool for Human Creativity: Doctorow views AI as a general-purpose tool that can facilitate creativity and expression for many people, similar to how the internet has democratized access to information and content creation. Limiting access to this technology through restrictive copyright law would stifle innovation and personal expression. [1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13]  
+
+AI responses may include mistakes.
+
+[1] https://www.rightclicksave.com/article/ai-art-and-uncanniness-cory-doctorow-artificial-intelligence-copyright
+[2] https://janefriedman.com/from-copyright-to-labor-rights-cory-doctorow-on-ai-challenges/
+[3] https://janefriedman.com/from-copyright-to-labor-rights-cory-doctorow-on-ai-challenges/
+[4] https://doctorow.medium.com/copyright-wont-solve-creators-generative-ai-problem-92d7adbcc6e6
+[5] https://www.jddavispoet.com/book-reviews/the-internet-con-how-to-seize-the-means-of-computation-cory-doctorow
+[6] https://vi-control.net/community/threads/cory-doctorow-copyright-wont-solve-creators-generative-ai-problem.167169/
+[7] https://pluralistic.net/2023/08/20/everything-made-by-an-ai-is-in-the-public-domain/
+[8] https://janefriedman.com/from-copyright-to-labor-rights-cory-doctorow-on-ai-challenges/
+[9] https://pluralistic.net/2023/08/20/everything-made-by-an-ai-is-in-the-public-domain/
+[10] https://doctorow.medium.com/https-pluralistic-net-2025-08-04-bad-vibe-coding-maximally-codelike-bugs-8372979b3933
+[11] https://vi-control.net/community/threads/cory-doctorow-copyright-wont-solve-creators-generative-ai-problem.167169/
+[12] https://www.techpolicy.press/generative-ai-and-copyright-policy-from-the-creator-users-perspective/
+[13] https://www.eff.org/deeplinks/2025/02/ai-and-copyright-expanding-copyright-hurts-everyone-heres-what-do-instead
+
+
+Mosaic | AI art and uncanniness https://share.google/egSVRHNr6oUDzAlgo
+
+
+https://yalelawjournal.org/forum/artificial-why-copyright-is-not-the-right-policy-tool-to-deal-with-generative-ai
+
+
+Lawrence Lessig has been vocal about the significant risks posed by AI to democracy and security, arguing against the automatic application of "open source" principles to highly capable AI models and advocating for new forms of regulation and democratic deliberation. He has also addressed the complexities of copyright law in the age of generative AI, arguing for copyright protection for human-triggered AI-generated works while maintaining that AI training on public data should be considered fair use. [1, 2, 3, 4]
+
+Key Positions:
+Open-Source AI Risks: Lessig, an open-source pioneer (founder of Creative Commons), argues that the open-source model should not be blindly extended to powerful AI. He highlights the "unique kind of risk" posed by open-weight AI models, such as potential misuse for creating bioweapons or conducting severe cyberattacks. He analogizes the situation to not sharing nuclear weapons technology and stresses the need for safeguards like on-chip kill-switches and improved control mechanisms before open deployment.
+AI's Threat to Democracy: Lessig warns that AI algorithms, particularly those driving engagement on social media, are "hacking our brains" and contributing to political polarization and a decline in shared reality. He argues for "protected democratic deliberation," such as citizen assemblies, to create a space for informed decision-making that is shielded from the manipulation of profit-driven AI algorithms.
+Copyright and Fair Use: Lessig takes a nuanced stance on AI and intellectual property.
+Training Data: He strongly believes that the use of publicly available data to train AI models should be considered fair use ("the right to read is the right to train").
+AI-Generated Works: He argues that human users who create works with the assistance of AI should be granted copyright protection for their output, an opinion contrary to current U.S. Copyright Office rulings. He views the human input, even a prompt, as akin to a photographer using a camera (a machine-aided creative process that is traditionally copyrightable).
+Regulation: He is a proponent of well-designed, robust government regulation to ensure AI development serves the public interest, countering the "anti-regulation" stance of many in the tech industry. He supports measures like California's AI safety bill (SB1047) and emphasizes the historical necessity of government oversight to balance private market interests with public good. He has also been representing a group of OpenAI whistleblowers, further highlighting his concerns about corporate self-regulation. [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+AI responses may include mistakes.
+[1] https://www.transformernews.ai/p/lawrence-lessig-open-source-ai-risks
+[2] https://walledculture.org/lawrence-lessig-on-copyright-generative-ai-and-the-right-to-train/
+[3] https://lessig.medium.com/for-ai-copyright-for-ai-artists-ca6221932811
+[4] https://www.transformernews.ai/p/lawrence-lessig-open-source-ai-risks
+[5] https://english.hani.co.kr/arti/english_edition/e_business/1204895.html
+[6] https://singjupost.com/transcript-how-ai-could-hack-democracy-lawrence-lessig/
+[7] https://www.thenation.com/article/society/sb-1047-ai-big-tech-fight/
+[8] https://johnbattelle.medium.com/the-internet-isnt-special-real-space-is-larry-lessig-on-our-failure-to-regulate-tech-9bd72c1701f0
+[9] https://rebootdemocracy.ai/blog/building-a-more-public-ai-ecosystem-lawrence-lessig/
+[10] https://walledculture.org/lawrence-lessig-on-copyright-generative-ai-and-the-right-to-train/
+
+https://fortune.com/2025/11/10/scott-galloway-nowhere-to-hide-ai-bubble-sam-altman/
+
+https://techcrunch.com/2025/11/10/wikipedia-urges-ai-companies-to-use-its-paid-api-and-stop-scraping/
+
+https://www.economist.com/business/2025/11/06/should-facial-analysis-help-determine-whom-companies-hire
+
+https://www.techradar.com/pro/microsoft-is-working-on-a-new-class-of-ai-agents-that-could-change-everything-in-your-workforce
+
+https://the-decoder.com/most-llm-benchmarks-are-flawed-casting-doubt-on-ai-progress-metrics-study-finds/
+
+
+https://fortune.com/2025/11/08/peter-thiel-millennails-socialism-capitalism-communism-boomers-mamdani/
+
+https://www.theatlantic.com/technology/2025/11/openai-lawsuit-subpoenas/684861/?link_source=ta_thread_link&taid=691298e590f23100010dde64&utm_campaign=the-atlantic&utm_content=edit-promo&utm_medium=social&utm_source=threads
+
+
+https://arxiv.org/abs/2511.04707
+
+https://www.theinformation.com/articles/stopped-worrying-learned-love-bots?utm_campaign=&utm_content=&utm_medium=organic_social&utm_source=bluesky%2Cfacebook%2Clinkedin%2Cthreads%2Ctwitter
+
+https://arxiv.org/abs/2506.21734
+
+https://mashable.com/article/kohls-black-friday-ad-2025-deals
+
+https://indianexpress.com/article/technology/artificial-intelligence/meta-chief-ai-scientist-yann-lecun-plans-to-exit-to-launch-startup-report-10359701/
+
+https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai
+
+https://onlinelibrary.wiley.com/doi/epdf/10.1111/jcc4.12166
+
+https://newrepublic.com/article/202864/meta-generative-ai-ads-emissions
+
+https://cacm.acm.org/blogcacm/why-nietzsche-matters-in-the-age-of-artificial-intelligence/
+
+https://www.gema.de/en/w/landmark-ruling-gema-against-openai
+
+https://journals.sagepub.com/doi/10.1177/15701255251394199
+
+https://budgetlab.yale.edu/research/evaluating-impact-ai-labor-market-current-state-affairs
+
+https://newrepublic.com/article/202864/meta-generative-ai-ads-emissions
+
+https://youtu.be/qG4ektofzkI?si=12m9uEmhk4Icr4JI
+
+https://www.morningbrew.com/stories/2025/11/08/is-openai-putting-the-ai-in-too-big-to-fail
+
+
+https://arxiv.org/abs/2510.26658
+
+
+https://progresschamber.org/insights/tim-wu-cory-doctorows-non-player-consumers/
+
+https://www.rollingstone.com/culture/culture-features/spiralist-cult-ai-chatbot-1235463175/
+
+https://event.webcasts.com/viewer/event.jsp?ei=1738439&tp_key=9c1868453f
+
+
+https://www.sbs.com.au/news/article/supermarket-chatbot-suggests-recipes-for-toxic-gas-and-poisonous-jelly/u4cw51rtw
+
+https://www.xda-developers.com/notebooklm-rolling-out-deep-research/
+
+https://www.windowscentral.com/microsoft/windows-11/windows-president-confirms-os-will-become-ai-agentic-generates-push-back-online
+
+https://www.politico.com/news/2025/11/12/mikie-sherrill-advice-democrats-2026-elections-00647375
+
+
+https://www.propublica.org/article/portland-protests-national-guard-fox-news-coverage?utm_campaign=propublica-sprout&utm_content=1762929586&utm_medium=social&utm_source=threads
+
+https://www.scmp.com/tech/big-tech/article/3332365/bytedance-unveils-chinas-most-affordable-ai-coding-agent-just-us130-month
+
+https://nymag.com/intelligencer/article/ai-replacing-entry-level-jobs-gen-z-careers.html
+
+
+https://www.anthropic.com/news/anthropic-invests-50-billion-in-american-ai-infrastructure
+
+
+Thread with several links
+https://www.threads.com/@tusannahkrauss/post/DQ-HygQkicT?xmt=AQF0KZsD5wSUDtiHF5-8raHzggbfw4gubCwkZvktEhYTvaM7saKJEX1qSsaQZBx_J7z7v5E&slof=1
+
+https://arxiv.org/abs/2509.08919?hl=en-US
+
+https://shesgotissues.com/broken-hiring-systems-and-the-cowards-who-run-them/
+
+https://www.washingtonpost.com/technology/2025/11/12/how-people-use-chatgpt-data/
+
+https://youtu.be/8-boBsWcr5A?si=VxTGtBOqZ9JDzMWE
+
+https://vp.net/l/en-US/blog/OpenAI%27s-Privacy-Theater-Uf6
+
+https://www.oneusefulthing.org/p/giving-your-ai-a-job-interview
+
+
+https://www.wired.com/story/all-my-employees-are-ai-agents-so-are-my-executives/
+
+https://sources.news/p/chatgpts-quiet-slump-zucks-ai-bubble
+
+https://theintercept.com/2024/04/15/nyt-israel-gaza-genocide-palestine-coverage/
+
+https://www.linkedin.com/posts/mkriggsbee_40-reddit-60-confidence-0-expertise-activity-7394444933392257024-Zs14?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAAAACkwIBHDYgMZJP8jo2j34PVvDeQJpAppI&utm_campaign=share_via
+
+https://www.forbes.com/sites/lanceeliot/2025/11/11/prompt-engineering-urges-hermeneutic-prompting-as-a-powerful-technique-unlocking-the-true-value-of-generative-ai/
+
+https://lp.scholasticahq.com/technology-needs-small-medium-journal-publishers/
+
+https://fortune.com/2025/11/11/who-is-yann-lecun-career-meta-ai-chief-scientist-nyu-turing/
+
+https://people.com/after-their-books-were-pirated-to-train-ai-three-authors-went-to-court-and-won-exclusive-11844826
+
+https://tax.thomsonreuters.com/blog/how-do-different-accounting-firms-use-ai-tri/
+
+https://finance.yahoo.com/news/mark-zuckerbergs-patience-ran-hyperbolic-193106491.html
+
+https://newyorkwarcrimes.com/
+
+https://www.reddit.com/r/perplexity_ai/s/HTpcKbsQu2
+
+https://www.wsj.com/tech/ai/china-hackers-ai-cyberattacks-anthropic-41d7ce76?st=Xic5Ro&reflink=desktopwebshare_permalink
+
+https://www.westmonroe.com/insights/state-enterprise-ai-spend?atrkid=V3ADWED098667______m___&utm_source=google&utm_medium=cpc&utm_term=&utm_content=!acq!v3!_____m__&utm_campaign=PMax+%28eBook%29+-+B2B_Software&gad_source=1&gad_campaignid=23174155616&gclid=CjwKCAiAoNbIBhB5EiwAZFbYGOyvNrkCDOtA_W1EzgtaNqDJWO-Ck0Qo0MgyfyQxRmPExUMUuvL8GhoCIpYQAvD_BwE
+
+https://www.theverge.com/news/802653/openai-gpt-5-1-upgrade-personality-presets
+
+https://www.pcmag.com/news/chinese-hackers-successfully-used-anthropics-ai-for-cyberespionage?link_source=ta_thread_link&taid=69166e764d914700013a06b6&utm_campaign=trueAnthem:+Trending+Content&utm_medium=trueAnthem&utm_source=threads
+
+https://www.irishtimes.com/business/2025/10/07/has-social-media-finally-peaked-the-rise-of-ai-and-decline-of-screen-time/
+
+https://economictimes.indiatimes.com/news/new-updates/pakistans-biggest-newspaper-dawn-started-by-jinnah-publishes-ai-prompt-in-car-sales-news-report-apologises-for-ai-generated-text/articleshow/125294198.cms?from=mdr
+
+https://www.texastribune.org/2025/11/13/texas-am-regents-race-gender-ideology-course-audit/
+
+https://developers.googleblog.com/en/google-colab-is-coming-to-vs-code/
+
+https://youtu.be/vrTrOCQZoQE?si=2oCEzHQnpiQDa6no
+
+https://www.amazon.com/dp/B0G29XXNT4
+
+https://techcrunch.com/2025/11/14/openai-says-its-fixed-chatgpts-em-dash-problem/
+
+https://www.adweek.com/media/future-media-youtube-onbackground/
+
+https://msmagazine.com/2025/11/11/texas-gender-studies-audit-university-college-feminist-studies/
+
+https://www.huffpost.com/entry/viral-ai-ice-raid-videos_l_69163baee4b0df3e16be4163
+
+https://www.businessinsider.com/meta-ai-employee-performance-review-overhaul-2025-11
+
+https://pen.org/press-release/restrictive-texas-am-policy-marks-latest-erosion-of-academic-freedom/
+
+https://www.wsj.com/tech/ai/yann-lecun-ai-meta-0058b13c?st=19Ec8H&reflink=article_copyURL_share
+
+https://www.noemamag.com/the-ascendance-of-algorithmic-tyranny/?utm_source=noemathreads&utm_medium=noemasocial
+
+https://psycnet.apa.org/fulltext/2026-89350-001.html
+
+https://futurism.com/future-society/palantir-ceo-talks-to-nazis
+
+https://www.reuters.com/world/china-says-us-is-true-empire-lies-2023-09-30/
+
+https://www.wsj.com/tech/ai/ai-is-making-big-tech-weaker-6a12b0b7
+
+https://futurism.com/artificial-intelligence/company-run-entirely-ai-generated-employees-chaos
+
+https://www.nytimes.com/2025/11/12/business/media/ai-defamation-libel-slander.html?unlocked_article_code=1.1k8.gsLX.0gTQ7L9W7xGt&smid=url-share
+
+https://www.yahoo.com/lifestyle/articles/ai-being-shoved-down-throat-114500822.html
+
+
+https://www.theguardian.com/technology/2025/nov/11/chatgpt-violated-copyright-laws-german-court-rules
+
+https://www.cjr.org/opinion/viktor-orban-hungary-press-freedom-blikk-kesma-indamedia.php
+
+https://www.penguinrandomhouse.com/books/782388/how-to-ai-by-christopher-mims/
+
+https://youtu.be/PFRrTuVyhNg?si=dKI0CqRR2pDPNX7N
+
+
+https://duo.com/resources/ebooks/state-of-identity-security?utm_source=facebook&utm_medium=paid_social&utm_campaign=151_duo_ig_fb_salll1_amer&utm_content=DUO-FY26-Q1-GLOBAL-0814-COEB-EBOOK%3A-2025-STATE-OF-IDENTITY-SECURITY%3A-CHALLENGES-&language=English&utm_keyword=state-of-identity_black_dyn&utm_id=120212258931590250_v2_s10_e7375_c1&utm_term=120212258931590250&fbclid=PAZXh0bgNhZW0BMABhZGlkAaso67MaSfpzcnRjBmFwcF9pZBAzNDE5NjI4MzA1MDI1OTE3CGNhbGxzaXRlATMAAae9uYORa5cjHM_ifFDlIgMFkveIkxGplnfbwSFWQEKFdDibKyFgrFVqGFH82A_aem_6mQeFTww6Twgm9x9zR7b-A
+
+https://steadycompounding.com/investing/google-search/
+
+https://www.threads.com/@elizabethrosehalligan/post/DRIX19Dkhpz?xmt=AQF07RAmia8z3iTokTZ3Tz2wX5MYYpk15O4OSJOO6Qguy-7Abx7HbLdc0iK14MqWzjVj8qWy&slof=1
+
+https://futurism.com/artificial-intelligence/fireflies-founder-startup-ai
+
+https://www.theatlantic.com/politics/2025/11/brendan-carr/684936/
+
+
+https://www.bloomberg.com/graphics/2025-ai-data-centers-electricity-prices/
+
+https://www.interconnects.ai/p/why-ai-writing-is-mid
+
+https://futurism.com/future-society/facial-recognition-ai-prejudice
+
+https://spookyconnections.com/2025/11/17/hybrid-war-in-mexico-how-an-anti-impunity-protest-was-hijacked/
+
+https://mashable.com/article/age-verification-may-impede-on-adults-rights-study-suggests?link_source=ta_thread_link&taid=691b864181d1f40001b4dd28&utm_campaign=trueanthem&utm_medium=social&utm_source=threads.net&test_uuid=04wb5avZVbBe1OWK6996faM&test_variant=b
+
+https://www.thebeaverton.com/2025/11/nestle-worried-ai-will-destroy-worlds-water-supply-before-they-do/
+
+https://www.reuters.com/commentary/breakingviews/ai-adds-logic-reinventing-silicon-wheel-2025-11-17/?link_source=ta_bluesky_link&taid=691b9e7243e91a00019eb144&utm_campaign=trueanthem&utm_medium=social&utm_source=bluesky
+
+https://youtu.be/-cbtUYshYM8?si=09wwZKN6u-xpeW1N
+
+https://www.theatlantic.com/magazine/archive/2022/05/social-media-democracy-trust-babel/629369/?link_source=ta_thread_link&taid=691b319a87ea5e0001e7e458&utm_campaign=the-atlantic&utm_content=edit-promo&utm_medium=social&utm_source=threads
+
+https://www.icij.org/investigations/coin-laundry/
+
+https://www.thefp.com/p/niall-ferguson-the-ai-boom-is-a-house-of-cards?link_source=ta_thread_link&taid=691ba6f587ea5e0001e7ed77&utm_campaign=trueanthem&utm_medium=social&utm_source=threads
+
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5710867
+
+https://aigenealogyinsights.com/2025/11/17/you-will-hear-of-launches-and-rumors-of-launches/
+
+https://www.csmonitor.com/USA/Education/2025/1009/ai-chatgpt-college-students-abstain
+
+https://augmentedmind.substack.com/p/prepping-for-agi-is-a-distraction
+
+https://www.theatlantic.com/magazine/2025/12/ai-companionship-anti-social-media/684596/
+
+https://www.oversightboard.com/news/board-to-address-ai-generated-content-in-israel-iran-conflict/
+
+https://www.forbes.com/sites/maryroeloffs/2025/11/14/americans-want-billionaires-out-of-politics-and-think-theyre-a-threat-to-democracy-poll-shows/
+
+https://news.bgov.com/bloomberg-government-news/ai-chatbot-risks-to-kids-back-in-the-spotlight-as-house-returns?link_source=ta_thread_link&taid=691c44ea87ea5e0001e7f69b&utm_campaign=trueanthem&utm_medium=social&utm_source=threads
+
+https://www.cloudflare.com/press/press-releases/2025/cloudflare-just-changed-how-ai-crawlers-scrape-the-internet-at-large/
+
+https://fratelli.com/get-ahead-or-fall-behind-telling-your-story-in-a-fragmented-media-ecosystem/
+
+https://news.mit.edu/2025/bigger-datasets-arent-always-better-1118
+
+https://agentsofinfluence.substack.com/p/source-wars-and-bespoke-realities
+
+https://theconversation.com/when-fake-data-is-a-good-thing-how-synthetic-data-trains-ai-to-solve-real-problems-265180
+
+https://www.wsj.com/opinion/montclair-states-inhumanity-to-the-humanities-3da168fa?st=Vjjk9Z&reflink=desktopwebshare_permalink
+
+https://www.wsj.com/opinion/montclair-states-inhumanity-to-the-humanities-3da168fa?st=Vjjk9Z&reflink=desktopwebshare_permalink
+
+https://www.businessinsider.com/media-startups-post-google-zero-search-traffic-2025-11
+
+https://abovethelaw.com/2025/10/judges-admit-the-obvious-concede-ai-used-for-hallucinated-opinions/
+

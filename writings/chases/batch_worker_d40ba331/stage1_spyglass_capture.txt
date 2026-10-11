@@ -1,0 +1,9 @@
+SOURCE_URL: https://kityates.substack.com/p/why-im-resigning-my-editorship-at
+CANONICAL_PATH: acquisitions/why-im-resigning-my-editorship-at-a-royal-society-journal.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/why-im-resigning-my-editorship-at-a-royal-society-journal.txt
+TITLE: Why I'm resigning my editorship at a Royal Society journal
+AUTHORS: Kit Yates
+PUBLICATION_DATE: 2025-03-05
+PUBLICATION_TITLE: Kit Yates - Math(s) and the real world
+ITEM_TYPE: blogPost
+STATUS: COMPLETED

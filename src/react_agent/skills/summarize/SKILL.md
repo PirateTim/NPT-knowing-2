@@ -1,7 +1,6 @@
 ---
 name: summarize
 description: Writes a brief, strict, non-judgmental summary of what the content says—free from editorial critique, evaluation, praise, or interpretive spin.
-agents: [grog]
 ---
 
 # SKILL: Summarize

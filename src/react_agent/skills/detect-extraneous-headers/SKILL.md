@@ -1,7 +1,6 @@
 ---
 name: detect-extraneous-headers
 description: Enables Spyglass to inspect multiple successfully captured text files from the same domain to identify recurring navigation or footprint blocks and commit exclusion rules.
-agents: [spyglass]
 ---
 
 # SKILL: Detect Extraneous Headers & Footers

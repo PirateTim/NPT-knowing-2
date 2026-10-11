@@ -1,7 +1,6 @@
 ---
 name: fact-plumbing
 description: Plumbs the depth of a text to extract explicit assertions of fact and unstated assumptions, formatted as high-density bullet points structured for conversion into ontological triples.
-agents: [grog]
 ---
 
 # SKILL: Fact Plumbing

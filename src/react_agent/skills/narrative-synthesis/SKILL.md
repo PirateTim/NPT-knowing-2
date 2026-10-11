@@ -1,7 +1,6 @@
 ---
 name: narrative-synthesis
 description: Scallywag's skill for synthesizing seized Cargo Hold artifacts and fleet enrichments into brilliant, articulate final responses for the Author.
-agents: [scallywag]
 ---
 
 # SKILL: Narrative Synthesis

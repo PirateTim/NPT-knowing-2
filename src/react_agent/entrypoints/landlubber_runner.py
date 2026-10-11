@@ -36,7 +36,7 @@ def run_isolated_search(query: str):
         )
         
         response = client.models.generate_content(
-            model=os.getenv("DEFAULT_MODEL", "gemini-3.7-flash"),
+            model=os.getenv("DEFAULT_MODEL", "gemini-3.8-flash"),
             contents=query,
             config=config
         )

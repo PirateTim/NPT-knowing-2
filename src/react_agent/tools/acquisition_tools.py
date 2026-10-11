@@ -3,12 +3,14 @@ NPT Fleet Tools: Content Acquisition & Extraction Primitives
 Architecture: Tiered HTTP Fallbacks & Strict UTF-8 Sanitization
 """
 import os
+import re
 import json
 import requests
 import urllib.request
 import trafilatura
 import html
 from pathlib import Path
+from typing import Optional, List, Dict, Any
 import pypdf
 import uuid
 from bs4 import BeautifulSoup
@@ -124,6 +126,7 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
     
     highwire_authors = []
     dc_authors = []
+    general_meta_authors = []
 
     for tag in soup.find_all('meta'):
         name = tag.get('name', '').lower()
@@ -158,17 +161,23 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
         elif name in ['dc.publisher', 'dcterms.publisher']: meta["publisher"] = content
         elif name in ['dc.identifier', 'dcterms.identifier'] and content.startswith('10.'): meta["doi"] = content
 
-        # OpenGraph
+        # Standard Author & OpenGraph
+        elif name == 'author' or prop == 'article:author':
+            if not content.startswith('http') and len(content) < 80:
+                parts = [p.strip() for p in re.split(r'\s*(?:,|&|\band\b)\s*', content) if p.strip()]
+                for p in parts:
+                    if p not in general_meta_authors and not any(w in p.lower() for w in ['archive', 'staff', 'editor', 'photo']):
+                        general_meta_authors.append(p)
         elif prop == 'og:title' and meta["title"] == target_url: meta["title"] = content
         elif prop == 'og:site_name' and meta["publisher"] == "UNKNOWN": meta["publisher"] = content
-        elif prop == 'article:author' and not meta["authors"]: meta["authors"].append(content)
         elif prop == 'article:published_time' and meta["published_date"] == "UNKNOWN": meta["published_date"] = content
         elif prop == 'og:type':
             if content in ['article', 'journal']: meta["item_type"] = "journalArticle"
             elif content in ['video', 'video.other']: meta["item_type"] = "videoRecording"
 
     if highwire_authors: meta["authors"] = highwire_authors
-    elif dc_authors and not meta["authors"]: meta["authors"] = dc_authors
+    elif dc_authors and len(dc_authors) > len(meta["authors"]): meta["authors"] = dc_authors
+    elif general_meta_authors and len(general_meta_authors) > len(meta["authors"]): meta["authors"] = general_meta_authors
 
     # 3. JSON-LD Extraction & Type Mapping
     for script in soup.find_all('script', type='application/ld+json'):
@@ -201,14 +210,56 @@ def _extract_rich_metadata(html_string: str, target_url: str) -> dict:
                 if 'description' in item and not meta["abstract"]:
                     meta["abstract"] = item['description']
                 
-                if 'author' in item and not meta["authors"]:
-                    authors = item['author']
-                    if isinstance(authors, dict): meta["authors"] = [authors.get('name')]
-                    elif isinstance(authors, list): meta["authors"] = [a.get('name') for a in authors if isinstance(a, dict)]
+                # Robust JSON-LD Author extraction
+                ld_author_field = item.get('author') or item.get('creator')
+                if ld_author_field:
+                    ld_authors = []
+                    if isinstance(ld_author_field, dict) and ld_author_field.get('name'):
+                        ld_authors.append(ld_author_field.get('name'))
+                    elif isinstance(ld_author_field, list):
+                        for a in ld_author_field:
+                            if isinstance(a, dict) and a.get('name'):
+                                ld_authors.append(a.get('name'))
+                            elif isinstance(a, str):
+                                ld_authors.append(a.strip())
+                    elif isinstance(ld_author_field, str):
+                        ld_authors.append(ld_author_field.strip())
+                    
+                    if len(ld_authors) > len(meta["authors"]):
+                        meta["authors"] = ld_authors
         except Exception:
             continue
 
-    # 4. Domain & URL Overrides
+    # 4. DOM Byline Extraction (Discovers co-authors when CMS/JSON-LD only lists primary author)
+    byline_candidates = []
+    byline_elems = soup.find_all(attrs={'class': re.compile(r'\b(byline|contentFooter__byline|author-name|entry-author|c-byline)\b', re.I)})
+    for b in byline_elems:
+        for al in b.find_all(['a', 'span', 'li'], attrs={'class': re.compile(r'author|name', re.I)}):
+            atxt = al.get_text(strip=True).replace('archive page', '').strip()
+            if atxt and 3 <= len(atxt) <= 40 and not any(w in atxt.lower() for w in ['by', 'archive', 'photo', 'share', 'view', 'read', 'post']):
+                if atxt not in byline_candidates:
+                    byline_candidates.append(atxt)
+        if len(byline_candidates) >= 2:
+            break
+        # Also check for "By X & Y" text
+        b_text = b.get_text(separator=' ', strip=True)
+        if re.search(r'\bby\s+([A-Z][a-zA-Z\.\s]+)\s+(&|and)\s+([A-Z][a-zA-Z\.\s]+)', b_text, re.I):
+            m_by = re.search(r'\bby\s+(.+)', b_text, re.I)
+            if m_by:
+                by_raw = m_by.group(1).replace('archive page', '').strip()
+                parts = [p.strip() for p in re.split(r'\s*(?:&|\band\b|,)\s*', by_raw) if p.strip()]
+                cleaned_parts = [p for p in parts if len(p) <= 40 and not any(w in p.lower() for w in ['archive', 'staff', 'photo', 'editor'])]
+                if len(cleaned_parts) > len(byline_candidates):
+                    byline_candidates = cleaned_parts
+
+    if len(byline_candidates) > len(meta["authors"]):
+        meta["authors"] = byline_candidates
+
+    # 5. Clean up title string
+    if meta.get("title") and isinstance(meta["title"], str):
+        meta["title"] = meta["title"].replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"').strip()
+
+    # 6. Domain & URL Overrides
     lower_url = target_url.lower()
     if 'youtube.com' in lower_url or 'youtu.be' in lower_url:
         meta["item_type"] = "videoRecording"
@@ -252,8 +303,16 @@ def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "", o
         with open(temp_pdf_path, "rb") as f:
             reader = pypdf.PdfReader(f)
             if reader.metadata:
-                pdf_title = reader.metadata.get('/Title', '') or ""
-                pdf_author = reader.metadata.get('/Author', '') or ""
+                try:
+                    raw_t = reader.metadata.title or reader.metadata.get('/Title', '') or ""
+                    pdf_title = str(raw_t).strip()
+                except Exception:
+                    pdf_title = ""
+                try:
+                    raw_a = reader.metadata.author or reader.metadata.get('/Author', '') or ""
+                    pdf_author = str(raw_a).strip()
+                except Exception:
+                    pdf_author = ""
 
             for i, page in enumerate(reader.pages):
                 page_text = page.extract_text()
@@ -314,6 +373,111 @@ def download_remote_pdf(url: str, cookies: str = "", custom_headers: str = "", o
         return f"[ERROR] Execution of download_remote_pdf failed: {str(e)}"
 
 
+def _canonicalize_url_for_archives(url: str) -> str:
+    """
+    Helper: Canonical URL Normalizer for Web Archives.
+    Strips ephemeral tracking tokens, affiliate codes, and subscriber gift link parameters
+    (e.g., unlocked_article_code, smid, utm_*, ref, fbclid, gclid) so Wayback and Archive.today
+    lookups query the permanent canonical snapshot rather than failing on unique session strings.
+    """
+    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+    parsed = urlparse(url.strip())
+    if not parsed.query:
+        return url.strip()
+    
+    query_params = parse_qsl(parsed.query, keep_blank_values=True)
+    clean_params = []
+    drop_keys = {'unlocked_article_code', 'smid', 'ref', 'fbclid', 'gclid', 'share_token', 'gift_code', 'gift_link'}
+    
+    # For major news publications where the path is the complete article identifier:
+    is_major_news = any(d in parsed.netloc.lower() for d in [
+        'nytimes.com', 'wsj.com', 'theinformation.com', 'economist.com', 
+        'bloomberg.com', 'ft.com', 'theatlantic.com', 'washingtonpost.com', 'wired.com'
+    ])
+    
+    for k, v in query_params:
+        k_lower = k.lower()
+        if k_lower in drop_keys or k_lower.startswith('utm_'):
+            continue
+        if is_major_news:
+            # Drop all session/tracking parameters for known news domains
+            continue
+        clean_params.append((k, v))
+        
+    new_query = urlencode(clean_params)
+    clean_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, ''))
+    return clean_url
+
+
+def acquire_gift_article(target_url: str) -> Optional[str]:
+    """
+    Agent Sub-Tool: High-Fidelity Headless Renderer for Fresh Gift Article Links.
+    Purpose: Recovers subscriber gift articles (NYT unlocked_article_code, etc.)
+    that fail under raw Python requests due to DataDome/Akamai TLS client checks.
+    Runs an offscreen Chromium instance to execute the client JavaScript and render full prose.
+    Invoked By: SPYGLASS (download_url auto-routing).
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+        import trafilatura
+        from bs4 import BeautifulSoup
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=False,
+                args=['--window-position=-2400,-2400', '--window-size=1920,1080']
+            )
+            page = browser.new_page()
+            page.goto(target_url, wait_until='domcontentloaded', timeout=15000)
+            page.wait_for_timeout(3500)
+            
+            html_content = page.content()
+            browser.close()
+            
+            clean_text = trafilatura.extract(html_content)
+            if not clean_text or len(clean_text.strip()) < 500:
+                return None
+                
+            rich_meta = _extract_rich_metadata(html_content, target_url)
+            if not rich_meta.get("title") or rich_meta["title"] == target_url:
+                soup = BeautifulSoup(html_content, 'html.parser')
+                title_tag = soup.find('title')
+                if title_tag and title_tag.text:
+                    rich_meta["title"] = title_tag.text.strip().split(" - ")[0].split(" | ")[0]
+                    
+            cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+            os.makedirs(cache_dir, exist_ok=True)
+            temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+            temp_filepath = os.path.join(cache_dir, temp_filename)
+            
+            formatted_payload = (
+                f"=== ACQUISITION INDEX ===\n"
+                f"SOURCE: {target_url}\n"
+                f"ACQUISITION_METHOD: GIFT_LINK_PLAYWRIGHT_RENDER\n"
+                f"TITLE: {rich_meta.get('title', 'Gift Article')}\n"
+                f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta.get('authors') else 'UNKNOWN'}\n"
+                f"PUBLISHED: {rich_meta.get('published_date', 'UNKNOWN')}\n"
+                f"PUBLISHER: {rich_meta.get('publisher', 'The New York Times' if 'nytimes.com' in target_url else 'UNKNOWN')}\n"
+                f"ITEM_TYPE: {rich_meta.get('item_type', 'webpage')}\n"
+                f"===========================================================\n\n"
+                f"{clean_text}"
+            )
+            
+            with open(temp_filepath, "w", encoding="utf-8") as f:
+                f.write(formatted_payload)
+                
+            receipt = {
+                "status": "SUCCESS",
+                "metadata": rich_meta,
+                "local_cache_path": temp_filepath,
+                "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
+            }
+            return json.dumps(receipt, indent=2)
+    except Exception as e:
+        print(f"  -> [GIFT LINK RENDER ERROR] {str(e)}")
+        return None
+
+
 def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
     """
     Agent Tool: Standard Web Ingestion & Fallback Router.
@@ -322,6 +486,17 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
     Invoked By: SPYGLASS (The Ingestion Engine).
     """
     target_url = url.strip().replace('"', '').replace("'", "")
+    
+    # 0. CMS PREVIEW & STAGING PARAMETER SANITIZER (SPYGLASS-HEURISTIC-011)
+    from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+    parsed_u = urlparse(target_url)
+    if any(p in parsed_u.query.lower() for p in ["x-craft-preview", "preview_token", "preview_id", "wp-preview"]):
+        clean_qs = {k: v for k, v in parse_qs(parsed_u.query).items() if not any(p in k.lower() for p in ["x-craft-preview", "preview_token", "preview_id", "wp-preview", "token"])}
+        clean_query = urlencode(clean_qs, doseq=True)
+        sanitized_url = urlunparse((parsed_u.scheme, parsed_u.netloc, parsed_u.path, parsed_u.params, clean_query, parsed_u.fragment))
+        print(f"  -> [URL SANITIZER] Stripped CMS preview query parameters: '{target_url}' -> '{sanitized_url}'")
+        target_url = sanitized_url
+
     lower_target = target_url.lower()
 
     # 1. STRICT arXiv ROUTING GUARDRAIL
@@ -329,8 +504,9 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
         print(f"  -> [SPYGLASS ROUTING] arXiv URL detected ({target_url}). Forwarding to acquire_arxiv_document...")
         return acquire_arxiv_document(target_url)
 
-    # 2. REMOTE PDF AUTO-DETECTION
-    if lower_target.endswith(".pdf"):
+    # 2. REMOTE PDF AUTO-DETECTION (Path-based to handle trailing query parameters)
+    parsed_path = urlparse(lower_target).path
+    if parsed_path.endswith(".pdf") or lower_target.endswith(".pdf"):
         print(f"  -> [SPYGLASS ROUTING] Direct PDF URL detected ({target_url}). Forwarding to download_remote_pdf...")
         return download_remote_pdf(target_url, cookies=cookies, custom_headers=custom_headers)
 
@@ -344,6 +520,16 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
         print(f"  -> [SPYGLASS ROUTING] YouTube Video URL detected ({target_url}). Forwarding to extract_youtube_transcript...")
         from tools.youtube_tools import extract_youtube_transcript
         return extract_youtube_transcript(target_url)
+
+    # 5. SUBSCRIBER GIFT LINK AUTO-DETECTION (NYT, etc.)
+    if any(k in lower_target for k in ["unlocked_article_code", "gift_code", "share_token", "gift_link"]):
+        print(f"  -> [SPYGLASS ROUTING] Subscriber gift link detected ({target_url}). Attempting headless rendering...")
+        gift_receipt = acquire_gift_article(target_url)
+        if gift_receipt:
+            print(f"  -> [SPYGLASS SUCCESS] Successfully retrieved full gift article via headless renderer.")
+            return gift_receipt
+        else:
+            print(f"  -> [SPYGLASS NOTICE] Gift link rendering returned insufficient prose. Falling back to standard pipeline...")
 
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     custom_headers_dict, cookies_dict = _parse_headers_and_cookies(cookies, custom_headers)
@@ -389,66 +575,41 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
             except Exception as e_fast:
                 print(f"  -> [SPYGLASS FAST ARCHIVE FAILED] {str(e_fast)}")
 
-        print(f"  -> [SPYGLASS TIER 1 FAILED] Reason: {str(e1)}. Triggering Botasaurus...")
-        # TIER 2: Botasaurus
-        try:
-            bota_result = botasaurus_fetch([{"url": target_url}])
-            if bota_result and bota_result[0]:
-                if bota_result[0].startswith("[BOTASAURUS_TIMEOUT]"):
-                    raise ValueError(bota_result[0])
-                html_string = bota_result[0]
-                temp_clean = trafilatura.extract(html_string) or BeautifulSoup(html_string, 'html.parser').get_text(separator='\n', strip=True)[:10000]
-                if not temp_clean or len(temp_clean.strip()) < 200:
-                    raise ValueError("Extracted Botasaurus content is suspiciously short.")
-                clean_content = temp_clean
-            else:
-                raise ValueError("Botasaurus returned empty DOM.")
-        except Exception as e2:
-            print(f"  -> [SPYGLASS TIER 2 FAILED] Reason: {str(e2)}. Triggering Tier 3 (Jina Reader)...")
-            # TIER 3: Jina Reader
+        # TIER 2: Botasaurus (DEPRECATED & BYPASSED per empirical data: 0% recovery, prevents 30-60s local browser freezes)
+        # Proceeding directly to Tier 3 / Tier 4 fallbacks.
+        jina_key = os.getenv("JINA_API_KEY")
+        if jina_key:
+            # TIER 3: Jina Reader (Only attempted if JINA_API_KEY is configured)
             try:
                 jina_url = f"https://r.jina.ai/{target_url}"
-                jina_headers = {"User-Agent": "Mozilla/5.0"}
-                jina_key = os.getenv("JINA_API_KEY")
-                if jina_key:
-                    jina_headers["Authorization"] = f"Bearer {jina_key}"
-                
-                jina_response = requests.get(jina_url, headers=jina_headers, timeout=20)
+                jina_headers = {
+                    "User-Agent": "Mozilla/5.0",
+                    "Authorization": f"Bearer {jina_key}",
+                    "Accept": "application/json"
+                }
+                jina_response = requests.get(jina_url, headers=jina_headers, timeout=15)
                 if jina_response.status_code == 200:
-                    jina_text = jina_response.text
-                    if jina_text and len(jina_text.strip()) >= 200:
-                        # Parse Jina markdown header for metadata
-                        jina_title = None
-                        jina_pub = "UNKNOWN"
-                        for line in jina_text.split("\n")[:15]:
-                            if line.lower().startswith("title:"):
-                                jina_title = line[6:].strip()
-                            elif line.lower().startswith("published time:") or line.lower().startswith("published:"):
-                                jina_pub = line.split(":", 1)[1].strip()
-                                
-                        if not jina_title:
-                            jina_title = target_url.split('/')[-1] or "acquired_article"
-                            
-                        # Guard against Jina paywall/challenge stubs
-                        low_title = jina_title.lower()
-                        if any(stub in low_title for stub in ["verification required", "just a moment", "attention required", "cloudflare"]) or \
-                           low_title in ["nytimes.com", "wsj.com", "the information", "bloomberg.com", "economist.com", "financial times"] or \
-                           len(jina_text.strip()) < 800:
-                            raise ValueError(f"Jina returned a paywall/verification stub: '{jina_title}' ({len(jina_text.strip())} chars)")
+                    jina_json = jina_response.json().get("data", {})
+                    jina_text = jina_json.get("content", "")
+                    jina_title = jina_json.get("title", "") or target_url.split('/')[-1]
+                    jina_pub = jina_json.get("publishedTime", "UNKNOWN")
+                    
+                    low_title = jina_title.lower()
+                    if any(stub in low_title for stub in ["verification required", "just a moment", "attention required", "cloudflare"]) or len(jina_text.strip()) < 800:
+                        raise ValueError(f"Jina returned a paywall/verification stub: '{jina_title}'")
 
-                        clean_content = jina_text
-                        html_string = f"<html><body>{jina_text}</body></html>" # mock HTML payload
-                        jina_meta = {
-                            "title": jina_title,
-                            "published_date": jina_pub
-                        }
-                        print(f"  -> [SPYGLASS TIER 3 SUCCESS] Ingested URL via Jina Reader. Title: '{jina_title}'")
-                    else:
-                        raise ValueError("Jina returned empty/short content.")
-                else:
-                    raise ValueError(f"Jina returned HTTP {jina_response.status_code}")
+                    clean_content = jina_text
+                    html_string = f"<html><body>{jina_text}</body></html>"
+                    jina_meta = {
+                        "title": jina_title,
+                        "published_date": jina_pub
+                    }
+                    print(f"  -> [SPYGLASS TIER 3 SUCCESS] Ingested URL via Jina Reader. Title: '{jina_title}'")
             except Exception as e3:
                 print(f"  -> [SPYGLASS TIER 3 FAILED] Reason: {str(e3)}. Checking Academic OA and Web Archive snapshots...")
+
+        if not clean_content:
+            # TIER 4: Fast Fallbacks (Academic OA and Web Archive)
 
                 # TIER 4A: Check for Academic DOI / Open Access PDF
                 import re
@@ -475,48 +636,49 @@ def download_url(url: str, cookies: str = "", custom_headers: str = "") -> str:
                 except Exception as e_arch:
                     print(f"  -> [SPYGLASS ARCHIVE FAILED] {str(e_arch)}")
 
-                # TIER 5: Zotero Translation Server (Metadata & Abstract Fallback)
-                print(f"  -> [SPYGLASS TIER 4 FAILED]. Triggering Tier 5 (Zotero Translation Server)...")
-                try:
-                    zotero_endpoint = os.getenv("ZOTERO_TRANSLATOR_URL", "https://zotero-translator-809652732702.us-central1.run.app/web")
-                    zotero_resp = requests.post(zotero_endpoint, data=target_url, headers={"Content-Type": "text/plain"}, timeout=35)
-                    if zotero_resp.status_code == 200:
-                        z_items = zotero_resp.json()
-                        if z_items and isinstance(z_items, list) and len(z_items) > 0:
-                            z_item = z_items[0]
-                            z_title = z_item.get("title") or target_url.split('/')[-1]
-                            z_creators = []
-                            for c in z_item.get("creators", []):
-                                name = f"{c.get('firstName', '')} {c.get('lastName', '')}".strip() or c.get("name", "")
-                                if name:
-                                    z_creators.append(name)
-                            
-                            z_abstract = z_item.get("abstractNote") or ""
-                            clean_content = f"Title: {z_title}\n\nAbstract:\n{z_abstract}\n\nPublication: {z_item.get('publicationTitle', '')}\nDOI: {z_item.get('DOI', '')}"
-                            html_string = f"<html><body><h1>{z_title}</h1><p>{z_abstract}</p></body></html>"
-                            
-                            jina_meta = {
-                                "title": z_title,
-                                "authors": z_creators,
-                                "published_date": z_item.get("date", "UNKNOWN"),
-                                "publisher": z_item.get("publisher") or z_item.get("publicationTitle") or "UNKNOWN",
-                                "item_type": z_item.get("itemType", "journalArticle"),
-                                "doi": z_item.get("DOI", ""),
-                                "journal_title": z_item.get("publicationTitle", ""),
-                                "volume": z_item.get("volume", ""),
-                                "issue": z_item.get("issue", ""),
-                                "pages": z_item.get("pages", ""),
-                                "abstract": z_abstract
-                            }
-                            print(f"  -> [SPYGLASS TIER 5 SUCCESS] Ingested URL via Zotero Translation Server. Title: '{z_title}'")
-                        else:
-                            raise ValueError("Zotero translator returned 0 items.")
-                    else:
-                        raise ValueError(f"Zotero translator HTTP {zotero_resp.status_code}")
-                except Exception as e4:
+                # TIER 5: Zotero Translation Server (Metadata & Abstract Fallback for Academic Domains)
+                if any(ad in lower_target for ad in ["doi.org", "sciencedirect.com", "nature.com", "springer.com", "wiley.com", "jstor.org", "ieee.org"]) or re.search(r'10\.\d{4,9}/', lower_target):
+                    print(f"  -> [SPYGLASS TIER 4 FAILED]. Triggering Tier 5 (Zotero Translation Server)...")
+                    try:
+                        zotero_endpoint = os.getenv("ZOTERO_TRANSLATOR_URL", "https://zotero-translator-809652732702.us-central1.run.app/web")
+                        zotero_resp = requests.post(zotero_endpoint, data=target_url, headers={"Content-Type": "text/plain"}, timeout=12)
+                        if zotero_resp.status_code == 200:
+                            z_items = zotero_resp.json()
+                            if z_items and isinstance(z_items, list) and len(z_items) > 0:
+                                z_item = z_items[0]
+                                z_title = z_item.get("title") or target_url.split('/')[-1]
+                                z_creators = []
+                                for c in z_item.get("creators", []):
+                                    name = f"{c.get('firstName', '')} {c.get('lastName', '')}".strip() or c.get("name", "")
+                                    if name:
+                                        z_creators.append(name)
+                                
+                                z_abstract = z_item.get("abstractNote") or ""
+                                clean_content = f"Title: {z_title}\n\nAbstract:\n{z_abstract}\n\nPublication: {z_item.get('publicationTitle', '')}\nDOI: {z_item.get('DOI', '')}"
+                                html_string = f"<html><body><h1>{z_title}</h1><p>{z_abstract}</p></body></html>"
+                                
+                                jina_meta = {
+                                    "title": z_title,
+                                    "authors": z_creators,
+                                    "published_date": z_item.get("date", "UNKNOWN"),
+                                    "publisher": z_item.get("publisher") or z_item.get("publicationTitle") or "UNKNOWN",
+                                    "item_type": z_item.get("itemType", "journalArticle"),
+                                    "doi": z_item.get("DOI", ""),
+                                    "journal_title": z_item.get("publicationTitle", ""),
+                                    "volume": z_item.get("volume", ""),
+                                    "issue": z_item.get("issue", ""),
+                                    "pages": z_item.get("pages", ""),
+                                    "abstract": z_abstract
+                                }
+                                print(f"  -> [SPYGLASS TIER 5 SUCCESS] Ingested URL via Zotero Translation Server. Title: '{z_title}'")
+                    except Exception as e_zot:
+                        print(f"  -> [SPYGLASS TIER 5 FAILED] Zotero translation server error: {str(e_zot)}")
+
+                if not clean_content:
+                    e1_msg = str(e1) if 'e1' in locals() else 'HTTP extraction failed'
                     receipt = {
                         "status": "FAILED",
-                        "reason": f"[ACCESS BARRIER] All ingestion tiers failed. Tier 1: {str(e1)}, Tier 2: {str(e2)}, Tier 3 (Jina): {str(e3)}, Tier 4 (Archive/OA): Unavailable, Tier 5 (Zotero): {str(e4)}"
+                        "reason": f"[ACCESS BARRIER] Ingestion failed across all active tiers. Tier 1: {e1_msg}"
                     }
                     return json.dumps(receipt, indent=2)
 
@@ -876,9 +1038,13 @@ def acquire_archive_snapshot(target_url: str) -> str:
     Invoked By: SPYGLASS (The Ingestion Engine).
     """
     clean_url = target_url.strip().replace('"', '').replace("'", "")
+    canonical_url = _canonicalize_url_for_archives(clean_url)
+    if canonical_url != clean_url:
+        print(f"  -> [URL CANONICALIZER] Sanitized for Web Archives: '{clean_url}' -> '{canonical_url}'")
+
     # Wayback Machine Availability API requires the URL query parameter literally unencoded
-    wayback_api = f"https://archive.org/wayback/available?url={clean_url}"
-    headers = {"User-Agent": "NPT-Fleet-Bot/1.0 (https://github.com/PirateTim/NPT-knowing-2; contact: npt-fleet@reckoning.org)"}
+    wayback_api = f"https://archive.org/wayback/available?url={canonical_url}"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"}
 
     try:
         resp = requests.get(wayback_api, headers=headers, timeout=15)
@@ -935,15 +1101,70 @@ def acquire_archive_snapshot(target_url: str) -> str:
                         }
                         return json.dumps(receipt, indent=2)
 
+        # 2. FALLBACK ARCHIVE: Query archive.today / archive.ph mirrors
+        # First query using canonical URL; fallback to clean_url if different
+        urls_to_try = [canonical_url]
+        if clean_url != canonical_url:
+            urls_to_try.append(clean_url)
+
+        for gw_url in urls_to_try:
+            for gateway in ["https://archive.ph", "https://archive.today", "https://archive.is"]:
+                try:
+                    today_url = f"{gateway}/newest/{gw_url}"
+                    today_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                    snap_today = requests.get(today_url, headers=today_headers, timeout=8, allow_redirects=True)
+                    if snap_today.status_code == 200 and len(snap_today.text) > 1000:
+                        html_content = snap_today.text
+                        clean_text = trafilatura.extract(html_content)
+                        if clean_text and len(clean_text.strip()) >= 500 and not any(w in clean_text.lower() for w in ["no results", "search archive", "archive.today"]):
+                            print(f"  -> [ARCHIVE SNAPSHOT FOUND] Rescued article from {gateway}: {snap_today.url}")
+                            rich_meta = _extract_rich_metadata(html_content, clean_url)
+                            if not rich_meta.get("title") or rich_meta["title"] == clean_url:
+                                soup = BeautifulSoup(html_content, 'html.parser')
+                                title_tag = soup.find('title')
+                                if title_tag and title_tag.text:
+                                    rich_meta["title"] = title_tag.text.strip().split(" - ")[0].split(" | ")[0]
+
+                            cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+                            os.makedirs(cache_dir, exist_ok=True)
+                            temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+                            temp_filepath = os.path.join(cache_dir, temp_filename)
+
+                            formatted_payload = (
+                                f"=== ACQUISITION INDEX ===\n"
+                                f"SOURCE: {clean_url}\n"
+                                f"ARCHIVE_SOURCE: {snap_today.url}\n"
+                                f"TITLE: {rich_meta.get('title', 'Archived Article')}\n"
+                                f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta.get('authors') else 'UNKNOWN'}\n"
+                                f"PUBLISHED: {rich_meta.get('published_date', 'UNKNOWN')}\n"
+                                f"PUBLISHER: {rich_meta.get('publisher', 'UNKNOWN')}\n"
+                                f"ITEM_TYPE: {rich_meta.get('item_type', 'webpage')}\n"
+                                f"===========================================================\n\n"
+                                f"{clean_text}"
+                            )
+
+                            with open(temp_filepath, "w", encoding="utf-8") as f:
+                                f.write(formatted_payload)
+
+                            receipt = {
+                                "status": "SUCCESS",
+                                "metadata": rich_meta,
+                                "local_cache_path": temp_filepath,
+                                "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
+                            }
+                            return json.dumps(receipt, indent=2)
+                except Exception:
+                    continue
+
         return json.dumps({
             "status": "FAILED",
-            "reason": f"[NO_ARCHIVE_SNAPSHOT] No valid snapshot available on archive.org for {clean_url}"
+            "reason": f"[NO_ARCHIVE_SNAPSHOT] No valid snapshot available on archive.org or archive.today for {clean_url}"
         }, indent=2)
 
     except Exception as e:
         return json.dumps({
             "status": "FAILED",
-            "reason": f"[ARCHIVE_ERROR] Failed to query Wayback Machine: {str(e)}"
+            "reason": f"[ARCHIVE_ERROR] Failed to query Web Archives: {str(e)}"
         }, indent=2)
 
 
@@ -1295,3 +1516,323 @@ def acquire_google_doc(url: str) -> str:
         "message": f"Successfully exported Google Doc '{title}'. Saved to {temp_filename}"
     }
     return json.dumps(receipt, indent=2)
+
+
+def stevedore_local_epub(epub_path: str = "") -> str:
+    """
+    Agent Tool: Local EPUB Stevedore & Book Partition Engine.
+    Purpose: Unpacks full-length book EPUBs from the local inbox (cargo_cache/inbox/), 
+    extracts metadata and reading spine, segments the endnote dossier by chapter,
+    generates self-contained chapter assets with complete parent book provenance back-pointers
+    and attached citations, uploads to GCS (acquisitions/*.txt), and registers both 
+    a Master Book Reference (item_type='book') and Chapter Assets (item_type='bookSection') 
+    in cargo.content_metadata.
+    Invoked By: SPYGLASS (The Ingestion Engine).
+    """
+    import zipfile
+    import glob
+    import unicodedata
+    import xml.etree.ElementTree as ET
+    from bs4 import BeautifulSoup
+    from .cloud_knowledge_tools import _get_bucket
+    from .cargo_db_tools import _get_strict_cargo_connection
+
+    def _slugify(text: str) -> str:
+        text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8').lower()
+        text = re.sub(r'[\'\"]', '', text)
+        text = re.sub(r'[^a-z0-9]+', '-', text)
+        return text.strip('-')
+
+    target_file = (epub_path or "").strip().replace('"', '').replace("'", "")
+    if not target_file:
+        inbox_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache", "inbox"))
+        epubs = glob.glob(os.path.join(inbox_dir, "*.epub"))
+        if not epubs:
+            return json.dumps({
+                "status": "FAILED",
+                "reason": f"[NO_EPUB_FOUND] No EPUB files found in {inbox_dir}. Drop an .epub into cargo_cache/inbox/ first."
+            }, indent=2)
+        target_file = epubs[0]
+
+    if not os.path.exists(target_file):
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[FILE_NOT_FOUND] Target EPUB does not exist: {target_file}"
+        }, indent=2)
+
+    try:
+        bucket = _get_bucket()
+        conn = _get_strict_cargo_connection()
+        if not conn:
+            return json.dumps({"status": "FAILED", "reason": "[DATABASE_ERROR] Cannot connect to cargo database."}, indent=2)
+
+        with zipfile.ZipFile(target_file, 'r') as z:
+            file_list = z.namelist()
+
+            # Locate OPF
+            container_xml = z.read("META-INF/container.xml")
+            c_root = ET.fromstring(container_xml)
+            rootfile = c_root.find(".//{urn:oasis:names:tc:opendocument:xmlns:container}rootfile")
+            opf_path = rootfile.attrib.get("full-path") if rootfile is not None else None
+            if not opf_path:
+                for f in file_list:
+                    if f.endswith(".opf"):
+                        opf_path = f
+                        break
+
+            opf_data = z.read(opf_path)
+            opf_dir = os.path.dirname(opf_path)
+            opf_root = ET.fromstring(opf_data)
+
+            ns = {'opf': 'http://www.idpf.org/2007/opf', 'dc': 'http://purl.org/dc/elements/1.1/'}
+            
+            # Extract Metadata
+            title_el = opf_root.find(".//dc:title", ns)
+            creator_el = opf_root.find(".//dc:creator", ns)
+            pub_el = opf_root.find(".//dc:publisher", ns)
+            date_el = opf_root.find(".//dc:date", ns)
+            
+            book_title = title_el.text.strip() if title_el is not None and title_el.text else "Unknown Book"
+            book_author = creator_el.text.strip() if creator_el is not None and creator_el.text else "Unknown Author"
+            book_pub = pub_el.text.strip() if pub_el is not None and pub_el.text else "Unknown Publisher"
+            book_date = date_el.text.strip() if date_el is not None and date_el.text else str(datetime.now().year)
+            
+            book_isbn = "UNKNOWN"
+            for id_elem in opf_root.findall(".//dc:identifier", ns):
+                txt = id_elem.text or ""
+                if "isbn" in txt.lower() or id_elem.attrib.get("{http://www.idpf.org/2007/opf}scheme", "").lower() == "isbn":
+                    clean_isbn = re.sub(r'[^0-9X]', '', txt.upper())
+                    if clean_isbn:
+                        book_isbn = clean_isbn
+                        break
+                elif re.match(r'^\d{10}(\d{3})?$', txt.strip()):
+                    book_isbn = txt.strip()
+
+            # Manifest & Spine
+            manifest = {}
+            for item in opf_root.findall(".//opf:item", ns):
+                manifest[item.attrib.get("id")] = (item.attrib.get("href"), item.attrib.get("media-type"))
+
+            spine_hrefs = []
+            for itemref in opf_root.findall(".//opf:itemref", ns):
+                idref = itemref.attrib.get("idref")
+                if idref in manifest:
+                    spine_hrefs.append(manifest[idref][0])
+
+            # Endnotes segmentation
+            endnotes_map = {}
+            for href in spine_hrefs:
+                if "endnote" in href.lower() or "note" in href.lower():
+                    full_href = os.path.normpath(os.path.join(opf_dir, href)).replace("\\", "/")
+                    if full_href in file_list:
+                        raw_notes = z.read(full_href).decode('utf-8', errors='ignore')
+                        soup_notes = BeautifulSoup(raw_notes, 'html.parser')
+                        for h2 in soup_notes.find_all('h2'):
+                            header_key = h2.get_text(strip=True).upper()
+                            sibs = []
+                            curr = h2.next_sibling
+                            while curr:
+                                if getattr(curr, 'name', None) == 'h2':
+                                    break
+                                txt = curr.get_text(strip=True) if hasattr(curr, 'get_text') else str(curr).strip()
+                                if txt:
+                                    sibs.append(txt)
+                                curr = curr.next_sibling
+                            endnotes_map[header_key] = "\n\n".join(sibs)
+                        break
+
+            master_slug = f"{_slugify(book_title)}-{_slugify(book_author)}-{book_date[:4]}"
+            book_basename = os.path.basename(target_file)
+            
+            all_sections_prose = []
+            chapter_receipts = []
+            chapter_idx = 0
+            cur = conn.cursor()
+
+            for href in spine_hrefs:
+                full_href = os.path.normpath(os.path.join(opf_dir, href)).replace("\\", "/")
+                if full_href not in file_list or not (full_href.endswith('.xhtml') or full_href.endswith('.html')):
+                    continue
+
+                raw_bytes = z.read(full_href)
+                soup = BeautifulSoup(raw_bytes.decode('utf-8', errors='ignore'), 'html.parser')
+                
+                body = soup.body if soup.body else soup
+                md_lines = []
+                chapter_heading = ""
+                
+                for tag in body.find_all(['h1', 'h2', 'h3', 'h4', 'p', 'blockquote', 'ul', 'ol']):
+                    txt = tag.get_text(strip=True)
+                    if not txt: continue
+                    if tag.name == 'h1':
+                        if not chapter_heading: chapter_heading = txt
+                        md_lines.append(f"\n# {txt}\n")
+                    elif tag.name == 'h2':
+                        if not chapter_heading: chapter_heading = txt
+                        md_lines.append(f"\n## {txt}\n")
+                    elif tag.name == 'h3': md_lines.append(f"\n### {txt}\n")
+                    elif tag.name == 'blockquote': md_lines.append(f"\n> {txt}\n")
+                    elif tag.name in ['ul', 'ol']:
+                        for li in tag.find_all('li'):
+                            li_txt = li.get_text(strip=True)
+                            if li_txt: md_lines.append(f"* {li_txt}")
+                        md_lines.append("")
+                    elif tag.name == 'p': md_lines.append(f"{txt}\n")
+                    
+                prose = "\n".join(md_lines).strip()
+                if len(prose) < 600 and not any(k in href.lower() for k in ['epigraph', 'intro']):
+                    continue
+                all_sections_prose.append(prose)
+
+                is_intro = "intro" in href.lower()
+                is_chapter = "ch" in href.lower() or "chapter" in href.lower()
+
+                if is_intro or is_chapter:
+                    chapter_idx += 1 if is_chapter else 0
+                    if is_intro:
+                        sec_num = 0
+                        sec_title = "Introduction"
+                        ch_slug = f"{_slugify(book_title)}-intro-{_slugify(book_author)}-{book_date[:4]}"
+                    else:
+                        sec_num = chapter_idx
+                        clean_h = re.sub(r'^CHAPTER\s*\d+\s*', '', chapter_heading, flags=re.IGNORECASE).strip()
+                        sec_title = clean_h if clean_h else f"Chapter {chapter_idx}"
+                        ch_slug = f"{_slugify(book_title)}-ch{sec_num:02d}-{_slugify(sec_title)}-{_slugify(book_author)}-{book_date[:4]}"
+
+                    # Match endnotes
+                    matched_notes = ""
+                    if is_intro:
+                        for k, v in endnotes_map.items():
+                            if "INTRO" in k: matched_notes = v; break
+                    else:
+                        for k, v in endnotes_map.items():
+                            if f"CHAPTER {sec_num}" in k: matched_notes = v; break
+
+                    full_ch_title = f"{book_title}: {('Introduction' if is_intro else f'Chapter {sec_num}')} — {sec_title}"
+                    src_url = f"local://cargo_cache/inbox/{book_basename}#{href}"
+                    
+                    ch_payload = (
+                        f"=== ACQUISITION INDEX ===\n"
+                        f"SOURCE: {src_url}\n"
+                        f"TITLE: {full_ch_title}\n"
+                        f"AUTHORS: {book_author}\n"
+                        f"PUBLISHED: {book_date}\n"
+                        f"PUBLISHER: {book_pub}\n"
+                        f"ITEM_TYPE: bookSection\n"
+                        f"BOOK_TITLE: {book_title}\n"
+                        f"BOOK_AUTHORS: {book_author}\n"
+                        f"BOOK_PUBLISHER: {book_pub}\n"
+                        f"BOOK_PUBLISHED: {book_date}\n"
+                        f"BOOK_ISBN: {book_isbn}\n"
+                        f"CHAPTER_NUMBER: {sec_num}\n"
+                        f"CHAPTER_TITLE: {sec_title}\n"
+                        f"PARENT_BOOK_SLUG: {master_slug}\n"
+                        f"===========================================================\n\n"
+                        f"{prose}\n"
+                    )
+                    if matched_notes:
+                        ch_payload += f"\n\n## CHAPTER ENDNOTES & SOURCE CITATIONS\n\n{matched_notes}\n"
+
+                    gcs_path = f"gs://{bucket.name}/acquisitions/{ch_slug}.txt"
+                    blob = bucket.blob(f"acquisitions/{ch_slug}.txt")
+                    blob.upload_from_string(ch_payload, content_type="text/plain; charset=utf-8")
+
+                    cur.execute("SELECT id FROM cargo.content_metadata WHERE source_url = %s;", (src_url,))
+                    existing = cur.fetchone()
+                    authors_json = json.dumps([book_author])
+                    kw_json = json.dumps({
+                        "parent_book_title": book_title,
+                        "parent_book_slug": master_slug,
+                        "isbn": book_isbn,
+                        "chapter_number": sec_num,
+                        "chapter_title": sec_title,
+                        "endnotes_attached": bool(matched_notes)
+                    })
+
+                    if existing:
+                        ch_id = existing[0]
+                        cur.execute("""
+                            UPDATE cargo.content_metadata
+                            SET item_type = 'bookSection', title = %s, authors = %s, publication_title = %s,
+                                publication_date = %s, keywords = %s, gcp_bucket_path = %s
+                            WHERE id = %s;
+                        """, (full_ch_title, authors_json, book_title, book_date, kw_json, gcs_path, ch_id))
+                    else:
+                        cur.execute("""
+                            INSERT INTO cargo.content_metadata (
+                                source_url, item_type, title, authors, publication_title, publication_date,
+                                keywords, rights, gcp_bucket_path, created_at
+                            ) VALUES (%s, 'bookSection', %s, %s, %s, %s, %s, 'All Rights Reserved', %s, NOW())
+                            RETURNING id;
+                        """, (src_url, full_ch_title, authors_json, book_title, book_date, kw_json, gcs_path))
+                        ch_id = cur.fetchone()[0]
+                    conn.commit()
+
+                    chapter_receipts.append({
+                        "id": ch_id,
+                        "chapter_number": sec_num,
+                        "title": full_ch_title,
+                        "slug": ch_slug,
+                        "gcs_path": gcs_path,
+                        "size_chars": len(ch_payload)
+                    })
+
+            # Master Book Reference
+            master_src_url = f"local://cargo_cache/inbox/{book_basename}"
+            master_payload = (
+                f"=== ACQUISITION INDEX ===\n"
+                f"SOURCE: {master_src_url}\n"
+                f"TITLE: {book_title}\n"
+                f"AUTHORS: {book_author}\n"
+                f"PUBLISHED: {book_date}\n"
+                f"PUBLISHER: {book_pub}\n"
+                f"ITEM_TYPE: book\n"
+                f"BOOK_ISBN: {book_isbn}\n"
+                f"ROLE: MASTER_BOOK_REFERENCE_ONLY (Do not ingest into VDB or single-agent audit)\n"
+                f"TOTAL_CHAPTERS_EXTRACTED: {len(chapter_receipts)}\n"
+                f"===========================================================\n\n"
+                + "\n\n---\n\n".join(all_sections_prose)
+            )
+            master_gcs = f"gs://{bucket.name}/acquisitions/{master_slug}.txt"
+            blob_master = bucket.blob(f"acquisitions/{master_slug}.txt")
+            blob_master.upload_from_string(master_payload, content_type="text/plain; charset=utf-8")
+
+            cur.execute("SELECT id FROM cargo.content_metadata WHERE source_url = %s;", (master_src_url,))
+            existing_master = cur.fetchone()
+            master_kw = json.dumps({"isbn": book_isbn, "role": "master_reference", "chapters_count": len(chapter_receipts)})
+            if existing_master:
+                master_id = existing_master[0]
+                cur.execute("""
+                    UPDATE cargo.content_metadata
+                    SET item_type = 'book', title = %s, authors = %s, publication_title = %s,
+                        publication_date = %s, keywords = %s, gcp_bucket_path = %s
+                    WHERE id = %s;
+                """, (book_title, json.dumps([book_author]), book_pub, book_date, master_kw, master_gcs, master_id))
+            else:
+                cur.execute("""
+                    INSERT INTO cargo.content_metadata (
+                        source_url, item_type, title, authors, publication_title, publication_date,
+                        keywords, rights, gcp_bucket_path, created_at
+                    ) VALUES (%s, 'book', %s, %s, %s, %s, %s, 'All Rights Reserved', %s, NOW())
+                    RETURNING id;
+                """, (master_src_url, book_title, json.dumps([book_author]), book_pub, book_date, master_kw, master_gcs))
+                master_id = cur.fetchone()[0]
+            conn.commit()
+            conn.close()
+
+            return json.dumps({
+                "status": "SUCCESS",
+                "book_title": book_title,
+                "author": book_author,
+                "isbn": book_isbn,
+                "master_asset_id": master_id,
+                "master_slug": master_slug,
+                "total_chapters_stevedored": len(chapter_receipts),
+                "chapters": chapter_receipts
+            }, indent=2)
+
+    except Exception as e:
+        return json.dumps({
+            "status": "FAILED",
+            "reason": f"[EPUB_STEVEDORE_ERROR] Failed to stevedore EPUB: {str(e)}"
+        }, indent=2)

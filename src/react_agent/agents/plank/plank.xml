@@ -10,6 +10,9 @@
         <!-- Defer to DEFAULT_MODEL in .env --> 
     </system_config>
     <skills>
+        <skill_ref name="audit-academic-crossref-evidence" path="src/react_agent/skills/audit-academic-crossref-evidence/SKILL.md"/>
+        <skill_ref name="expand-chapter-references" path="src/react_agent/skills/expand-chapter-references/SKILL.md"/>
+        <skill_ref name="formulate-learned-rule" path="src/react_agent/skills/formulate-learned-rule/SKILL.md"/>
         <skill_ref name="manuscript-chapter-section-inline-reference-expansion" path="src/react_agent/skills/manuscript-chapter-section-inline-reference-expansion/SKILL.md"/>
     </skills>
 

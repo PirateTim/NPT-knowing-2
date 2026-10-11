@@ -5,6 +5,7 @@ Streamlit Web Application for zero-token asset inspection, batch fast-triage, an
 
 import os
 import sys
+import re
 import json
 import datetime
 import urllib.parse
@@ -19,7 +20,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 load_dotenv(override=True)
 
 from tools.cloud_knowledge_tools import read_knowledge_artifact
-from tools.cargo_db_tools import _get_strict_cargo_connection, purge_corrupted_cargo
+from tools.cargo_db_tools import (
+    _get_strict_cargo_connection,
+    purge_corrupted_cargo,
+    list_fleet_sightings,
+    promote_sighting_to_queue
+)
+from tools.memory_tools import record_learned_rule
+from workflows.cargo_intake_pipeline import run_cargo_intake
 
 # Page configuration
 st.set_page_config(
@@ -100,8 +108,8 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
         FROM cargo.content_metadata cm
         LEFT JOIN cargo.fleet_enrichments fe 
             ON cm.id = fe.metadata_id 
-            AND fe.agent_name IN ('cutlass', 'author', 'cutlass_calibrated')
-            AND fe.enrichment_type IN ('triage', 'triage_quick', 'triage_human_override', 'triage_full_audit')
+            AND fe.agent_name IN ('cutlass', 'author', 'cutlass_calibrated', 'bilgeladle')
+            AND fe.enrichment_type IN ('triage', 'triage_quick', 'triage_human_override', 'triage_full_audit', 'cargo_intake_turn1')
         LEFT JOIN cargo.ingestion_queue iq
             ON cm.source_url = iq.target_url
         LEFT JOIN LATERAL (
@@ -149,6 +157,13 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
                 if not rationale_text and isinstance(full_payload, dict):
                     rationale_text = full_payload.get("rationale") or full_payload.get("author_intent_hypothesis") or ""
 
+            parsed_payload = full_payload if isinstance(full_payload, dict) else {}
+            if not parsed_payload and isinstance(full_payload, str) and full_payload.startswith("{"):
+                try:
+                    parsed_payload = json.loads(full_payload)
+                except Exception:
+                    parsed_payload = {}
+
             items.append({
                 "id": mid,
                 "title": title or "Untitled Cargo",
@@ -163,6 +178,7 @@ def fetch_all_cargo_with_triage() -> List[Dict[str, Any]]:
                 "rationale": rationale_text,
                 "warrant": warrant or "",
                 "dossier_path": dossier_path or "",
+                "full_payload": parsed_payload,
                 "triaged_at": triaged_at
             })
         cursor.close()
@@ -183,9 +199,50 @@ def get_cached_raw_content(gcp_bucket_path: str) -> str:
     return text
 
 
+def _format_dialectical_learning(learning_note: str, new_locker: str, asset_title: str, gcp_bucket_path: str) -> Dict[str, str]:
+    """
+    Constructs a calibrated, non-absolutist learned rule directive.
+    Strictly forbids 'must', 'always', 'never', 'ignore', 'dismiss' in machine-generated
+    text unless the Author explicitly authored those words in learning_note.
+    Uses dialectical framing: 'consider', 'might be', 'focus on', 'is related to'.
+    """
+    clean_note = learning_note.strip()
+    
+    # Check if Author deliberately used any absolutist words
+    author_used_absolutist = any(
+        re.search(rf"\b{word}\b", clean_note, re.IGNORECASE)
+        for word in ["must", "always", "never", "ignore", "dismiss"]
+    )
+    
+    # Format the machine directive using dialectical phrasing
+    if clean_note:
+        rule_text = (
+            f"Sail Locker Calibration ({new_locker}): When reviewing assets similar to '{asset_title}', "
+            f"consider that this material is related to {new_locker}. Focus on: {clean_note}"
+        )
+    else:
+        rule_text = (
+            f"Sail Locker Calibration ({new_locker}): Consider that assets similar to '{asset_title}' "
+            f"might be oriented toward {new_locker} rather than Doldrums."
+        )
+        
+    # Safety assertion: machine text must not introduce banned words
+    if not author_used_absolutist:
+        for banned in ["must", "always", "never", "ignore", "dismiss"]:
+            if banned.lower() not in clean_note.lower():
+                pattern = re.compile(rf"\b{banned}\b", re.IGNORECASE)
+                rule_text = pattern.sub("consider", rule_text)
+
+    return {
+        "rule_directive": rule_text,
+        "source_context": f"Author Triage Calibration on {gcp_bucket_path} ({datetime.date.today().isoformat()})"
+    }
+
+
 def record_human_reclassification(metadata_id: int, gcp_bucket_path: str, new_locker: str, learning_note: str, asset_title: str) -> bool:
     """
-    Commits an Author human override to cargo.fleet_enrichments and records a learned rule in learned_rules.json.
+    Commits an Author human override to cargo.fleet_enrichments and records a calibrated dialectical
+    learned rule in both Cutlass's and Bilgeladle's learned_rules.json memory vaults.
     """
     conn = _get_strict_cargo_connection()
     if not conn:
@@ -212,21 +269,20 @@ def record_human_reclassification(metadata_id: int, gcp_bucket_path: str, new_lo
         cursor.close()
         conn.close()
 
-        # Update Cutlass learned_rules.json memory vault if a learning note was provided
+        # Update Cutlass and Bilgeladle learned_rules.json memory vaults
         if learning_note.strip():
-            rules_path = os.path.abspath("src/react_agent/agents/cutlass/learned_rules.json")
-            if os.path.exists(rules_path):
-                with open(rules_path, "r", encoding="utf-8") as f:
-                    rules_data = json.load(f)
-
-                new_rule = {
-                    "rule_directive": f"Sail Locker Calibration ({new_locker}): When evaluating assets similar to '{asset_title}', assign '{new_locker}'. Rationale: {learning_note.strip()}",
-                    "source_context": f"Author Triage Override on {gcp_bucket_path} ({datetime.date.today().isoformat()})"
-                }
-                rules_data.append(new_rule)
-
-                with open(rules_path, "w", encoding="utf-8") as f:
-                    json.dump(rules_data, f, indent=4)
+            new_rule = _format_dialectical_learning(learning_note, new_locker, asset_title, gcp_bucket_path)
+            for agent_name in ["cutlass", "bilgeladle"]:
+                rules_path = os.path.abspath(f"src/react_agent/agents/{agent_name}/learned_rules.json")
+                if os.path.exists(rules_path):
+                    try:
+                        with open(rules_path, "r", encoding="utf-8") as f:
+                            rules_data = json.load(f)
+                        rules_data.append(new_rule)
+                        with open(rules_path, "w", encoding="utf-8") as f:
+                            json.dump(rules_data, f, indent=4)
+                    except Exception as le:
+                        print(f"[WARNING] Failed to update {agent_name} learned_rules.json: {le}")
 
         return True
     except Exception as e:
@@ -343,7 +399,7 @@ def run_batch_triage_job(asset_list: List[Dict[str, Any]], count: int) -> List[D
             f"(MAINSAIL, BILGE, JIB, or DOLDRUMS if confidence < 4), log to fleet_enrichments, and report."
         )
 
-        thread_id = f"cargo_{asset['id']}_cutlass"
+        thread_id = f"thread_cargo_{asset['id']}"
         chat_session = engine.start_chat_session(thread_id)
 
         try:
@@ -475,6 +531,10 @@ def main():
         reverse=True
     )
 
+    # Sightings count
+    all_sightings = list_fleet_sightings()
+    new_sightings_count = len([s for s in all_sightings if s.get("status") == "NEW"])
+
     # Sidebar: Metrics & Batch Controls
     with st.sidebar:
         st.header("📊 Cargo Manifest Metrics")
@@ -490,6 +550,9 @@ def main():
         col_m7, col_m8 = st.columns(2)
         col_m7.metric("🚩 Jib", len(jib_items))
         col_m8.metric("🛶 Wherry", len(wherry_items))
+        col_m9, col_m10 = st.columns(2)
+        col_m9.metric("🪵 Flotsam", len(flotsam_items))
+        col_m10.metric("🔭 Sightings", len(all_sightings))
 
         st.divider()
 
@@ -519,6 +582,7 @@ def main():
         view_options = [
             f"🕒 Recently Triaged ({len(recently_triaged_items)})",
             f"🌊 Doldrums (Needs Review) ({len(doldrums_items)})",
+            f"🔭 Sightings Ledger ({len(all_sightings)})",
             f"⏳ Untriaged ({len(untriaged_items)})",
             f"🔄 Pending Re-acquisition ({len(reacquiring_items)})",
             f"⛵ Mainsail ({len(mainsail_items)})",
@@ -557,6 +621,59 @@ def main():
             if st.button("Dismiss Batch Notice"):
                 st.session_state["latest_triage_batch"] = None
                 st.rerun()
+
+    # Special View: Primary Source Sightings Ledger
+    if "Sightings Ledger" in selected_view:
+        st.subheader("🔭 Primary Source Sightings Ledger")
+        st.caption("Aggregated inventory of upstream datasets, whitepapers, legal filings, and empirical reports sighted across cargo assets. Sighted by Grog (Turn 3), held here for human review and queue promotion.")
+
+        if not all_sightings:
+            st.info("No primary source sightings recorded yet in `writings/cargo/FLEET_SIGHTINGS_LEDGER.md`.")
+            return
+
+        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+        col_s1.metric("Total Sightings", len(all_sightings))
+        col_s2.metric("🆕 New (Unreviewed)", new_sightings_count)
+        col_s3.metric("🚀 Promoted to Queue", len([s for s in all_sightings if s.get("status") == "PROMOTED"]))
+        col_s4.metric("✅ In Cargo Hold", len([s for s in all_sightings if s.get("status") == "ALREADY_ACQUIRED"]))
+
+        st.divider()
+
+        status_filter = st.selectbox("Filter Sightings by Status:", ["All", "NEW", "PROMOTED", "ALREADY_ACQUIRED", "IN_QUEUE"])
+        display_sightings = all_sightings if status_filter == "All" else [s for s in all_sightings if s.get("status") == status_filter]
+
+        st.write(f"Showing {len(display_sightings)} sightings:")
+        for s in display_sightings:
+            with st.container():
+                st.markdown(f"#### 📄 {s['sighted_title']}")
+                c1, c2, c3 = st.columns([3, 3, 2])
+                c1.markdown(f"**Source Cargo:** `{s['source_cargo_id']}` ({s['source_title']})")
+                c1.markdown(f"**Type:** `{s['source_type']}` | **Sighted:** {s['sighted_at']}")
+                
+                c2.markdown(f"**Locator / URL:** `{s['url_or_locator']}`")
+                if s.get('context_quote'):
+                    c2.caption(f"*\"{s['context_quote']}\"*")
+                
+                stat = s.get('status', 'NEW')
+                if stat == "NEW":
+                    c3.markdown("<span class='badge-doldrums'>NEW SIGHTING</span>", unsafe_allow_html=True)
+                    if s['url_or_locator'].startswith("http://") or s['url_or_locator'].startswith("https://"):
+                        if c3.button("🚀 Promote to Queue", key=f"prom_{s['sighting_id']}"):
+                            res = promote_sighting_to_queue(s['sighting_id'])
+                            st.success(res)
+                            st.cache_data.clear()
+                            st.rerun()
+                    else:
+                        c3.caption("Non-URL locator (manual lookup required)")
+                elif stat == "PROMOTED":
+                    c3.markdown("<span class='badge-jib'>PROMOTED TO QUEUE</span>", unsafe_allow_html=True)
+                elif stat == "ALREADY_ACQUIRED":
+                    c3.markdown("<span class='badge-mainsail'>ALREADY IN HOLD</span>", unsafe_allow_html=True)
+                elif stat == "IN_QUEUE":
+                    c3.markdown("<span class='badge-reacquiring'>IN INGESTION QUEUE</span>", unsafe_allow_html=True)
+
+                st.markdown("---")
+        return
 
     # Determine active queue list
     if "Recently Triaged" in selected_view:
@@ -624,6 +741,41 @@ def main():
         if current_asset["triaged_at"]:
             st.caption(f"Last Triaged: {current_asset['triaged_at']}")
 
+        # Check for Bilgeladle Chapter Anchor & Advisory Tags
+        payload_dict = current_asset.get("full_payload") or {}
+        rec_locker = payload_dict.get("recommended_locker")
+        needs_reacq = payload_dict.get("needs_reacquisition")
+        primary_chap = payload_dict.get("primary_chapter")
+
+        workspace_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        bilge_align_path = os.path.join(workspace_root, "writings", "cargo", f"cargo_{current_asset['id']}", "bilgeladle_alignment.md")
+        if os.path.exists(bilge_align_path):
+            try:
+                with open(bilge_align_path, "r", encoding="utf-8", errors="replace") as bf:
+                    b_text = bf.read()
+                    if not rec_locker:
+                        r_match = re.search(r"Recommended Locker:\s*(FLOTSAM|WHERRY|None)", b_text, re.IGNORECASE)
+                        if r_match: rec_locker = r_match.group(1).upper()
+                    if needs_reacq is None:
+                        n_match = re.search(r"Needs Reacquisition:\s*(TRUE|FALSE)", b_text, re.IGNORECASE)
+                        if n_match: needs_reacq = (n_match.group(1).upper() == "TRUE")
+                    if not primary_chap:
+                        c_match = re.search(r"Primary Chapter Anchor:\s*([^\n]+)", b_text)
+                        if c_match: primary_chap = c_match.group(1).strip()
+            except Exception:
+                pass
+
+        if primary_chap and primary_chap != "NONE":
+            st.markdown(f"**⚓ Primary Chapter Anchor:** `{primary_chap}`")
+
+        if rec_locker == "FLOTSAM":
+            st.warning("⚠️ **Bilgeladle Advisory: Recommended FLOTSAM** (Suspected non-research cargo, spam, or marketing puffery)")
+        elif rec_locker == "WHERRY":
+            st.info("🛶 **Bilgeladle Advisory: Recommended WHERRY** (Suspected developer tooling, library docs, or agent infrastructure)")
+
+        if needs_reacq:
+            st.error("🔄 **Bilgeladle Alert: Needs Reacquisition** (Truncated paywall preview, 403 block, or empty video shell)")
+
         # Cutlass Triage Card
         if current_asset["sail_locker"] != "UNTRIAGED":
             st.markdown("---")
@@ -648,9 +800,9 @@ def main():
         )
 
         auto_audit = st.checkbox(
-            "⚡ Automatically run Full 6-Section Audit upon primary classification (Re-awakens thread & saves tokens)",
+            "⚡ Automatically run Complete Intake Pipeline (Bilgeladle -> Cutlass -> Grog + Sightings)",
             value=True,
-            help="When checked, clicking MAINSAIL, BILGE, or JIB immediately records the human calibration, trains Cutlass's learned rules, and executes the complete 6-section audit in the existing thread."
+            help="When checked, clicking MAINSAIL, BILGE, or JIB immediately records the human calibration, trains learned rules, and executes the complete 3-turn inverted pipeline (Bilgeladle -> Cutlass -> Grog) in one pass."
         )
 
         st.markdown("##### ⛵ Primary Research Sail Lockers (Core Intellectual Cargo)")
@@ -659,12 +811,17 @@ def main():
         if pri_c1.button("⛵ MAINSAIL", use_container_width=True, type="primary" if locker != "MAINSAIL" else "secondary", help="Primary Thesis Alignment: Direct evidence of epistemic corruption, institutional decay, or core thesis proof."):
             record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "MAINSAIL", learning_note, current_asset["title"])
             if auto_audit:
-                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for MAINSAIL..."):
-                    audit_res = run_full_audit_for_asset(current_asset, target_locker="MAINSAIL", learning_note=learning_note)
-                    if audit_res:
-                        st.success(f"Asset #{current_asset['id']} calibrated as MAINSAIL and Full Audit generated!")
+                with st.spinner(f"Running Inverted Shared-Thread Intake (Bilgeladle -> Cutlass -> Grog) for MAINSAIL..."):
+                    res = run_cargo_intake(
+                        metadata_id=current_asset["id"],
+                        force_turn2_3=True,
+                        author_locker="MAINSAIL",
+                        author_note=learning_note
+                    )
+                    if res.get("status") in ("COMPLETED", "HALTED_DOLDRUMS", "HALTED_DOLDRUMS_AFTER_CUTLASS"):
+                        st.success(f"Asset #{current_asset['id']} calibrated as MAINSAIL! Full dossiers & primary source sightings generated in one pass.")
                     else:
-                        st.warning(f"Locker updated to MAINSAIL, but audit encountered an issue.")
+                        st.warning(f"Locker updated to MAINSAIL, but intake pipeline encountered an issue: {res.get('message', res.get('status'))}")
             else:
                 st.success(f"Asset #{current_asset['id']} categorized as MAINSAIL with learning note recorded.")
             st.cache_data.clear()
@@ -673,12 +830,17 @@ def main():
         if pri_c2.button("🛢️ BILGE", use_container_width=True, type="primary" if locker != "BILGE" else "secondary", help="Toxic Epistemic Waste: Unverifiable hype, computational truthiness, bureaucratic stenography, and deceptive rationalizations."):
             record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "BILGE", learning_note, current_asset["title"])
             if auto_audit:
-                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for BILGE..."):
-                    audit_res = run_full_audit_for_asset(current_asset, target_locker="BILGE", learning_note=learning_note)
-                    if audit_res:
-                        st.success(f"Asset #{current_asset['id']} calibrated as BILGE and Full Audit generated!")
+                with st.spinner(f"Running Inverted Shared-Thread Intake (Bilgeladle -> Cutlass -> Grog) for BILGE..."):
+                    res = run_cargo_intake(
+                        metadata_id=current_asset["id"],
+                        force_turn2_3=True,
+                        author_locker="BILGE",
+                        author_note=learning_note
+                    )
+                    if res.get("status") in ("COMPLETED", "HALTED_DOLDRUMS", "HALTED_DOLDRUMS_AFTER_CUTLASS"):
+                        st.success(f"Asset #{current_asset['id']} calibrated as BILGE! Full dossiers & primary source sightings generated in one pass.")
                     else:
-                        st.warning(f"Locker updated to BILGE, but audit encountered an issue.")
+                        st.warning(f"Locker updated to BILGE, but intake pipeline encountered an issue: {res.get('message', res.get('status'))}")
             else:
                 st.success(f"Asset #{current_asset['id']} categorized as BILGE with learning note recorded.")
             st.cache_data.clear()
@@ -687,12 +849,17 @@ def main():
         if pri_c3.button("🚩 JIB", use_container_width=True, type="primary" if locker != "JIB" else "secondary", help="Counter-Arguments & Orthogonal Angles: Critical friction, alternative frameworks, or nuanced methodological pushback."):
             record_human_reclassification(current_asset["id"], current_asset["gcp_bucket_path"], "JIB", learning_note, current_asset["title"])
             if auto_audit:
-                with st.spinner(f"Re-awakening Cutlass thread (cargo_{current_asset['id']}_cutlass) to execute full audit for JIB..."):
-                    audit_res = run_full_audit_for_asset(current_asset, target_locker="JIB", learning_note=learning_note)
-                    if audit_res:
-                        st.success(f"Asset #{current_asset['id']} calibrated as JIB and Full Audit generated!")
+                with st.spinner(f"Running Inverted Shared-Thread Intake (Bilgeladle -> Cutlass -> Grog) for JIB..."):
+                    res = run_cargo_intake(
+                        metadata_id=current_asset["id"],
+                        force_turn2_3=True,
+                        author_locker="JIB",
+                        author_note=learning_note
+                    )
+                    if res.get("status") in ("COMPLETED", "HALTED_DOLDRUMS", "HALTED_DOLDRUMS_AFTER_CUTLASS"):
+                        st.success(f"Asset #{current_asset['id']} calibrated as JIB! Full dossiers & primary source sightings generated in one pass.")
                     else:
-                        st.warning(f"Locker updated to JIB, but audit encountered an issue.")
+                        st.warning(f"Locker updated to JIB, but intake pipeline encountered an issue: {res.get('message', res.get('status'))}")
             else:
                 st.success(f"Asset #{current_asset['id']} categorized as JIB with learning note recorded.")
             st.cache_data.clear()
@@ -719,32 +886,54 @@ def main():
                 st.cache_data.clear()
                 st.rerun()
 
-        # ADR-015 Permanent Dossier Section
-        dossier_rel_path = current_asset.get("dossier_path") or f"writings/cargo/cargo_{current_asset['id']}/cutlass_audit.md"
-        dossier_abs_path = os.path.abspath(dossier_rel_path)
-        dossier_exists = os.path.exists(dossier_abs_path)
+        # ADR-015 Permanent Dossiers & Deliverables
+        cargo_folder = os.path.join(workspace_root, "writings", "cargo", f"cargo_{current_asset['id']}")
+        bilge_path = os.path.join(cargo_folder, "bilgeladle_alignment.md")
+        cutlass_path = current_asset.get("dossier_path") or os.path.join(cargo_folder, "cutlass_audit.md")
+        if not os.path.isabs(cutlass_path):
+            cutlass_path = os.path.abspath(cutlass_path)
+        grog_path = os.path.join(cargo_folder, "grog_extraction.md")
 
         st.markdown("---")
-        st.markdown("### 🏛️ ADR-015 Reusable Audit Dossier")
-        if dossier_exists:
-            st.success(f"✅ Reusable Full Audit Dossier exists on disk: `{dossier_rel_path}`")
-            with st.expander("📄 View Cutlass Full 6-Section Audit Deliverable", expanded=False):
-                try:
-                    with open(dossier_abs_path, "r", encoding="utf-8", errors="replace") as df:
-                        st.markdown(df.read())
-                except Exception as de:
-                    st.error(f"Error reading dossier: {str(de)}")
-        else:
-            st.info("ℹ️ No permanent 6-section dossier exists yet for this asset.")
+        st.markdown("### 🏛️ ADR-015 Reusable Cargo Deliverables")
 
-        audit_btn_label = "📝 Re-run Full Audit & Refresh Dossier" if dossier_exists else "📝 Run Full Structural Logic Audit & Generate Dossier"
-        if st.button(audit_btn_label, use_container_width=True, type="secondary" if dossier_exists else "primary"):
-            with st.spinner(f"Cutlass executing full 6-section audit on Asset #{current_asset['id']} in thread cargo_{current_asset['id']}_cutlass..."):
-                audit_response = run_full_audit_for_asset(current_asset, target_locker=locker if locker != "UNTRIAGED" else "", learning_note=learning_note)
-                if audit_response:
-                    st.success(f"Full audit complete! Reusable dossier written to `{dossier_rel_path}` and Sail Locker synced to PostgreSQL.")
+        if os.path.exists(bilge_path):
+            with st.expander("📄 View Bilgeladle Chapter Alignment Deliverable (Turn 1)", expanded=False):
+                try:
+                    with open(bilge_path, "r", encoding="utf-8", errors="replace") as bf:
+                        st.markdown(bf.read())
+                except Exception as de:
+                    st.error(f"Error reading Bilgeladle deliverable: {str(de)}")
+
+        if os.path.exists(cutlass_path):
+            with st.expander("📄 View Cutlass Forensic Logic Audit Deliverable (Turn 2)", expanded=False):
+                try:
+                    with open(cutlass_path, "r", encoding="utf-8", errors="replace") as cf:
+                        st.markdown(cf.read())
+                except Exception as de:
+                    st.error(f"Error reading Cutlass deliverable: {str(de)}")
+
+        if os.path.exists(grog_path):
+            with st.expander("📄 View Grog Straight Summary & Sightings (Turn 3)", expanded=False):
+                try:
+                    with open(grog_path, "r", encoding="utf-8", errors="replace") as gf:
+                        st.markdown(gf.read())
+                except Exception as de:
+                    st.error(f"Error reading Grog deliverable: {str(de)}")
+
+        if not (os.path.exists(bilge_path) or os.path.exists(cutlass_path) or os.path.exists(grog_path)):
+            st.info("ℹ️ No permanent multi-agent deliverables exist yet for this asset.")
+
+        st.markdown("##### 🚀 Shared-Thread Intake Pipeline")
+        if st.button("⚡ Run Inverted Intake Pipeline (Bilgeladle -> Cutlass -> Grog)", use_container_width=True, type="primary"):
+            with st.spinner(f"Running Inverted Shared-Thread Pipeline on cargo_{current_asset['id']}..."):
+                res = run_cargo_intake(metadata_id=current_asset["id"])
+                if res.get("status") in ("COMPLETED", "HALTED_DOLDRUMS", "HALTED_DOLDRUMS_AFTER_CUTLASS"):
+                    st.success(f"Pipeline executed! Status: {res.get('status')}. Chapter Anchor: {res.get('primary_chapter', 'N/A')}. Locker: {res.get('sail_locker')}")
                     st.cache_data.clear()
                     st.rerun()
+                else:
+                    st.error(f"Pipeline execution issue: {res.get('message', res.get('status'))}")
 
         # Re-acquisition Escalation Deck
         st.markdown("---")

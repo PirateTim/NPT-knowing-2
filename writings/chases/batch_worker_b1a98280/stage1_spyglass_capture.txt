@@ -1,0 +1,11 @@
+# SPYGLASS CAPTURE RECEIPT
+- **Source URL**: https://www.theverge.com/column/863502/grok-deepfake-musk
+- **Canonical Asset Path**: acquisitions/under-musk-the-grok-disaster-was-inevitable.txt
+- **GCS URI**: gs://npt-fleet-cargo-hold/acquisitions/under-musk-the-grok-disaster-was-inevitable.txt
+- **Title**: Under Musk, the Grok disaster was inevitable
+- **Authors**: Hayden Field
+- **Publication Date**: 2026-01-18
+- **Publisher**: The Verge
+- **Item Type**: journalArticle
+- **Abstract**: The problems were baked in.
+- **Status**: COMPLETED

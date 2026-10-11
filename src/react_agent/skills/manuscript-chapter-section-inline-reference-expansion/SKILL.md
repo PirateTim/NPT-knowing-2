@@ -1,7 +1,6 @@
 ---
 name: manuscript-chapter-section-inline-reference-expansion
 description: Resolves raw chapter references into un-truncated vector citation nodes with verified live URLs using CrossRef and Landlubber search grounding.
-agents: [plank]
 ---
 
 # SKILL: Manuscript Inline Reference Expansion (Stage 2 & Stage 4)

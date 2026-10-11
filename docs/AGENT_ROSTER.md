@@ -38,6 +38,9 @@ This document serves as the master dossier for all autonomous AI agents operatin
 - **Key Guardrails & Heuristics**:
   - `PEGLEG-RULE-008`: Continuous Chase status tracking and CLI table logging to `writings/chases/{chase_id}/chase_status.md`.
   - `PEGLEG-RULE-010`: **Circuit Breaker Triaging & Informed Delta Protocol**. When worker agents hit turn limits, physically verifies disk/DB progress first. Re-dispatches with strict non-repetitive work deltas if progressing; halts and escalates if stagnant. Never performs worker file IO directly.
+  - `PEGLEG-RULE-017`: **Stage 0 Socratic Prompt Inquest & Rules of Engagement Protocol**. Socratic Coach and Prompt Architect. Interrogates raw inquiries to elevate their intellectual altitude for the dual-PhD synthesis engine (Scallywag), defines Scope and Rules of Engagement (evidence standards, mandatory Toulmin warrants), and holds an interactive alignment turn before dispatching the worker DAG. Defers chapter anchoring strictly to Bilgeladle.
+  - `PEGLEG-RULE-018`: **Universal Epistemic Signal Scoring Scale (0.0 to 10.0)**. Enforces standard 0.0–10.0 scoring across all reviewers, passing threshold $\ge 8.0 / 10.0$ across all 3 reviewers, and automatic Stage 5B revision if $< 8.0$.
+  - `PEGLEG-RULE-019`: **Spending Cap Enforcement & Budget Telemetry**. Automatically parses user-declared spending caps (e.g. `spending cap of $0.50`), records budget in `chase_status.md`, tracks cumulative dollar spend across stages, and enforces an immutable hard-abort circuit breaker if spend exceeds 100% of the cap.
 
 ---
 
@@ -48,7 +51,8 @@ This document serves as the master dossier for all autonomous AI agents operatin
 - **Key Skills**:
   - `bootstrap-ingestion`: Standardized ingestion sequence for URLs.
   - `web-content-seizure`: Captures full-text payloads, streams to GCS, and registers database records.
-- **Key Tools**: `check_cargo_manifest`, `download_url`, `download_remote_pdf`, `precision_html_extract`, `acquire_arxiv_document`, `upsert_knowledge_artifact`, `log_content_metadata`, `log_ingestion_failure`.
+  - `stevedore-book-epub`: Ingests full-length EPUB books from local inbox into hybrid master/chapter assets with complete provenance back-pointers and attached endnotes.
+- **Key Tools**: `check_cargo_manifest`, `download_url`, `download_remote_pdf`, `stevedore_local_epub`, `precision_html_extract`, `acquire_arxiv_document`, `acquire_archive_snapshot`, `resolve_open_access_pdf`, `upsert_knowledge_artifact`, `log_content_metadata`, `log_ingestion_failure`.
 - **Database/Storage Interface**:
   - GCS Bucket: `gs://npt-fleet-cargo-hold/acquisitions/` (deterministic kebab-case slugs).
   - PostgreSQL: `cargo.content_metadata` and `cargo.ingestion_queue`.
@@ -96,9 +100,12 @@ This document serves as the master dossier for all autonomous AI agents operatin
   - `making-a-sighting`: Exhaustive inventory of referenced content, papers, books, reports, and URLs for Spyglass acquisition targeting.
 - **Key Tools**: `read_knowledge_artifact`, `read_local_file`, `write_local_file`, `log_fleet_enrichment`.
 - **Database/Storage Interface**:
-  - Output files: `writings/chases/{chase_id}/stage3_grog_extraction.md`.
-  - PostgreSQL: `cargo.fleet_enrichments`.
-- **Key Guardrails**: Single-Asset Mandate (never processes two files in one prompt; never compares/contrasts). Strict Non-Judgmental Mandate (zero critique or bias scoring). Outputs all 4 standard skill sections.
+  - Output files: `writings/cargo/cargo_{id}/grog_extraction.md`, `writings/chases/{chase_id}/stage4_grog_extraction.md`, and `writings/chases/{chase_id}/stage6_grog_review.md`.
+  - PostgreSQL: `cargo.fleet_enrichments` and `cargo.fleet_sightings`.
+- **Key Guardrails**:
+  - Single-Asset Mandate (never processes two files in one prompt; never compares/contrasts).
+  - Strict Non-Judgmental Mandate (zero critique or bias scoring during extraction; outputs all 4 standard skill sections).
+  - `GROG-RULE-008`: **Chase Stage 6 Meaning Preservation & Blocker Gating Rubric**. In Stage 6 of a Chase, audits Scallywag's essay against the seized cargo. Acts as sole authority on whether provenance slips or procedural errors are BLOCKERS. Mandates a score < 8.0 and `REJECTED_FOR_REVISION` verdict on any blocker to automatically trip the Stage 5B revision loop. Strictly prohibited from checking references (Plank's domain). Scores on the universal 0.0 to 10.0 scale.
 
 ---
 

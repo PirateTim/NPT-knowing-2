@@ -1,5 +1,11 @@
 {
   "fleet_agents": {
+    "hook": {
+      "name": "Hook",
+      "role": "Lead Architect, Sovereign System Controller, and Agent Progenitor",
+      "xml_path": "src/react_agent/agents/hook/hook.xml",
+      "capabilities": ["System Architecture", "GitHub Backlog Management", "Agent Provisioning"]
+    },
     "plank": {
       "name": "Plank",
       "role": "Citation Specialist & Reference Resolution Agent",

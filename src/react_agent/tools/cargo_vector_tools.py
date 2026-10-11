@@ -29,11 +29,15 @@ def _get_strict_cargo_connection():
     )
 
 def _get_genai_client() -> Client:
-    """Instantiates Google GenAI client for embeddings."""
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("[ERROR] GEMINI_API_KEY environment variable is not set.")
-    return Client(api_key=api_key)
+    """Instantiates Google GenAI client for embeddings, prioritizing Vertex AI on npt-reckoning-1 with API key fallback."""
+    try:
+        project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "npt-reckoning-1"
+        return Client(vertexai=True, project=project, location="us-central1")
+    except Exception:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("[ERROR] Neither Vertex AI credentials nor GEMINI_API_KEY available.")
+        return Client(api_key=api_key)
 
 def embed_cargo_index(index_scope: str = "mainsail", batch_limit: Optional[int] = None) -> str:
     """

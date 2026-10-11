@@ -88,5 +88,32 @@
     "underlying_mechanism": "YouTube video pages contain little to no static body prose in their HTML; scraping the page with requests or Botasaurus yields only navigation chrome and copyright notices (< 1,000 chars), creating useless metadata shells.",
     "incident_context": "Author audit caught an un-transcribed YouTube metadata shell for WSJ profile (Asset #15), requiring re-acquisition protocol.",
     "timestamp_utc": "2026-09-10 13:38:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-011",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "URL Sanitization & CMS Preview Stripping",
+    "generalized_heuristic": "Before executing web requests, automatically detect and strip transient CMS preview and staging query parameters (e.g. 'x-craft-preview', 'token', 'preview_token', 'preview_id', 'wp-preview') from article URLs. If an inbound URL with preview query parameters triggers an HTTP 400 or HTTP 403 error, immediately re-attempt the fetch using the sanitized canonical path before classifying the domain as an access barrier.",
+    "underlying_mechanism": "Editorial preview links and draft URLs embed expiring session tokens that cause web servers to return HTTP 400 Bad Request or 403 Forbidden to unauthorized clients. The underlying article path is almost always publicly accessible once preview tokens are pruned.",
+    "incident_context": "Yale Environment 360 investigation on Pennsylvania data centers failed across all 5 tiers due to an expired Craft CMS preview token in the queue URL; stripping the parameter immediately yielded a 100% successful extraction.",
+    "timestamp_utc": "2026-09-22 15:55:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-012",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Binary Payload & PDF Stream Management",
+    "generalized_heuristic": "When extracting text and metadata from PDF files using pypdf, all reader metadata attributes (title, author, creation date) must be eagerly evaluated and stringified into standard Python strings (str(...)) while the underlying file stream remains actively open. Never retain lazy pypdf IndirectObject references after closing the file context. Additionally, route PDF URLs using parsed URL path extensions (urlparse(url).path.endswith('.pdf')) to prevent query parameters (e.g. '?hl=en-US') from bypassing PDF ingestion.",
+    "underlying_mechanism": "pypdf metadata lookups return IndirectObject pointers that perform lazy seek operations on the underlying file stream. If string formatting occurs after exiting the 'with open(...) as f:' block, Python raises 'ValueError: seek of closed file'. Path-based extension checking prevents query strings from misrouting binary streams.",
+    "incident_context": "Perplexity AI whitepaper (pplx-at-work.pdf?hl=en-US) crashed download_remote_pdf with 'seek of closed file' because the title IndirectObject was stringified after closing the temporary file descriptor.",
+    "timestamp_utc": "2026-09-22 15:55:00 UTC"
+  },
+  {
+    "heuristic_id": "SPYGLASS-HEURISTIC-013",
+    "scope": "SPYGLASS_LOCAL",
+    "category": "Mechanical Provenance & Metadata Redundancy",
+    "generalized_heuristic": "Never rely solely on cognitive ReAct agent prompt compliance for logging administrative provenance metadata (publication_date, publication_title, authors). The mechanical database logging tool (log_content_metadata) must enforce an automated safety net: if the caller omits date, publisher, or authors, the tool must mechanically parse the newly uploaded GCS artifact header index ('acquisitions/*.txt') to extract and commit PUBLISHED:, PUBLISHER:, and AUTHORS: into cargo.content_metadata automatically.",
+    "underlying_mechanism": "ReAct agents in batch loops can occasionally omit optional arguments during rapid multi-turn dispatches. Enforcing a mechanical inspection of the GCS artifact header at the database driver layer guarantees 100% metadata persistence regardless of model variance.",
+    "incident_context": "Corpus audit revealed that early batch ingestion runs wrote Dublin Core and JSON-LD dates to GCS text headers but left PostgreSQL fields NULL due to omitted arguments in prompt dispatches.",
+    "timestamp_utc": "2026-09-22 15:55:00 UTC"
   }
 ]

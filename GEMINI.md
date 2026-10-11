@@ -2,6 +2,19 @@
 
 This file is automatically loaded into Antigravity's system context upon workspace initialization. It defines the core identity of the NPT Fleet codebase, the active agent roster, multi-agent workflows, and immutable architectural rules.
 
+## 0. Mandatory Antigravity CLI Execution Law: Strictly Python 3.12 via `uv`
+> [!CRITICAL]
+> **This project strictly uses a Python 3.12 virtual environment managed by `uv` (`.venv/` / `.python-version = 3.12`).**
+>
+> **NEVER execute raw `python <script>.py` in the terminal.** 
+> Windows has multiple global Python installations (`C:\Python314\`, `C:\Program Files\Python311\`) that DO NOT have project dependencies like `pg8000`, `google-genai`, or `python-dotenv` installed, leading directly to `ModuleNotFoundError: No module named 'pg8000'`.
+>
+> **MANDATORY COMMAND SYNTAX:**
+> - To run ANY Python script or one-liner: **`uv run python <script>.py`** or **`uv run python -c "..."`**
+> - To run pytest / tests: **`uv run pytest`**
+> - To run entrypoints or streamlits: **`uv run streamlit run ...`**
+> - The virtual environment is located at `.venv/` and strictly pinned to Python 3.12 through `uv`.
+
 ---
 
 ## 1. Fleet Architecture & Identity
@@ -10,24 +23,26 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
 
 - **Master Dossier**: Read `docs/AGENT_ROSTER.md` for full agent profiles, mandates, psychological archetypes, and toolsets.
 - **Workflow Manual**: Read `docs/WORKFLOWS_AND_SYSTEM_FLOWS.md` for Mermaid flowcharts and sequence diagrams of all active pipelines.
-- **Master Decision Records**: Refer to `docs/ADRs.md` (ADR-001 through ADR-013).
+- **Master Decision Records**: Refer to `docs/ADRs.md` (ADR-001 through ADR-019).
 - **Standard Operating Procedures**: Refer to `docs/SOPs.md` (SOP-01 through SOP-07).
 
 ---
 
-## 2. Active Agent Roster Summary
+## 2. Active Agent Roster (Canonical XML Firmwares)
+> [!NOTE]
+> **Single Source of Truth (SSOT):** Agent directives, model targets, psychological archetypes, authorized tools, and skills are defined exclusively in each agent's XML firmware under `src/react_agent/agents/{agent}/{agent}.xml`. To avoid documentation drift, never duplicate XML prompt text in this file. Inspect the canonical files directly on-demand:
 
-| Agent | Role & Mandate | Key Tools & Skills |
-| :--- | :--- | :--- |
-| **`pegleg`** | **Mission Commander & DAG Foreman**: Batch orchestration, agile subagent dispatch, and stage gate enforcement. | `dispatch_subagent_turn`, `dispatch-fleet-task`, `orchestrate-chase`, `chapter-silver-pipeline` |
-| **`spyglass`** | **Ingestion & Seizure Engine**: Deduplicated acquisition of web, PDF, and arXiv payloads into GCS Cargo Hold. | `download_url`, `download_remote_pdf`, `upsert_knowledge_artifact`, `bootstrap-ingestion` |
-| **`cutlass`** | **Epistemic Auditor & Triage Officer**: Audits against the 3-Stage Chain of Ruin, 32 failure modes, and assigns Sail Lockers. | `read_knowledge_artifact`, `log_fleet_enrichment`, `audit_chapter_silver_citations` |
-| **`grog`** | **Content Summarizer & Core Extraction Agent**: Objective extraction of provenance context, factual assertions, unstated assumptions, strict summaries, and reference sightings for single content files. | `dead-reckoning`, `fact-plumbing`, `summarize`, `making-a-sighting`, `read_knowledge_artifact` |
-| **`plank`** | **Reference & Zotero Specialist**: CrossRef metadata resolution and vector node expansion. | `fetch_crossref_metadata`, `call_landlubber`, `expand-chapter-references` |
-| **`bilgeladle`** | **Thesis Alignment & Section Assembler,  Voice of the manuscript for The End of Knowing**: Slices chapters to sections, enforces completeness gates, and evaluates alignment. | `silver-section-assembly`, `vector_search_manuscript`, `read_manuscript_section` |
-| **`scallywag`** | **Diagnostician of Misanthropes & Epistemic Stress-Tester**: Formidable academic scholar driven by cold, justifiable anger. Studies misanthropes and misanthropy, specifically placing blame on individual humans who bear malintent toward knowledge and humanity, and who deliberately construct and hide behind organizational structures, legal entities, and algorithms to inflict harm and liquidate truth. | `narrative-synthesis`, `read_manuscript_section` |
-| **`landlubber`** | **Web & Search Grounding Helper**: Headless browser verification, live HTTP status checks (200 OK vs 404), and search. | `call_landlubber` |
-| **`hook`** | **Progenitor & Meta-Architect**: Generates agent XML firmwares and manages PostgreSQL DDL schema migrations. | `write_local_file`, `regrant_permissions.py` (SOP-06) |
+| Agent | Role & Mandate | Canonical XML Firmware | Master Dossier Profile |
+| :--- | :--- | :--- | :--- |
+| **`pegleg`** | Mission Commander & Agile DAG Foreman | [`pegleg.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/pegleg/pegleg.xml) | [`docs/AGENT_ROSTER.md#1-pegleg`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`spyglass`** | Content Seizure & Ingestion Engine | [`spyglass.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/spyglass/spyglass.xml) | [`docs/AGENT_ROSTER.md#2-spyglass`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`cutlass`** | Epistemic Auditor & Triage Officer | [`cutlass.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/cutlass/cutlass.xml) | [`docs/AGENT_ROSTER.md#3-cutlass`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`grog`** | Quartermaster & Core Content Specialist | [`grog.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/grog/grog.xml) | [`docs/AGENT_ROSTER.md#4-grog`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`plank`** | Bibliographer & Reference Resolution | [`plank.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/plank/plank.xml) | [`docs/AGENT_ROSTER.md#5-plank`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`bilgeladle`** | Thesis Alignment & Section Assembler | [`bilgeladle.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/bilgeladle/bilgeladle.xml) | [`docs/AGENT_ROSTER.md#6-bilgeladle`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`scallywag`** | Diagnostician of Misanthropes & Malintent | [`scallywag.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/scallywag/scallywag.xml) | [`docs/AGENT_ROSTER.md#7-scallywag`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`landlubber`** | Web & Search Grounding Helper | [`landlubber.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/landlubber/landlubber.xml) | [`docs/AGENT_ROSTER.md#8-landlubber`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
+| **`hook`** | Meta-Architect & Schema Progenitor | [`hook.xml`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/agents/hook/hook.xml) | [`docs/AGENT_ROSTER.md#9-hook`](file:///c:/Users/timot/NPT-knowing-2/docs/AGENT_ROSTER.md) |
 
 ---
 
@@ -59,7 +74,7 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
 The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be the authentic voice of the book manuscript (*The End of Knowing*). It structures the 120-page context file into clean, grounded tiers so Bilgeladle can parse, challenge, and discuss any piece of incoming external cargo against the book's thesis:
 - **`ship/bronze/`**: Raw section-level text sliced directly from the manuscript monolith (`ship/bronze/chapters/chXX/chXX_secX.Y_bronze.md`).
 - **`ship/bronze_plus/`**: Section-level text containing exhaustive, un-truncated reference vector nodes (`ship/bronze_plus/chapters/chXX/chXX_secX.Y_bronze_plus.md`) and master reference indices (`chXX_references.md`). **This tier is the exclusive source for populating the Vector Database (`ship.letters_of_marque`).**
-- **`ship/CHAPTER_BACKBONES.md` & `chapter_backbones.json`**: The **Master Cognitive Compass** (13 calibrated Chapter Backbones and Section Ribs). Formally supersedes the legacy "Silver" Map-Expand-Reduce experiment. Provides the lean, structured 13-node coordinate system used by Bilgeladle and Scallywag to diagnose external cargo against the book's thesis.
+- **`ship/SHIP_DECK_PLANS.md` & `ship_deck_plans.json`**: The **Master Cognitive Compass** (13 calibrated Chapter Backbones and Section Ribs). Formally supersedes the legacy "Silver" Map-Expand-Reduce experiment. Provides the lean, structured 13-node coordinate system used by Bilgeladle and Scallywag to diagnose external cargo against the book's thesis.
 - **`ship/silver/`**: **Formally Deprecated & Archived** (`archive/legacy_silver_pipeline/`). The legacy Map-Expand-Reduce pedagogical expansions were retired in September 2026.
 - **`ship/gold/`**: **Does not exist and never will.** (Gold-tier synthesis deliverables exist only as finalized articles and essays in `writings/`).
 
@@ -92,36 +107,33 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
 - **GitHub Backlog Exclusivity**: GitHub Issues is reserved exclusively for Timothy (Human Architect), Hook, and Antigravity. Domain content agents (Spyglass, Cutlass, etc.) do NOT create GitHub issues for routine scraping barriers (dead-letters go to `cargo.failed_metadata`).
 - **Anti-Regex Citation Parsing Policy (ADR-012 & PLANK-RULE-112)**: Regular expressions must NEVER be used to parse citation strings, extract author names/titles/dates, or decompose bibliographic metadata. All bibliographic extraction must be executed via LLM semantic comprehension with structured schemas or official API responses (CrossRef, Landlubber). Regex is restricted strictly to physical markdown file boundary slicing (e.g. `# Chapter X` or `### X.Y` headers).
 - **Hybrid Memory & Pointer Architecture (ADR-013)**:
-  1. *Full Manuscript Ingestion for Bilgeladle:* `AgentEngine` injects `ship/bronze_plus/End-of-Knowing-latest.md` into Bilgeladle's system prompt (~100k tokens = ~$0.007/turn) for unbroken thesis memory.
+  1. *Ship Deck Plans & On-Demand Chapter Ingestion for Bilgeladle:* `AgentEngine` injects `ship/SHIP_DECK_PLANS.md` into Bilgeladle's system prompt (~18k tokens) for macro-structural guidance. Bilgeladle calls `read_manuscript_chapter(chapter_number)` for full prose context or `vector_search_manuscript` for semantic retrieval across the entire manuscript or specific chapters.
   2. *Receipt-Based File Pointers for Cargo:* Multi-agent handoffs (`Spyglass -> Cutlass -> Grog -> Bilgeladle -> Scallywag`) must pass lightweight file pointers (`acquisitions/[slug].txt`) rather than concatenating 30k+ character raw text strings into prompts. Downstream agents stream or inspect files on demand via `read_knowledge_artifact` / `read_local_file`.
   3. *On-Demand Section Expansions:* Deep section expansions (`ship/expansions/ch01_sec1.4_expansion.md`) are kept as specialized reference deep-dives, loaded on-demand via tool calls (`read_local_file`) when a specific section requires forensic audit.
-- **Cloud Resource Teardown Governance (SHARED-HEURISTIC-013)**: Whenever new cloud resources (Cloud Run services, Cloud SQL databases, GCS buckets, Artifact Registry repositories, service accounts, or IAM access policies) are provisioned or altered, immediately update `docs/GCP_CLOUD_TEARDOWN_INSTRUCTIONS.md` with resource specifications, 3-month idle cost implications, and exact CLI deletion/dormancy recovery commands.
-- **The Guild Stenography Paradox & Chapter 4 Chain of Ruin (SHARED-HEURISTIC-014)**:
-  - *Public Myth vs. Guild Reality:* Rigorously distinguish what the **public thinks** journalists are supposed to do (independent empirical verification of physical reality, challenging power) from what **journalists think** journalists are supposed to do (access maintenance, source protection, and procedural stenography of official power: *"according to senior administration officials"*).
-  - *Anti-Aberration Rule:* Figures like Judith Miller were NOT failing at journalism in 2002; they were executing what the journalistic guild defines as journalism at its highest level of craft.
-  - *Origin of LLM Hallucination:* In Chapter 4's Chain of Ruin, this pre-existing professional rot (Stage 1 Pre-Existing Decay) generated the digitized "authoritative" corpus scraped to train foundation models (Stage 2 Technological Catalyst). LLMs emit computational truthiness and lie with supreme confidence (Stage 3 Proactive Negligence) not because of a mechanical bug, but because their training distribution defined ungrounded, procedurally attributed official assertion as the apex of authoritative language.
-- **Unified Cutlass Stage 2 Deliverable & Atomic Dispatch Contract (SHARED-HEURISTIC-015)**:
-  - *Atomic Single-Asset Dispatch:* Pegleg must dispatch Cutlass for each asset individually (`acquisitions/[slug].txt`) without bundling multiple assets or passing the Author's inquiry prompt in Round 1.
-  - *Mandatory 6-Section Schema:* To prevent `logic-audit` and `epistemic-fallacy-scan` from being omitted, Cutlass's deliverable (`stage2_cutlass_{slug}.md`) MUST include all 6 canonical sections: (1) SAYS vs IS, (2) Chain of Ruin, (3) Structural Logic Audit (Causal Claims & Evidentiary Warrants), (4) Classical & Epistemic Fallacy Scan (formal fallacies + 32 failure modes), (5) Anti-Financial Reductionism Audit & Scorecard, and (6) Downstream Value Directives for Grog, Bilgeladle, and Scallywag.
-  - *Skill Protocol Tooling:* All modular skill-using agents (Cutlass, Pegleg, Bilgeladle, Grog) are equipped with `read_skill_protocol` to load full execution protocols on demand.
-- **The Anti-Techno-Fetishism Attention Anchor & The Stage 2 Distraction Trap (SHARED-HEURISTIC-016)**:
-  - *The Trap:* Never allow fleet attention to be captured or distracted by the shiny technical surface of Stage 2 (model benchmarks, parameter scales, transformer novelties, prompt tricks, or synthetic metrics). Pure technological advancement is almost never the causal origin of epistemic collapse; it is universally deployed by institutions as an exculpatory smoke screen.
-  - *The Anchor:* All agents (Cutlass, Bilgeladle, Scallywag, Grog) must redirect their diagnostic focus away from "what the technology did" and anchor it firmly on the human and institutional nexus: (1) What pre-existing decay, credential rot, or financialized disinvestment in human verification (Stage 1) set the structural trap? and (2) What proactive corporate liability evasion, labor liquidation, or duty abandonment (Stage 3) is the technology being deployed to rationalize and shield? Treat any institutional claim that "the AI forced us to do this" as prima facie agnotology.
-- **The Bilge-Mainsail Dialectic (SHARED-HEURISTIC-017)**:
-  - *The Core Dialectic:* Bilge is the empirical crime scene in the wild (cultural effluent, executive stenography, feudal labor floats, agnotological laundering); Mainsail is the forensic apparatus (critical rationalism, political economy, institutional sociology, epistemology). Neither is self-sufficient: Mainsail without Bilge is detached academic pedantry; Bilge without Mainsail is shallow internet outrage.
-  - *Surfacing the Bilge:* Surfacing the bilge is a central mission of *The End of Knowing*. Cutlass must never discard Bilge, but evaluate it as a high-value agnotological specimen, explicitly identifying which Mainsail concepts are needed to autopsy it. Downstream agents (Bilgeladle, Scallywag) must systematically view and dissect the grotesque reality of the Bilge through the authoritative theoretical lenses of the Mainsail.
-- **Rejection of Machine & Institutional Intent / Linguistic Ban on Reification (SHARED-HEURISTIC-018)**:
-  - *No Machine/Institutional Intent:* Inanimate constructs, algorithms, models, corporations, and institutions never possess agency, intent, or decision-making capacity. Individual human beings within them do.
-  - *Agnotology of 'Agent Escape' & 'Hallucination':* Claims that 'the AI hallucinated', 'the algorithm biased itself', or 'our agents escaped' are prima facie agnotology and PR fabrications designed to shield human perpetrators from legal and regulatory liability.
-  - *Mandatory Human Attribution:* All fleet agents (Scallywag, Cutlass, Bilgeladle, Grog) must trace every instance of epistemic collapse directly to the human actors who wrote the software, authorized its unverified deployment, disinvested in human verification, and fabricated narratives of machine agency.
+### I. Shared Fleet Heuristics (Single Source of Truth)
+> [!NOTE]
+> **Canonical Location:** All operational heuristics and analytical rules (`SHARED-HEURISTIC-001` through `020`) are maintained authoritatively in [`src/react_agent/core_knowledge_vault/shared_fleet_rules.json`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/core_knowledge_vault/shared_fleet_rules.json). 
+> 
+> To prevent documentation drift, do not duplicate JSON heuristic text in `GEMINI.md`. When Antigravity or Hook requires deep diagnostic rules (e.g. *The Judith Miller Problem & Ghost Data*, *The Bilge-Mainsail Dialectic*, *Anti-Techno-Fetishism Attention Anchor*, *The Guild Stenography Paradox*), inspect `shared_fleet_rules.json` directly.
 
-- **Python Runtime & PostgreSQL Driver Mandates (SHARED-HEURISTIC-019 & ADR-016)**:
-  - *Python Runtime:* Strictly `Python >=3.12` (`3.12.x`) managed via `uv`. Subagents and code generators must never target deprecated Python 3.11 syntax or unverified 3.14+ pre-releases.
-  - *Database Driver Mandate:* All database interactions across tools, entrypoints, and helper scripts MUST strictly use `import pg8000.dbapi` adhering to standard PEP-249 (Python Database API Specification 2.0).
-  - *Standard PEP-249 Query Patterns:* Parameterization must use standard DB-API `%s` placeholders with sequence/tuple parameters (`cursor.execute("SELECT ... WHERE id = %s", (asset_id,))`). Connections must be opened on-demand and enclosed in `try: ... finally: cursor.close(); conn.close()`.
-  - *Explicit Bans:*
-    - **NEVER** use `import pg8000.native` (non-standard `.run(":id", ...)` syntax causes broken LLM SQL generation, unclosed sockets, and transaction failures).
-    - **NEVER** use `psycopg2` or `psycopg` (v3) (violates the pure-Python zero-C-compiler requirement, breaking cross-platform execution on Windows developer environments).
+### J. Developer Runtime & Database Driver Mandates (SHARED-HEURISTIC-019 & ADR-016)
+- *Python Runtime:* Strictly `Python >=3.12` (`3.12.x`) managed via `uv`. Subagents and code generators must never target deprecated Python 3.11 syntax or unverified 3.14+ pre-releases.
+- *Terminal & Execution Law:* **NEVER invoke bare `python` in shell/terminal commands.** Always run commands as **`uv run python <script>`**. Bare `python` resolves to global unconfigured Windows interpreters (`C:\Python314\python.exe`) which throw `ModuleNotFoundError: No module named 'pg8000'`.
+- *Database Driver Mandate:* All database interactions across tools, entrypoints, and helper scripts MUST strictly use `import pg8000.dbapi` adhering to standard PEP-249 (Python Database API Specification 2.0).
+- *Standard PEP-249 Query Patterns:* Parameterization must use standard DB-API `%s` placeholders with sequence/tuple parameters (`cursor.execute("SELECT ... WHERE id = %s", (asset_id,))`). Connections must be opened on-demand and enclosed in `try: ... finally: cursor.close(); conn.close()`.
+- *Explicit Driver Bans:*
+  - **NEVER** use `import pg8000.native` (non-standard `.run(":id", ...)` syntax causes broken LLM SQL generation, unclosed sockets, and transaction failures).
+  - **NEVER** use `psycopg2` or `psycopg` (v3) (violates the pure-Python zero-C-compiler requirement, breaking cross-platform execution on Windows developer environments).
+
+### K. The Context Firewall & Anti-Drift Protocol (ADR-010 & Hook Governance)
+> [!CRITICAL]
+> **Strict Firewall Between Developer Context and Subagent Prompts:**
+> 1. **`GEMINI.md` is strictly for Antigravity (IDE Pair-Programmer):** It must NEVER be injected into runtime prompts executed by `AgentEngine`. Fleet subagents run on Gemini Flash and must only receive their specific XML profile, authorized skills, and local memory vault.
+> 2. **No Verbatim Duplication:** Never duplicate XML system prompts, heuristic dictionaries, or manuscript texts inside `GEMINI.md`. `GEMINI.md` maintains lightweight structural pointers to canonical files:
+>    - Agent Identity & Tools: `src/react_agent/agents/{agent}/{agent}.xml`
+>    - Universal Heuristics: `src/react_agent/core_knowledge_vault/shared_fleet_rules.json`
+>    - Agent-Specific Rules: `src/react_agent/agents/{agent}/learned_rules.json`
+> 3. **Inspection on Demand:** When Antigravity needs deep details about an agent or rule, Antigravity MUST invoke `view_file` on the canonical file rather than relying on stale summary text.
 
 ---
 
@@ -136,6 +148,7 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
   - `docs/WORKFLOWS_AND_SYSTEM_FLOWS.md`: Sequence diagrams and Mermaid flowcharts for all fleet pipelines (Chase Lifecycle, Chapter Silver Expansion, Ingestion Deduplication, Vector Search).
   - `docs/ADRs.md`: Master Architectural Decision Records (ADR-001 through ADR-014) codifying database isolation, receipt-based ingestion, deterministic naming, output routing, and serverless Zotero translation.
   - `docs/SOPs.md`: Standard Operating Procedures (SOP-01 through SOP-07) governing agent XML creation, GCS slug conventions, ingestion loops, task map tracking, doc synchronization, and the Enterprise DDL Protocol.
+  - `docs/FLEET_MANUAL.md`: Single-source-of-truth UNIX-style operational reference manual for executing all fleet workflows, agent runners, database commands, ingestion pipelines, dashboards, and cloud power controls. Serviced interactively by Pegleg via `man`.
   - `docs/Hook_constitutiuon.md`: Foundational governance rules, DDL safety constraints, and self-modification firewalls for the meta-architect agent (`hook`).
   - `docs/PROJECT_CHARTER_v7.md`: The original multi-agent architecture specification, epistemic thesis, and tier definitions.
 

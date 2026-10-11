@@ -1,7 +1,6 @@
 ---
 name: epistemic-fallacy-scan
 description: Forensic scan for the 3-stage Chain of Ruin, 32 Epistemic Taxonomy failure modes, and classical logical fallacies.
-agents: [cutlass, pegleg]
 ---
 
 # SKILL: Epistemic & Logical Fallacy Scan

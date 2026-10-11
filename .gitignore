@@ -17,6 +17,8 @@ __pycache__/
 backlog_store.json
 *service-key*.json
 credentials/
+*cookies.txt
+youtube_cookies.txt
 
 # 4. OS/Editor Local State Garbage
 .DS_Store
@@ -30,6 +32,7 @@ Thumbs.db
 v-1-src/
 mcp_config.json
 logs/
+error_logs/
 debug_payloads/
 src/react_agent/local_wiki
 manuscript/
@@ -45,4 +48,8 @@ data_lake/
 output/
 scratch_graph_response.txt
 *.log
-src/react_agent/core/content_lists/
+acquisitions/
+archive/
+writings/cargo copy/
+writings/cargo/
+ship/waste_of_time/

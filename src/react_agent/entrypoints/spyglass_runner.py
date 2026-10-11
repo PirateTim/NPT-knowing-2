@@ -71,7 +71,7 @@ def run_spyglass():
             "2. If clear, call 'download_url'. (This tool automatically tries a Tier 1 fetch, and falls back to a Tier 2 fetch if blocked).\n"
             "3. FAILURE FORK: If 'download_url' returns an [ACCESS BARRIER] or [ERROR], you MUST immediately call 'log_ingestion_failure' with the URL and error message, report the failure to me, and STOP.\n"
             "4. SUCCESS FORK: If 'download_url' returns text, call 'upsert_knowledge_artifact' using a deterministic kebab-case filename derived from the title under the acquisitions/ folder (e.g. acquisitions/slug-name.txt).\n"
-            "5. Call 'log_content_metadata' using that same GCS path.\n"
+            "5. Call 'log_content_metadata' using that same GCS path, passing source_url, title, gcp_bucket_path, item_type, authors, abstract, publication_date, and publication_title from the receipt.\n"
             "6. FINAL REPORT: Print the final GCS path and the Title retrieved to the terminal."
         )
         

@@ -1,7 +1,6 @@
 ---
 name: audit-academic-crossref-evidence
 description: Placeholder skill for auditing academic works resolved via CrossRef DOIs/URLs. Assumes CrossRef metadata matches evidence for current pipeline iterations.
-agents: [cutlass, grog]
 ---
 
 # SKILL: Audit Academic CrossRef Evidence (Placeholder)

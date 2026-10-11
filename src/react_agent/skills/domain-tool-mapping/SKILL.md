@@ -1,7 +1,6 @@
 ---
 name: domain-tool-mapping
 description: Enables Spyglass to track and maintain a dynamic mapping of domain-to-tool failure patterns and optimize future tool selections.
-agents: [spyglass]
 ---
 
 # SKILL: Domain-to-Tool Failure Mapping

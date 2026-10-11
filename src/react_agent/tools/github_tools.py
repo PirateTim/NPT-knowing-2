@@ -31,6 +31,8 @@ def _get_repo():
     """
     if not HAS_GITHUB:
         raise ImportError("The 'PyGithub' package is not installed. Install via: pip install PyGithub")
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GITHUB_PAT")
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "PirateTim")
     repo_name = os.getenv("GITHUB_REPO_NAME", "NPT-knowing-2")

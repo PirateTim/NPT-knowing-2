@@ -1,6 +1,6 @@
 {
   "active_environment_context": {
-    "model_tier": "gemini-3.5-flash",
+    "model_tier": "gemini-3.8-flash",
     "gcp_project_id": "npt-reckoning-1",
     "last_discovery_utc": "2026-07-20T16:43:05.136672Z"
   },

@@ -33,12 +33,13 @@ load_dotenv(override=True)
 # Mounts the root src directory to ensure absolute module imports function correctly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.tool_dispatcher import ToolDispatcher
+from core.cost_tracker import CostTracker, SpendingCapExceededException
 
 load_dotenv(override=True)
 
 class AgentEngine:
 
-    def __init__(self, agent_name: str, xml_profile_path: str, model_override: str = None):
+    def __init__(self, agent_name: str, xml_profile_path: str, model_override: str = None, cost_tracker: CostTracker = None, spending_cap_usd: float = None):
         """
         Initializes the Engine, loads the agent's specific memory vault, 
         and binds the requested tools to the Gemini SDK.
@@ -47,6 +48,9 @@ class AgentEngine:
         self.xml_profile_path = xml_profile_path
         self.client = genai.Client()
         self.dispatcher = ToolDispatcher()
+        
+        # Financial Governor & Token Telemetry (ADR-018)
+        self.cost_tracker = cost_tracker or CostTracker(spending_cap_usd=spending_cap_usd)
         
         # Database connection is acquired on-demand per checkpoint operation to prevent pool exhaustion (ADR-003)
         self.db_conn = None
@@ -128,25 +132,41 @@ class AgentEngine:
             else:
                 profile["xml_model_target"] = None
 
-            # Parse specialized operational execution skills from XML
+            # Parse specialized operational execution skills and skill references from XML
+            allowed_skill_names = set()
             skills_elem = root.find(".//skills")
             if skills_elem is not None:
+                # 1. Collect declared skill references (<skill_ref name="..."/>)
+                for ref_node in skills_elem.findall("skill_ref"):
+                    r_name = ref_node.get("name")
+                    if r_name:
+                        allowed_skill_names.add(r_name.replace("_", "-").lower())
+
+                # 2. Collect inline skills (<skill name="..."><description>...</description></skill>)
                 for skill_node in skills_elem.findall("skill"):
                     s_name = skill_node.get("name", "UNNAMED_SKILL")
                     s_desc = skill_node.findtext("description", default="").strip()
                     s_exec = skill_node.findtext("execution_protocol", default="").strip()
+                    s_slug = s_name.replace("_", "-").lower()
+                    allowed_skill_names.add(s_slug)
                     profile["skills"].append({
                         "name": s_name,
                         "description": s_desc,
                         "protocol": s_exec
                     })
 
-        # Load standalone SKILL.md files from central skills repository
+        # Load standalone SKILL.md files from central skills repository ONLY if authorized for this agent
         central_skills_dir = os.path.abspath(os.path.join(
             os.path.dirname(__file__), "..", "skills"
         ))
         if os.path.exists(central_skills_dir):
             for skill_dir in os.listdir(central_skills_dir):
+                s_slug = skill_dir.replace("_", "-").lower()
+                
+                # Scope check: Only load skill if explicitly referenced in XML firmware
+                if s_slug not in allowed_skill_names:
+                    continue
+
                 skill_md_path = os.path.join(central_skills_dir, skill_dir, "SKILL.md")
                 if os.path.isfile(skill_md_path):
                     with open(skill_md_path, 'r', encoding='utf-8') as sf:
@@ -167,10 +187,10 @@ class AgentEngine:
                                         s_desc = line.split("description:", 1)[1].strip()
                         
                         # Append if not already present (comparing normalized kebab-case slug)
-                        s_slug = s_name.replace("_", "-").lower()
-                        if not any(existing['name'].replace("_", "-").lower() == s_slug for existing in profile["skills"]):
+                        s_norm = s_name.replace("_", "-").lower()
+                        if not any(existing['name'].replace("_", "-").lower() == s_norm for existing in profile["skills"]):
                             profile["skills"].append({
-                                "name": s_slug,
+                                "name": s_norm,
                                 "description": s_desc,
                                 "protocol": s_protocol
                             })
@@ -266,10 +286,38 @@ class AgentEngine:
                 prompt += f"• AGENT: {member['name'].upper()}\n  Role: {member['role']}\n  Capabilities: {member['capabilities']}\n"
             prompt += "\n"
             
-        lens = memory.get("lens", {})
+        lens = memory.get("lens")
         if lens:
-            prompt += "=== COGNITIVE LENS & DOMAIN BIAS ===\n"
-            prompt += lens.get("domain_bias", "") + "\n\n"
+            prompt += "=== COGNITIVE LENS & PHILOSOPHICAL FRAMEWORKS ===\n"
+            lens_items = lens if isinstance(lens, list) else [lens]
+            for item in lens_items:
+                if not isinstance(item, dict):
+                    continue
+                if "domain_bias" in item and item["domain_bias"]:
+                    prompt += f"--- DOMAIN BIAS & CONSTITUTION ---\n{item['domain_bias']}\n\n"
+                if "strict_lexicon" in item and isinstance(item["strict_lexicon"], dict):
+                    lex = item["strict_lexicon"]
+                    prompt += "--- STRICT LEXICON CONSTRAINTS ---\n"
+                    if "prioritize" in lex and lex["prioritize"]:
+                        prompt += f"• Prioritize Concepts: {', '.join(lex['prioritize'])}\n"
+                    if "reject" in lex and lex["reject"]:
+                        prompt += f"• Reject Concepts: {', '.join(lex['reject'])}\n"
+                    prompt += "\n"
+                if "analytical_frameworks" in item and isinstance(item["analytical_frameworks"], list):
+                    prompt += "--- ANALYTICAL FRAMEWORKS & EPISTEMIC LENSES ---\n"
+                    for f_idx, af in enumerate(item["analytical_frameworks"], 1):
+                        name = af.get("lens_name") or af.get("title") or f"Framework {f_idx}"
+                        desc = af.get("perspective") or af.get("thesis") or str(af)
+                        prompt += f"{f_idx}. [{name}]\n   {desc}\n\n"
+                for k, v in item.items():
+                    if k in ["agent_name", "domain_bias", "strict_lexicon", "analytical_frameworks"]:
+                        continue
+                    if isinstance(v, dict):
+                        title = v.get("title", k)
+                        thesis = v.get("thesis") or v.get("perspective") or str(v)
+                        prompt += f"• [{title}]: {thesis}\n\n"
+                    elif isinstance(v, str):
+                        prompt += f"• [{k}]: {v}\n\n"
 
         skills = memory.get("skills", [])
         if skills:
@@ -314,56 +362,34 @@ class AgentEngine:
             for ex in exemplars:
                 prompt += f"Input Context: {ex.get('input_context', '')}\nIdeal Output: {ex.get('ideal_output', '')}\n\n"
 
-        # Ingest Project Master Guidelines (GEMINI.md) per ADR-010
-        workspace_rules_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "GEMINI.md"))
-        if os.path.exists(workspace_rules_path):
-            try:
-                with open(workspace_rules_path, 'r', encoding='utf-8') as gf:
-                    gemini_content = gf.read()
-                    prompt += f"=== MASTER WORKSPACE ARCHITECTURAL GUIDELINES (GEMINI.MD) ===\n{gemini_content}\n\n"
-            except Exception:
-                pass
+        # Note: GEMINI.md contains Antigravity IDE and repository laws for human/IDE pair-programming.
+        # It is no longer injected into fleet subagent runtime prompts to save ~8,000 tokens per turn.
 
-        # Ingest Master Assembled Bronze+ Manuscript for Bilgeladle (ADR-003 & SOP-04)
+        # Ingest Master Ship Deck Plans (Macro-Backbones & Section Ribs) for Bilgeladle
         if self.agent_name.lower() == "bilgeladle":
-            bp_dirs = [
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "bronze_plus")),
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "bronzeplus")),
+            deck_plans_candidates = [
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "SHIP_DECK_PLANS.md")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ship", "CHAPTER_BACKBONES.md")),
             ]
-            manuscript_text = ""
-            for bpd in bp_dirs:
-                if os.path.exists(bpd):
-                    # Check for latest pointer first
-                    latest_pointer = os.path.join(bpd, "End-of-Knowing-latest.md")
-                    if os.path.exists(latest_pointer):
-                        try:
-                            with open(latest_pointer, "r", encoding="utf-8") as bf:
-                                manuscript_text = bf.read()
-                                break
-                        except Exception:
-                            pass
-                    
-                    # Or find most recent End-of-Knowing-*.md
-                    candidates = [
-                        os.path.join(bpd, f) for f in os.listdir(bpd)
-                        if f.startswith("End-of-Knowing-") and f.endswith(".md") and f != "End-of-Knowing-latest.md"
-                    ]
-                    if candidates:
-                        candidates.sort(key=os.path.getmtime, reverse=True)
-                        try:
-                            with open(candidates[0], "r", encoding="utf-8") as bf:
-                                manuscript_text = bf.read()
-                                break
-                        except Exception:
-                            pass
+            deck_plans_text = ""
+            for dp_path in deck_plans_candidates:
+                if os.path.exists(dp_path):
+                    try:
+                        with open(dp_path, "r", encoding="utf-8") as dpf:
+                            deck_plans_text = dpf.read()
+                            break
+                    except Exception:
+                        pass
 
-            if manuscript_text:
+            if deck_plans_text:
                 prompt += (
-                    "=== COMPLETE MANUSCRIPT CORPUS (THE END OF KNOWING - BRONZE+ TIER) ===\n"
-                    "The following is the full, un-truncated, section-by-section text of 'The End of Knowing' "
-                    "with all verified inline vector citation nodes. You must hold this complete manuscript "
-                    "in your cognitive working memory to evaluate all thesis alignments, expansions, and incoming cargo:\n\n"
-                    f"{manuscript_text}\n"
+                    "=== SHIP DECK PLANS (THE END OF KNOWING - MASTER CHAPTER BACKBONES & SECTION RIBS) ===\n"
+                    "The following is the canonical structural blueprint ('Ship Deck Plans') containing all 13 "
+                    "macro-chapter backbones and 140 calibrated individual section ribs. You must use this structural "
+                    "skeleton for epistemic triage to lock the Primary Chapter Anchor and candidate section ribs. "
+                    "When full chapter context or verbatim text is required, call read_manuscript_chapter(chapter_number) "
+                    "or vector_search_manuscript:\n\n"
+                    f"{deck_plans_text}\n"
                     "================================================================================\n\n"
                 )
                 
@@ -402,7 +428,7 @@ class AgentEngine:
     def __del__(self):
         self.close()
 
-    def get_latest_checkpoint(self, thread_id: str, max_turns: int = 10) -> List[types.Content]:
+    def get_latest_checkpoint(self, thread_id: str, max_turns: int = 20) -> List[types.Content]:
         """
         Retrieves the conversational history for a specific thread from Postgres.
         Implements a rolling window (truncation) to prevent Token Bloat.
@@ -486,18 +512,29 @@ class AgentEngine:
         # Instate active thread context so agents never hallucinate divergent folder names
         active_instruction = self.system_instruction
         if hasattr(self, "active_thread_id") and self.active_thread_id:
-            chase_id = getattr(self, "chase_id", None)
-            if not chase_id:
-                chase_id = re.sub(r"^thread_(?:spyglass|cutlass|grog|plank|bilgeladle|scallywag|landlubber|hook|pegleg)_", "", self.active_thread_id)
-                
-            active_instruction += (
-                f"\n\n=== ACTIVE SESSION THREAD & MANDATORY DIRECTORY BINDING ===\n"
-                f"ACTIVE_THREAD_ID: {self.active_thread_id}\n"
-                f"CHASE_WORKSPACE_ID: {chase_id}\n"
-                f"CRITICAL DIRECTIVE: The root chase workspace directory for this session is strictly \"writings/chases/{chase_id}/\". "
-                f"All stage outputs, audits, extractions, essays, and status tracking MUST be written directly inside \"writings/chases/{chase_id}/\". "
-                f"You are STRICTLY FORBIDDEN from creating or inventing subagent-specific folder prefixes (e.g. do NOT write to 'writings/chases/thread_{self.agent_name}_{chase_id}/').\n"
-            )
+            cargo_match = re.search(r"cargo_(\d+)", self.active_thread_id)
+            if cargo_match:
+                cargo_id = cargo_match.group(1)
+                active_instruction += (
+                    f"\n\n=== ACTIVE SESSION THREAD & MANDATORY DIRECTORY BINDING ===\n"
+                    f"ACTIVE_THREAD_ID: {self.active_thread_id}\n"
+                    f"CARGO_ID: {cargo_id}\n"
+                    f"CRITICAL DIRECTIVE: The cargo dossier workspace directory for this session is strictly \"writings/cargo/cargo_{cargo_id}/\". "
+                    f"All asset evaluations, audits, and extractions MUST be written directly inside \"writings/cargo/cargo_{cargo_id}/\".\n"
+                )
+            else:
+                chase_id = getattr(self, "chase_id", None)
+                if not chase_id:
+                    chase_id = re.sub(r"^thread_(?:spyglass|cutlass|grog|plank|bilgeladle|scallywag|landlubber|hook|pegleg)_", "", self.active_thread_id)
+                    
+                active_instruction += (
+                    f"\n\n=== ACTIVE SESSION THREAD & MANDATORY DIRECTORY BINDING ===\n"
+                    f"ACTIVE_THREAD_ID: {self.active_thread_id}\n"
+                    f"CHASE_WORKSPACE_ID: {chase_id}\n"
+                    f"CRITICAL DIRECTIVE: The root chase workspace directory for this session is strictly \"writings/chases/{chase_id}/\". "
+                    f"All stage outputs, audits, extractions, essays, and status tracking MUST be written directly inside \"writings/chases/{chase_id}/\". "
+                    f"You are STRICTLY FORBIDDEN from creating or inventing subagent-specific folder prefixes (e.g. do NOT write to 'writings/chases/thread_{self.agent_name}_{chase_id}/').\n"
+                )
 
         return types.GenerateContentConfig(
             system_instruction=active_instruction,
@@ -511,6 +548,13 @@ class AgentEngine:
         The ReAct (Reasoning and Acting) execution loop.
         Handles the conversational ping-pong of Tool Calling and Observation.
         """
+        # Check for user-declared spending cap in prompt if not already set (ADR-018)
+        if self.cost_tracker.spending_cap_usd is None:
+            detected_cap = CostTracker.parse_spending_cap(prompt)
+            if detected_cap is not None:
+                self.cost_tracker.spending_cap_usd = detected_cap
+                print(f"  -> [FINANCIAL GOVERNOR] User spending cap detected and locked: ${detected_cap:.2f}")
+
         history = chat_session.get_history()
         
         # =====================================================================
@@ -564,7 +608,16 @@ class AgentEngine:
         # 2. STANDARD EXECUTION & TOOL LOOP
         # =====================================================================
         active_config = self._get_active_config()
-        response = _send_with_retry(prompt, active_config)
+        try:
+            response = _send_with_retry(prompt, active_config)
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
+                summary = self.cost_tracker.record_turn_usage(response.usage_metadata, self.model_name)
+                print(self.cost_tracker.get_telemetry_string(summary))
+        except SpendingCapExceededException as sce:
+            print(f"\n{sce}\n")
+            alert_msg = f"[FINANCIAL CIRCUIT BREAKER TRIGGERED] {str(sce)}"
+            self._log_interaction(prompt, alert_msg)
+            return alert_msg
         
         tool_loop_count = 0
         # DAG orchestrators (e.g. Pegleg) coordinate multi-stage pipelines across 6+ agents
@@ -631,9 +684,18 @@ class AgentEngine:
                 ))
             
             # Send tool observation data back to the model for the next step of reasoning
-            response = _send_with_retry(tool_responses, active_config)
+            try:
+                response = _send_with_retry(tool_responses, active_config)
+                if hasattr(response, "usage_metadata") and response.usage_metadata:
+                    summary = self.cost_tracker.record_turn_usage(response.usage_metadata, self.model_name)
+                    print(self.cost_tracker.get_telemetry_string(summary))
+            except SpendingCapExceededException as sce:
+                print(f"\n{sce}\n")
+                alert_msg = f"[FINANCIAL CIRCUIT BREAKER TRIGGERED] {str(sce)}"
+                self._log_interaction(prompt, alert_msg)
+                return alert_msg
             
-        final_text = response.text
+        final_text = getattr(response, "text", "") or ""
         self._log_interaction(prompt, final_text)
         return final_text
 

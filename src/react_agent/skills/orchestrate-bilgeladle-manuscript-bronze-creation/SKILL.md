@@ -1,7 +1,6 @@
 ---
 name: orchestrate-bilgeladle-manuscript-bronze-creation
 description: Master DAG orchestration protocol for Leg 1 (Monolith to Bronze to Bronze Plus) enforcing linear stage transitions and URL completeness gates.
-agents: [pegleg]
 ---
 
 # SKILL: Orchestrate Bilgeladle Manuscript Bronze Creation (Leg 1 Master DAG)

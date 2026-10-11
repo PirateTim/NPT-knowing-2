@@ -1,7 +1,6 @@
 ---
 name: asset-chapter-indexing
 description: Atomic first-pass evaluation of a single Grog extraction to establish its primary manuscript chapter anchor, Chain of Ruin vector, and Toulmin warrant, persisting the result to PostgreSQL cargo.fleet_enrichments.
-agents: [bilgeladle]
 ---
 
 # SKILL: Asset-to-Manuscript Chapter Indexing (Atomic First Pass)

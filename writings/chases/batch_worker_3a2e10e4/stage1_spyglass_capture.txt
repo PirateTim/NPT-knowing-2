@@ -1,0 +1,10 @@
+TARGET_URL: https://www.reuters.com/business/usdas-reputation-suffers-after-massive-revisions-us-corn-acres-2026-02-10/?utm_source=reddit.com
+TITLE: USDA's reputation suffers after massive revisions in US corn acres
+AUTHORS: Tom Polansek
+PUBLICATION_DATE: 2026-02-10
+PUBLISHER: Reuters
+ITEM_TYPE: journalArticle
+CANONICAL_PATH: acquisitions/usdas-reputation-suffers-after-massive-revisions-in-us-corn-acres.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/usdas-reputation-suffers-after-massive-revisions-in-us-corn-acres.txt
+STATUS: COMPLETED
+ABSTRACT: The U.S. Department of Agriculture, long the world's gold standard for crop estimates, faces mounting doubts about the reliability of its data from farmers, grain traders and economists following deep staff losses and a sharp upward revision in how many acres of corn were harvested.

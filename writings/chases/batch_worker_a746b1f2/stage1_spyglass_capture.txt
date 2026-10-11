@@ -1,0 +1,11 @@
+CAPTURE_RECEIPT:
+STATUS: SUCCESS
+SOURCE_URL: https://www.irishtimes.com/business/2026/01/20/ai-boom-could-falter-without-wider-adoption-microsoft-chief-satya-nadella-warns/
+CANONICAL_PATH: acquisitions/ai-boom-could-falter-without-wider-adoption-microsoft-chief-satya-nadella-warns.txt
+GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/ai-boom-could-falter-without-wider-adoption-microsoft-chief-satya-nadella-warns.txt
+TITLE: AI boom could falter without wider adoption, Microsoft chief Satya Nadella warns
+AUTHORS: Melissa Heikkilä
+PUBLICATION_DATE: 2026-01-20
+PUBLISHER: The Irish Times
+ITEM_TYPE: journalArticle
+ABSTRACT: Big tech boss tells delegates at Davos that broader global use is essential if technology is to deliver lasting growth

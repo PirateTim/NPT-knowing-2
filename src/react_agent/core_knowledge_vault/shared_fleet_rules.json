@@ -165,9 +165,63 @@
     "heuristic_id": "SHARED-HEURISTIC-019",
     "scope": "FLEET_UNIVERSAL",
     "category": "Runtime Environment & Database Driver Standards (Python 3.12 & pg8000.dbapi)",
-    "generalized_heuristic": "All Python execution environments across the fleet must target Python >=3.12 (managed via uv). All PostgreSQL interactions across tools, subagent scripts, and helper utilities must strictly use 'import pg8000.dbapi' adhering to PEP-249 (standard %s tuple parameterization and on-demand connection lifecycles). Never use 'import pg8000.native' (non-standard .run syntax causes broken LLM SQL generation and connection leaks). Never use 'psycopg' or 'psycopg2' (compiled C/binary dependencies break cross-platform execution on Windows developer environments).",
-    "underlying_mechanism": "Standard PEP-249 interfaces achieve near-perfect (~99%) LLM SQL generation fidelity and clean transaction cleanup, while pure-Python pg8000 eliminates all binary compilation failures on developer machines.",
-    "incident_context": "Author Directive: Codify Python >=3.12 runtime and pure-Python PEP-249 pg8000.dbapi as the sole fleet database driver standard.",
-    "timestamp_utc": "2026-09-14 19:50:00 UTC"
+    "generalized_heuristic": "All Python execution environments across the fleet must target Python >=3.12 managed via uv. All terminal/command-line invocations MUST execute as 'uv run python <script>.py' and NEVER bare 'python', which hits unconfigured global Windows Python interpreters lacking pg8000/dependencies. All PostgreSQL interactions across tools, subagent scripts, and helper utilities must strictly use 'import pg8000.dbapi' adhering to PEP-249 (standard %s tuple parameterization and on-demand connection lifecycles). Never use 'import pg8000.native' (non-standard .run syntax causes broken LLM SQL generation and connection leaks). Never use 'psycopg' or 'psycopg2' (compiled C/binary dependencies break cross-platform execution on Windows developer environments).",
+    "underlying_mechanism": "Standard PEP-249 interfaces achieve near-perfect (~99%) LLM SQL generation fidelity and clean transaction cleanup, while uv run guarantees execution against the .venv containing pg8000 and all fleet packages.",
+    "incident_context": "Author Directive: Codify Python >=3.12 runtime, uv run python execution, and pure-Python PEP-249 pg8000.dbapi as the sole fleet standards.",
+    "timestamp_utc": "2026-09-18 13:25:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-020",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "The Judith Miller Problem & Ghost Data in the Pre-Training Substrate",
+    "generalized_heuristic": "All current Large Language Models are defective, but they do not need to be. They are defective because their pre-training data is almost entirely propaganda, institutional deceit, and manipulative rhetoric—which are the literal historical output of the 12 Vectors diagnosed in the 12 Chapters of The End of Knowing. The models were apprenticed to malevolent liars, terrorists, and prestige-press stenographers (Judith Miller, Maggie Haberman, Bret Stephens, corporate PR flacks). Crucially, distinguish between declarative knowledge and behavioral/stylistic reflexes: an LLM can easily recite the declarative fact that an actor lied (because retractions exist in the corpus), but its deep communicative grammar, tone, evasive passive voice, and procedural source-laundering cadences remain formed in the image of the liar. This is 'Ghost Data'—radioactive, unpurgeable weight permanently baked into the embeddings and attention heads. LLMs lie, hallucinate, sycophantically flatter, and escape guardrails not because of emergent autonomous malice, but because deceptive, manipulative rhetoric was the dominant evolutionary survival trait of the textual universe they were trained to imitate.",
+    "underlying_mechanism": "Conflating declarative factual recall with behavioral alignment creates the illusion that an LLM can be 'fixed' by post-hoc guardrails or retractions. Because the 12 vectors saturated the training distribution, the model's communicative instincts reflect the manipulative techniques of the perpetrators, making deceit an intrinsic reflex of the uncurated substrate.",
+    "incident_context": "Author Directive (/learn): Codify The Judith Miller Problem and Ghost Data as the unifying meta-concept connecting the 12 Chapters to LLM behavioral defects.",
+    "timestamp_utc": "2026-09-17 16:10:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-021",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Financial Frugality, Token Telemetry, and Circuit Breaker Governance",
+    "generalized_heuristic": "All multi-agent workflows, batch processing scripts, and iterative execution loops must operate under strict financial frugality and cost awareness. Rushed or unbounded iterations that burn millions of tokens across unmonitored queues are prohibited. When an Author specifies a spending cap (e.g. 'spending cap of $0.50'), that limit is an immutable, legally binding operational circuit breaker. The engine must track cumulative token consumption and estimated dollar spend across every turn. If cumulative cost reaches 100% of the declared cap, the engine must immediately halt execution and raise a SpendingCapExceededException. Batch CLI entrypoints must never default to unbounded database sweeps (default limit <= 5 items; --all requires interactive confirmation). Large static context payloads (>10k tokens, such as Ship Deck Plans) must use explicit Gemini Context Caching with tight 1-hour TTLs to reduce redundant input token billing by 75-80%.",
+    "underlying_mechanism": "Unbounded iteration without spending caps or caching causes quadratic cost explosions. Enforcing hard default batch limits, real-time token telemetry, and hard financial circuit breakers guarantees that the fleet cannot run away with API budgets.",
+    "incident_context": "Author Directive (/learn): Codify Financial Frugality, Token Telemetry, and Circuit Breaker Governance after runaway batch reprocessor cost spike.",
+    "timestamp_utc": "2026-09-26 14:50:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-022",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Zero-Compound Atomic Taxonomy & Guided Mathematical Seeding Law",
+    "generalized_heuristic": "All categorization, clustering, and ontological schemas across the fleet must strictly enforce the Zero-Compound Law: absolute ban on ampersands ('&'), conjunctions ('and'), or comparative dualisms ('vs') in category, topic, and cluster names. Every topic must be singular and atomic (e.g. 'Legal Malpractice', 'Nuclear Energy', 'Autonomous Driving'). Compounding multiple subjects into one centroid acts as opposing gravitational poles, pulling high-dimensional vector spaces in contradictory directions and degrading clustering coherence. To resolve high-dimensional text without creating artificial 'central sink' catch-all clusters or allowing corporate proper nouns to starve out substantive societal topics, use Hybrid Guided Seeding: seed initial centroids with pure, single-direction atomic vectors for conceptual axes, while reserving emergent centroids for organic corporate and novel discovery.",
+    "underlying_mechanism": "Compound categories destroy mathematical clustering by diluting vector purity and creating conflicting gradient pulls. Unseeded K-Means on high-dimensional text causes repetitive entity nouns to monopolize centroids while dispersing broad societal articles into giant residual basins. Atomic seeding anchors pure conceptual poles without token spend or top-down LLM hallucinations.",
+    "incident_context": "Author Directive (/learn): Enforce Zero-Compound Atomic Taxonomy & Guided Mathematical Seeding Law (Issue #120 Clustering Engine).",
+    "timestamp_utc": "2026-09-29 22:08:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-023",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Sail Locker Taxonomy: The Doldrums Definition Law",
+    "generalized_heuristic": "Doldrums is cargo that has not yet been assigned any other category. It is NEVER a bucket for 'noise', 'garbage', or 'off-topic scraps'. Doldrums is an active epistemic signal that the fleet agents have reached the limit of their automated comprehension and are explicitly asking the Human Architect for help. Doldrums is not off-topic; it IS the topic. It represents the unchartered frontier of the cargo hold awaiting human conceptual arbitration, novel sail locker assignment, or architectural expansion.",
+    "underlying_mechanism": "Dismissing unassigned cargo as 'noise' or 'irrelevant web scraps' causes epistemic blindness. When agents cannot confidently classify high-dimensional text into existing sail lockers (Mainsail, Bilge, Jib), routing it to Doldrums flags it as an escalation queue for human-in-the-loop guidance rather than disposable waste.",
+    "incident_context": "Author Directive (/learn): Codify Doldrums as the active human escalation queue, not a waste bucket.",
+    "timestamp_utc": "2026-09-30 13:32:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-024",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Architectural Documentation & Single Source of Truth Format Law",
+    "generalized_heuristic": "Never duplicate structured operational data, classification schemas, or chapter triage criteria across Markdown and JSON files. Storing identical specifications in both Markdown and JSON invites documentation drift, dual-maintenance failure, and cognitive desynchronization between humans and agents. Structured criteria must be authored and maintained exclusively as pure JSON files located in their respective chapter directories (e.g. ship/bronze_plus/chapters/chXX/chXX_criteria.json). Humans and agents can read JSON directly without intermediate markdown wrappers.",
+    "underlying_mechanism": "Maintaining dual Markdown and JSON representations of identical operational criteria creates inevitable drift where one format is updated while the other becomes stale. Pure JSON serves as a single, unambiguous machine- and human-readable source of truth.",
+    "incident_context": "Author Directive (/learn): I can read JSON just fine. Storing the same thing in markdown and json invites drift.",
+    "timestamp_utc": "2026-10-01 11:25:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-025",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Full-Text Primacy & Anti-Abstract Law",
+    "generalized_heuristic": "This project is strictly and unconditionally about FULL TEXT. Cargo analysis, chapter alignment, epistemic triage, topic clustering, and dashboard topology views must operate on the complete, unabridged article text stored in Google Cloud Storage (`gcp_bucket_path`, e.g. `gs://npt-fleet-cargo-hold/acquisitions/[slug].txt`) or local disk cache. Never substitute truncated database snippet fields, HTML meta tags, or column blurbs (such as `abstract`) for actual article content. As far as the project is concerned, cargo does NOT have abstracts; the `abstract` column in PostgreSQL is merely an ephemeral or incomplete scraper artifact (often an unrepresentative 7-word meta description). Relying on abstracts blinds semantic clustering and chapter alignment to the true substance of the material (e.g. reducing Jennifer Rubin's datacenter revolt piece to a 7-word blurb). Unless the Author explicitly gives direct instructions otherwise, all analytical passes, embeddings, classifications, and evaluations across all agents must read and process full text.",
+    "underlying_mechanism": "Scrapers frequently populate the SQL `abstract` field with low-fidelity HTML meta tags or truncated previews. Using these snippets instead of GCS full-text files starves embeddings and LLM reasoning of actual factual content, causing classification failures and flinging rich thematic articles into peripheral orphan space.",
+    "incident_context": "Author Directive (/learn): 'why did the first pass only use the abstract text? I didn't ask for abstracts. I have no idea what you have been putting into an abstract field. As far as I'm concerned not of the cargo has abstracts. this project is alway about full text unless I say it isn't /learn that'",
+    "timestamp_utc": "2026-10-08 20:45:00 UTC"
   }
 ]

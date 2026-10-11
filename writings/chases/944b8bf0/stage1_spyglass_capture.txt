@@ -1,0 +1,13 @@
+[SPYGLASS STAGE 1 CAPTURE RECEIPT]
+CHASE ID: 944b8bf0
+CARGO ID: cargo_1237
+TARGET URL: https://www.publishersweekly.com/pw/by-topic/digital/copyright/article/101300-unsealed-files-show-open-ai-microsoft-knew-copying-was-illegal-and-could-hurt-authors.html
+TITLE: Unsealed Files Show Open AI/Microsoft Knew Copying Was Illegal and Could Hurt Authors
+AUTHORS: Jim Milliot
+PUBLICATION DATE: 2026-09-21
+PUBLISHER: Publishers Weekly
+ITEM TYPE: article
+ABSTRACT: Newly unsealed comments made in briefs filed by Open AI and Microsoft reveal that executives knew they were illegally training their products on copyrighted books and that AI generated books would likely displace human-authored books in the market.
+GCS ARTIFACT: acquisitions/unsealed-files-show-open-ai-microsoft-knew-copying-was-illegal-and-could-hurt-authors.txt
+LOCAL CACHE PATH: C:\Users\timot\NPT-knowing-2\cargo_cache\temp_acquire_2636be19.txt
+STATUS: SUCCESS

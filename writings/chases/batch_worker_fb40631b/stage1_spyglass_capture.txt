@@ -1,0 +1,9 @@
+SOURCE_URL: https://www.law360.com/articles/2430764
+CANONICAL_PATH: acquisitions/book-publishers-ask-to-join-authors-ai-suit-against-google.txt
+TITLE: Book Publishers Ask To Join Authors' AI Suit Against Google - Law360
+AUTHORS: Ivan Moreno
+PUBLICATION_DATE: 2026-01-15
+PUBLISHER: Law360
+ITEM_TYPE: blogPost
+ABSTRACT: Book publishers Cengage Learning and Hachette Book Group on Thursday asked to intervene in a proposed copyright class action from writers and illustrators accusing Google of using their works for AI training, arguing that as major publishers they have significant interests that are not currently represented in the case.
+STATUS: COMPLETED

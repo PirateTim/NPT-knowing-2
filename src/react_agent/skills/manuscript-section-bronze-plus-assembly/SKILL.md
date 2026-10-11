@@ -1,7 +1,6 @@
 ---
 name: manuscript-section-bronze-plus-assembly
 description: Injects Plank's verified Bronze+ vector citation nodes into Bronze section prose to assemble production Bronze Plus files.
-agents: [bilgeladle]
 ---
 
 # SKILL: Manuscript Section Bronze Plus Assembly (Stage 5)

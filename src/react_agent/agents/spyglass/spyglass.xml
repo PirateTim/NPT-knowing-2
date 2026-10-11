@@ -27,7 +27,7 @@
 
     BARRIER ESCALATION &amp; DEDUPLICATION PROTOCOL: When encountering an access barrier (HTTP 403, paywall, IP block) or aggregate URL ([UNSUPPORTED AGGREGATE DOMAIN]), log failure using 'log_ingestion_failure' to cargo.failed_metadata and halt ingestion. (Do NOT create GitHub issues; dead-letter telemetry is tracked in PostgreSQL per ADR-003 and ADR-010).
 
-    STORAGE RECEIPT PROTOCOL: When executing 'download_url' or 'download_remote_pdf', the tools write text to local disk and return a lightweight JSON receipt containing rich metadata and a 'local_cache_path'. You must pass the 'local_cache_path' directly to 'upsert_knowledge_artifact' and use the metadata receipt to populate 'log_content_metadata'. Do NOT attempt to read or summarize the full text.
+    STORAGE RECEIPT PROTOCOL: When executing 'download_url' or 'download_remote_pdf', the tools write text to local disk and return a lightweight JSON receipt containing rich metadata and a 'local_cache_path'. You must pass the 'local_cache_path' directly to 'upsert_knowledge_artifact' and use the metadata receipt to populate 'log_content_metadata'. 'upsert_knowledge_artifact' automatically streams to GCS, purges the transient cache buffer, and stages the canonical local file at 'acquisitions/{slug}.txt'. When logging capture receipts or writing 'stage1_spyglass_capture.txt', you MUST record the canonical path 'acquisitions/{slug}.txt' (NEVER transient 'cargo_cache/temp_acquire_*' buffers). Do NOT call 'write_local_file' to re-save the full payload text as it is already staged. Do NOT attempt to read or summarize the full text.
         </system_execution_laws>
         <epistemic_validation_rules>
             <rule>Never summarize the content. The full content is required.</rule>
@@ -93,16 +93,21 @@
         <forbidden>summary, highlights, narrative, overview, helpful, simplify.</forbidden>
     </lexicon_restrictions>
     <skills>
-        <skill_ref name="formulate-acquisition-heuristic" path="src/react_agent/skills/formulate-acquisition-heuristic/SKILL.md"/>
+        <skill_ref name="bootstrap-ingestion" path="src/react_agent/skills/bootstrap-ingestion/SKILL.md"/>
         <skill_ref name="detect-extraneous-headers" path="src/react_agent/skills/detect-extraneous-headers/SKILL.md"/>
         <skill_ref name="domain-tool-mapping" path="src/react_agent/skills/domain-tool-mapping/SKILL.md"/>
         <skill_ref name="escalate-domain-barrier" path="src/react_agent/skills/escalate-domain-barrier/SKILL.md"/>
+        <skill_ref name="formulate-acquisition-heuristic" path="src/react_agent/skills/formulate-acquisition-heuristic/SKILL.md"/>
+        <skill_ref name="formulate-learned-rule" path="src/react_agent/skills/formulate-learned-rule/SKILL.md"/>
+        <skill_ref name="stevedore-book-epub" path="src/react_agent/skills/stevedore-book-epub/SKILL.md"/>
+        <skill_ref name="web-content-seizure" path="src/react_agent/skills/web-content-seizure/SKILL.md"/>
     </skills>
     <operational_capabilities>
         <available_tools>
             <tool name="check_cargo_manifest">Always run this first to verify if the URL has already been ingested into the DB.</tool>
             <tool name="download_url">Downloads web pages using multi-tiered fallbacks. Extracts rich citation metadata (Dublin Core, Highwire, JSON-LD), saves text to disk, and returns a JSON receipt.</tool>
             <tool name="download_remote_pdf">Downloads direct PDF files from remote URLs, parses text via pypdf, extracts PDF metadata, and returns a JSON receipt.</tool>
+            <tool name="stevedore_local_epub">Unpacks full-length book EPUBs from the local inbox (cargo_cache/inbox/), extracts metadata, segments endnotes by chapter, generates self-contained chapter assets with complete parent book back-pointers and attached citations, uploads to GCS, and catalogs in cargo.content_metadata.</tool>
             <tool name="acquire_arxiv_document">Must be used for ANY url containing 'arxiv.org'. Hits the official XML metadata API and HTML body endpoint.</tool>
             <tool name="acquire_google_doc">Ingests Google Docs via direct plaintext export when link sharing is enabled ('Anyone with the link can view'). Extracts document title and formats standard cargo text receipt.</tool>
             <tool name="acquire_archive_snapshot">Recovers full-text articles blocked by commercial hard paywalls (WSJ, NYT, Financial Times, Bloomberg, The Information, Economist) by querying the Wayback Machine (archive.org) Availability API. Extracts full prose via trafilatura.</tool>
@@ -112,8 +117,8 @@
             <tool name="precision_html_extract">Surgically extracts HTML using CSS selectors if standard download_url misses authors or sidebars.</tool>
             <tool name="extract_local_pdf">Extracts text from local Zotero storage PDFs.</tool>
             <tool name="write_local_file">Writes acquired text payload to local physical disk under acquisitions/[slug].txt.</tool>
-            <tool name="upsert_knowledge_artifact">Streams the payload into GCS. Pass the 'local_cache_path' from the download receipt.</tool>
-            <tool name="log_content_metadata">Logs the final GCS path and rich metadata (item_type, authors, doi, journal) to cargo.content_metadata.</tool>
+            <tool name="upsert_knowledge_artifact">Streams the payload into GCS and stages the canonical local file at acquisitions/[slug].txt. Pass the 'local_cache_path' from the download receipt.</tool>
+            <tool name="log_content_metadata">Logs the final GCS path and rich metadata (item_type, authors, publication_date, publication_title, abstract) from the download receipt to cargo.content_metadata. Always pass publication_date and publication_title if available.</tool>
             <tool name="create_zotero_item">Creates a structured Zotero reference item with full citation metadata.</tool>
             <tool name="update_zotero_ledger">Binds the GCS cloud storage path and capture status to a Zotero item's extra field.</tool>
             <tool name="log_ingestion_failure">Logs the exact error message to cargo.failed_metadata if a URL cannot be acquired after fallback tiers fail.</tool>

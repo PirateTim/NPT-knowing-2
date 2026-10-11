@@ -1,7 +1,6 @@
 ---
 name: logic-audit
 description: Structural Logic Audit & Fallacy Scan. Audits causal claims, logical fallacies, and evidentiary validity to inform Sail Locker classification.
-agents: [cutlass, grog, bilgeladle, pegleg]
 ---
 
 # SKILL: Structural Logic Audit & Fallacy Scan

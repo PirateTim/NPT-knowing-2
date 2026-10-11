@@ -1,0 +1,65 @@
+# STAGE 1 SPYGLASS CAPTURE RECORD
+CHASE ID: 2026-09-24-chase-3
+STATUS: PRIMARY CLUSTER INGESTION COMPLETE (WITH ACCESS BARRIERS LOGGED)
+
+================================================================================
+CANONICAL ASSET INVENTORY
+================================================================================
+
+1. PRIMARY SEED ARTICLE:
+   - CARGO ID: cargo_1240
+   - CANONICAL PATH: acquisitions/exclusive-census-bureau-directs-staff-to-keep-quiet-during-comment-period-for-controversial-new-rule.txt
+   - SOURCE URL: https://talkingpointsmemo.com/news/exclusive-census-bureau-directs-staff-to-keep-quiet-during-comment-period-for-controversial-new-rule
+   - TITLE: Exclusive: Census Bureau Directs Staff to Keep Quiet During Comment Period for Controversial New Rule
+   - PUBLISHER: Talking Points Memo (TPM)
+   - PUBLICATION DATE: 2023-12-14
+   - TRIAGE STATUS: UNTRIAGED
+
+2. PRIMARY GOVERNMENT DOCKET / FEDERAL REGISTER NOTICE:
+   - CARGO ID: cargo_1241
+   - CANONICAL PATH: acquisitions/proposed-information-collection-comment-request-american-community-survey.txt
+   - SOURCE URL: https://www.federalregister.gov/documents/2023/10/20/2023-23249/proposed-information-collection-comment-request-american-community-survey
+   - TITLE: Agency Information Collection Activities; Submission to the Office of Management and Budget (OMB) for Review and Approval; Comment Request American Community Survey and Puerto Rico Community Survey
+   - PUBLISHER: Federal Register / Department of Commerce / Census Bureau
+   - PUBLICATION DATE: 2023-10-20
+   - TRIAGE STATUS: UNTRIAGED
+
+================================================================================
+DEAD-LETTER / ACCESS BARRIERS (LOGGED TO cargo.failed_metadata)
+================================================================================
+
+1. TARGET: https://talkingpointsmemo.com/wp-content/uploads/2023/12/census-bureau-directive-internal-memo.pdf
+   - STATUS: FAILED (HTTP 404 Not Found)
+   - REASON: File does not exist at specified upload path; Wayback Machine snapshot search returned NO_ARCHIVE_SNAPSHOT.
+   - DEAD-LETTER DISPOSITION: Logged to cargo.failed_metadata via log_ingestion_failure.
+
+2. TARGET: https://www.c-c-d.org/fliers/CCD-Comments-ACS-Disability-Questions-2023.pdf
+   - STATUS: FAILED (HTTP 403 Forbidden)
+   - REASON: Commercial CDN / WAF active access barrier (HTTP 403); Wayback Machine snapshot search returned NO_ARCHIVE_SNAPSHOT.
+   - DEAD-LETTER DISPOSITION: Logged to cargo.failed_metadata via log_ingestion_failure.
+
+================================================================================
+HARVESTED OUTBOUND LINKS & PRIMARY CITATIONS
+================================================================================
+The following outbound primary links were cataloged from cargo_1240 and committed to writings/chases/2026-09-24-chase-3/harvested_outbound_links.json:
+
+1. Federal Register Notice (88 FR 72424)
+   - Target URL: https://www.federalregister.gov/documents/2023/10/20/2023-23249/proposed-information-collection-comment-request-american-community-survey
+   - Type: Primary Government Docket / Notice
+   - Ingestion: Acquired as cargo_1241
+
+2. Regulations.gov Public Comment Docket (USBC-2023-0005)
+   - Target URL: https://www.regulations.gov/docket/USBC-2023-0005
+   - Type: Primary Public Regulatory Docket
+
+3. Consortium for Constituents with Disabilities (CCD) Coalition Letter
+   - Target URL: http://www.c-c-d.org/fliers/CCD-Comments-ACS-Disability-Questions-2023.pdf
+   - Type: Expert Coalition Regulatory Comment
+
+4. Washington Group on Disability Statistics - Short Set on Functioning
+   - Target URL: https://www.washingtongroup-disability.com/question-sets/wg-short-set-on-functioning-wg-ss/
+   - Type: Primary Technical Metric & Question Standard Specification
+
+5. Census Bureau ACS Disability Questions Documentation & Technical Guidance
+   - Target URL: https://www.census.gov/topics/health/disability/guidance/data-collection-acs.html
+   - Type: Primary Agency Statistical Methodology

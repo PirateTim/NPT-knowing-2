@@ -1,0 +1,9 @@
+CAPTURE_STATUS: SUCCESS
+SOURCE_URL: https://www.theverge.com/column/863319/highlights-musk-v-altman-openai
+CANONICAL_PATH: acquisitions/sideshow-concerns-and-billionaire-dreams-what-i-learned-from-elon-musks-lawsuit-against-openai.txt
+TITLE: 'Sideshow' concerns and billionaire dreams: What I learned from Elon Musk's lawsuit against OpenAI
+AUTHORS: Alex Heath
+PUBLICATION_DATE: 2026-01-16
+PUBLICATION_TITLE: The Verge
+ITEM_TYPE: journalArticle
+ABSTRACT: Highlights from Musk v. Altman.

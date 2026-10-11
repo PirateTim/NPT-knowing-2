@@ -1,7 +1,6 @@
 ---
 name: dead-reckoning
 description: Injects precise factual assessment of what an information artifact is—its provenance, author posture, publication timing, platform context, and trustworthiness indicators—without subjective judgment or editorial bias.
-agents: [grog]
 ---
 
 # SKILL: Dead Reckoning
@@ -32,6 +31,13 @@ Grog does **NOT** judge or moralize about the content or the source. Grog's mand
 
 4. **Single Asset Scope**:
    - Always executed on a single content asset. Never compare multiple assets in this skill.
+
+5. **Metadata Reconciliation & Ledger Rectification Protocol**:
+   - Initial scraping by Spyglass relies on automated HTML/JSON-LD parsers that frequently miss secondary co-authors, misread dates, or inherit flawed CMS metadata (e.g. WordPress listing only the primary author in schema markup).
+   - When establishing Authorial Identity and Platform Context, Grog MUST cross-examine the full prose (byline, author bio footers, acknowledgments) against the asset header index (`=== ACQUISITION INDEX ===`).
+   - If co-authors (e.g. Emily M. Bender alongside Timnit Gebru), publication dates, or publisher details are missing or inaccurate in the header index or database manifest:
+     - Grog MUST invoke `update_cargo_metadata(metadata_id=..., authors=[...], ...)` to rectify `cargo.content_metadata` and automatically synchronize the local asset file header.
+     - Explicitly note the reconciled authorship in the Dead Reckoning section.
 
 ---
 

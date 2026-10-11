@@ -35,20 +35,22 @@ from tools.file_io_tools import read_local_file, write_local_file, delete_local_
 from tools.github_tools import create_github_issue, list_github_issues, close_github_issue, post_github_comment, get_complete_issue_context
 from tools.subagent_tools import dispatch_subagent_turn
 from tools.cloud_knowledge_tools import list_knowledge_artifacts, read_knowledge_artifact, upsert_knowledge_artifact
-from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator, acquire_google_doc, acquire_archive_snapshot, resolve_open_access_pdf
+from tools.acquisition_tools import download_url, download_remote_pdf, extract_local_pdf, precision_html_extract, acquire_arxiv_document, call_zotero_translator, acquire_google_doc, acquire_archive_snapshot, resolve_open_access_pdf, stevedore_local_epub
 from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
 from tools.memory_tools import record_learned_rule, record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens, conduct_learned_rules_audit, compile_rules_to_turtle_ontology
-from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, log_full_audit_dossier, reseed_failed_cargo_queue
+from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, update_cargo_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, log_full_audit_dossier, reseed_failed_cargo_queue, record_fleet_sighting, promote_sighting_to_queue
 from tools.extraction_tools import run_langextract_mapping
 from tools.agent_logger import log_agent_action
 from tools.youtube_tools import extract_youtube_transcript
-from tools.chapter_analysis_tools import perform_chapter_structural_analysis, generate_chapter_expansion_document, generate_chapter_synthesis_essay, evaluate_asset_alignment, generate_chapter_reduce_v1_forensic_matrix, generate_chapter_reduce_v2_argumentative_arc, generate_chapter_reduce_v3_operational_map
+from tools.chapter_analysis_tools import perform_chapter_structural_analysis, generate_chapter_expansion_document, generate_chapter_synthesis_essay, evaluate_asset_alignment, generate_chapter_reduce_v1_forensic_matrix, generate_chapter_reduce_v2_argumentative_arc, generate_chapter_reduce_v3_operational_map, read_manuscript_chapter, vector_search_manuscript
 from tools.reference_resolution_tools import triage_and_expand_chapter_references, fetch_crossref_metadata
 from tools.manuscript_slicing_tools import slice_monolith_to_bronze_sections, assemble_bronze_plus_sections
 from tools.cutlass_audit_tools import audit_chapter_silver_citations
 from tools.cargo_vector_tools import embed_cargo_index, query_cargo_vector_index
+from tools.manual_tools import display_fleet_manual, update_fleet_manual
+from tools.folksonomy_bridge import query_folksonomy_deckplan_bridge
 
 
 # =====================================================================
@@ -155,11 +157,14 @@ class ToolDispatcher:
             # --- Cargo Pipeline (Postgres Bronze/Silver) ---
             elif call.name == "check_cargo_manifest": return check_cargo_manifest(**args)
             elif call.name == "log_content_metadata": return log_content_metadata(**args)
+            elif call.name == "update_cargo_metadata": return update_cargo_metadata(**args)
             elif call.name == "log_ingestion_failure": return log_ingestion_failure(**args)
             elif call.name == "purge_corrupted_cargo": return purge_corrupted_cargo(**args)
             elif call.name == "log_fleet_enrichment": return log_fleet_enrichment(**args)
             elif call.name == "log_full_audit_dossier": return log_full_audit_dossier(**args)
             elif call.name == "reseed_failed_cargo_queue": return reseed_failed_cargo_queue()
+            elif call.name == "record_fleet_sighting": return record_fleet_sighting(**args)
+            elif call.name == "promote_sighting_to_queue": return promote_sighting_to_queue(**args)
             elif call.name == "embed_cargo_index": return embed_cargo_index(**args)
             elif call.name == "query_cargo_vector_index": return query_cargo_vector_index(**args)
 
@@ -173,6 +178,7 @@ class ToolDispatcher:
             elif call.name == "acquire_google_doc": return acquire_google_doc(**args)
             elif call.name == "acquire_archive_snapshot": return acquire_archive_snapshot(**args)
             elif call.name == "resolve_open_access_pdf": return resolve_open_access_pdf(**args)
+            elif call.name == "stevedore_local_epub": return stevedore_local_epub(**args)
             elif call.name == "call_landlubber": return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
@@ -195,6 +201,13 @@ class ToolDispatcher:
             elif call.name == "assemble_bronze_plus_sections": return assemble_bronze_plus_sections(**args)
             elif call.name == "fetch_crossref_metadata": return fetch_crossref_metadata(**args)
             elif call.name == "audit_chapter_silver_citations": return audit_chapter_silver_citations(**args)
+            elif call.name == "read_manuscript_chapter": return read_manuscript_chapter(**args)
+            elif call.name == "vector_search_manuscript": return vector_search_manuscript(**args)
+
+            # --- Operational Manual & Help ---
+            elif call.name == "display_fleet_manual": return display_fleet_manual(**args)
+            elif call.name == "update_fleet_manual": return update_fleet_manual()
+            elif call.name == "query_folksonomy_deckplan_bridge": return query_folksonomy_deckplan_bridge(**args)
 
             # --- Memory & Glossary ---
             elif call.name == "conduct_learned_rules_audit": return conduct_learned_rules_audit()
@@ -299,18 +312,36 @@ class ToolDispatcher:
             types.FunctionDeclaration(name="check_cargo_manifest", description="Checks Postgres for duplicates.", parameters={"type": "OBJECT", "properties": {"target_url": {"type": "STRING"}}, "required": ["target_url"]}),
             types.FunctionDeclaration(
                 name="log_content_metadata", 
-                description="Logs to Postgres.", 
+                description="Logs acquired asset metadata to Postgres cargo.content_metadata upon successful acquisition, including publication_date, publication_title (publisher), authors, etc.", 
                 parameters={
                     "type": "OBJECT", 
                     "properties": {
-                        "source_url": {"type": "STRING"}, 
-                        "title": {"type": "STRING"}, 
-                        "gcp_bucket_path": {"type": "STRING"}, 
-                        "item_type": {"type": "STRING"},
-                        "authors": {"type": "STRING"},
-                        "abstract": {"type": "STRING"}
+                        "source_url": {"type": "STRING", "description": "Original source URL of the acquired asset."}, 
+                        "title": {"type": "STRING", "description": "Title of the acquired asset."}, 
+                        "gcp_bucket_path": {"type": "STRING", "description": "GCS cloud storage path (e.g. acquisitions/slug.txt)."}, 
+                        "item_type": {"type": "STRING", "description": "Type of item (e.g. webpage, pdf, report, article)."},
+                        "authors": {"type": "STRING", "description": "Comma-separated list or JSON array of author names."},
+                        "abstract": {"type": "STRING", "description": "Abstract or summary excerpt of the content."},
+                        "publication_date": {"type": "STRING", "description": "ISO publication date (YYYY-MM-DD) if available."},
+                        "publication_title": {"type": "STRING", "description": "Publisher, journal, venue, or site name."}
                     }, 
                     "required": ["source_url", "title", "gcp_bucket_path"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="update_cargo_metadata",
+                description="Reconciles and enriches cargo metadata (authors, publication_date, publisher, title, abstract) in PostgreSQL cargo.content_metadata and synchronizes the local file header index (acquisitions/[slug].txt).",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "metadata_id": {"type": "INTEGER", "description": "The cargo metadata ID (e.g. 1238)."},
+                        "source_url": {"type": "STRING", "description": "The original URL if metadata_id is unknown."},
+                        "authors": {"type": "STRING", "description": "Reconciled author name(s) as a comma-separated string or JSON array (e.g. 'Timnit Gebru, Emily M. Bender')."},
+                        "publication_date": {"type": "STRING", "description": "Corrected publication date (YYYY-MM-DD)."},
+                        "publication_title": {"type": "STRING", "description": "Corrected publisher or journal title."},
+                        "title": {"type": "STRING", "description": "Corrected clean article title."},
+                        "abstract": {"type": "STRING", "description": "Enriched abstract or summary."}
+                    }
                 }
             ),
             types.FunctionDeclaration(name="log_ingestion_failure", description="Logs a completely failed acquisition to the Postgres dead-letter queue.", parameters={"type": "OBJECT", "properties": {"source_url": {"type": "STRING"}, "error_message": {"type": "STRING"}}, "required": ["source_url", "error_message"]}),
@@ -349,6 +380,38 @@ class ToolDispatcher:
                 name="reseed_failed_cargo_queue",
                 description="Reads all failed URLs from cargo.failed_metadata, disaggregates YouTube playlists, and resets status to PENDING in cargo.ingestion_queue.",
                 parameters={"type": "OBJECT", "properties": {}}
+            ),
+            types.FunctionDeclaration(
+                name="record_fleet_sighting",
+                description="Appends a newly identified upstream primary source, report, or dataset sighting from cargo content to the centralized Fleet Sightings Ledger (writings/cargo/FLEET_SIGHTINGS_LEDGER.md) and logs the sighting to cargo.fleet_enrichments.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "source_cargo_id": {"type": "INTEGER", "description": "The cargo metadata ID that references the sighting (e.g. 147)."},
+                        "source_title": {"type": "STRING", "description": "Title of the source cargo asset."},
+                        "sighted_title": {"type": "STRING", "description": "Title of the cited or referenced upstream work/dataset (for single sighting)."},
+                        "source_type": {"type": "STRING", "description": "Category of sighted item: 'dataset', 'paper', 'report', 'code_repo', 'whitepaper', 'legal_filing', or 'book'."},
+                        "url_or_locator": {"type": "STRING", "description": "URL, DOI, arXiv ID, or specific institutional locator for the sighted work."},
+                        "context_quote": {"type": "STRING", "description": "Exact excerpt or quote showing how and why the work was cited."},
+                        "sightings": {
+                            "type": "ARRAY",
+                            "items": {"type": "OBJECT"},
+                            "description": "Optional batch list of sighting objects to record multiple sightings in a single tool call. Each item should contain sighted_title, source_type, url_or_locator, and context_quote."
+                        }
+                    },
+                    "required": ["source_cargo_id", "source_title"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="promote_sighting_to_queue",
+                description="Promotes an upstream primary source sighting from the centralized ledger to cargo.ingestion_queue for acquisition.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "sighting_id": {"type": "STRING", "description": "The unique sighting ID from the ledger (e.g. 'sighting_147_a1b2c3')."}
+                    },
+                    "required": ["sighting_id"]
+                }
             ),
 
             # Acquisition & Web Extractors
@@ -407,6 +470,19 @@ class ToolDispatcher:
                 name="resolve_open_access_pdf",
                 description="Resolves paywalled academic landing pages (ScienceDirect, Wiley, Springer, JSTOR, Nature) by extracting the DOI and querying the Unpaywall REST API for legal open-access copies, preprints, and institutional repository PDFs. If found, automatically streams the PDF via download_remote_pdf.",
                 parameters={"type": "OBJECT", "properties": {"url_or_doi": {"type": "STRING", "description": "The academic URL or DOI string to resolve to an open-access PDF."}}, "required": ["url_or_doi"]}
+            ),
+            types.FunctionDeclaration(
+                name="stevedore_local_epub",
+                description="Unpacks full-length book EPUBs from the local inbox (cargo_cache/inbox/), extracts metadata and reading spine, segments the endnote dossier by chapter, generates self-contained chapter assets with complete parent book provenance back-pointers and attached citations, uploads to GCS (acquisitions/*.txt), and registers both a Master Book Reference (item_type='book') and Chapter Assets (item_type='bookSection') in cargo.content_metadata.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "epub_path": {
+                            "type": "STRING",
+                            "description": "Optional absolute path to the local .epub file. If omitted, automatically scans cargo_cache/inbox/*.epub."
+                        }
+                    }
+                }
             ),
             types.FunctionDeclaration(name="extract_local_pdf", description="Extracts local PDF.", parameters={"type": "OBJECT", "properties": {"zotero_storage_key": {"type": "STRING"}}, "required": ["zotero_storage_key"]}),
             types.FunctionDeclaration(
@@ -517,6 +593,30 @@ class ToolDispatcher:
                     "required": ["asset_text"]
                 }
             ),
+            types.FunctionDeclaration(
+                name="read_manuscript_chapter",
+                description="Reads the complete text of a specific manuscript chapter (0-12) from the verified Bronze+ tier (ship/bronze_plus/chapters/chXX/).",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "chapter_number": {"type": "INTEGER", "description": "The chapter number to read (0 to 12)."}
+                    },
+                    "required": ["chapter_number"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="vector_search_manuscript",
+                description="Performs semantic vector search across the entire manuscript in pgVector (ship.letters_of_marque). Optionally scopes the search to a specific chapter (0-12). If chapter_number is omitted, searches the entire book.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "query": {"type": "STRING", "description": "The semantic search query, entity, or thesis concept to search for."},
+                        "chapter_number": {"type": "INTEGER", "description": "Optional chapter number (0-12) to restrict the search to. If omitted, searches the whole book."},
+                        "top_k": {"type": "INTEGER", "description": "Number of top matching paragraph chunks to return (default 5)."}
+                    },
+                    "required": ["query"]
+                }
+            ),
 
             # Cognitive Memory & System State
             types.FunctionDeclaration(name="conduct_learned_rules_audit", description="Dispatches a multi-agent survey asking all subagents to defend their local learned rules, generates ship/learned_rules_audit_decision.md, and promotes approved rules.", parameters={"type": "OBJECT", "properties": {}}),
@@ -604,6 +704,46 @@ class ToolDispatcher:
                         "top_k": {"type": "INTEGER", "description": "Maximum number of matching chunks to return. Default: 10."}
                     },
                     "required": ["query"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="display_fleet_manual",
+                description="Displays UNIX-style manual pages ('man') for fleet functions, CLI commands, required flags, and prompt syntax.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "topic": {"type": "STRING", "description": "Optional manual topic or keyword (e.g. 'chase', 'vdb', 'ingestion', 'dashboards', 'cloudsql', 'database', 'agents', 'manuscript', 'all')."}
+                    }
+                }
+            ),
+            types.FunctionDeclaration(
+                name="update_fleet_manual",
+                description="Walks the repository file system to audit entrypoints, scripts, skills, and ADRs, updating docs/FLEET_MANUAL.md.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {}
+                }
+            ),
+            types.FunctionDeclaration(
+                name="query_folksonomy_deckplan_bridge",
+                description="Queries the bi-directional bridge connecting Grog's emergent cargo folksonomy tags to the 140 Section Ribs of the manuscript Deck Plans.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "query_type": {
+                            "type": "STRING",
+                            "description": "Type of query: 'tag' (lookup section ribs for a folksonomy tag), 'section' (lookup tags for a section rib), or 'chapter' (lookup all tags for a chapter)."
+                        },
+                        "identifier": {
+                            "type": "STRING",
+                            "description": "The target identifier: tag (e.g. '#early_childhood_literacy'), section ID (e.g. '10.5'), or chapter number (e.g. '10')."
+                        },
+                        "min_score": {
+                            "type": "NUMBER",
+                            "description": "Optional minimum relevance score threshold between 0.0 and 1.0 (default 0.50)."
+                        }
+                    },
+                    "required": ["query_type", "identifier"]
                 }
             )
         ]

@@ -5,7 +5,7 @@ Generated dynamically by inspect_schemas.py
 SCHEMA: AGENT_STATE (Connection: DATABASE_URL)
 ============================================================
 
---- BASE TABLE: agent_state.checkpoints [Rows: 434] ---
+--- BASE TABLE: agent_state.checkpoints [Rows: 558] ---
   --> thread_id: character varying (NOT NULL)
   --> state_payload: jsonb (NULL)
   --> updated_at: timestamp without time zone (NULL)
@@ -35,7 +35,7 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
   --> created_at: timestamp with time zone (NULL)
   --> completed_at: timestamp with time zone (NULL)
 
---- BASE TABLE: cargo.content_metadata [Rows: 246] ---
+--- BASE TABLE: cargo.content_metadata [Rows: 3667] ---
   --> id: integer (NOT NULL)
   --> source_url: text (NOT NULL)
   --> item_type: text (NULL)
@@ -49,7 +49,23 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
   --> gcp_bucket_path: text (NULL)
   --> created_at: timestamp without time zone (NULL)
 
---- BASE TABLE: cargo.failed_metadata [Rows: 62] ---
+--- BASE TABLE: cargo.content_vectors [Rows: 3711] ---
+  --> vector_id: integer (NOT NULL)
+  --> chunk_id: character varying (NULL)
+  --> metadata_id: integer (NULL)
+  --> index_scope: character varying (NULL)
+  --> source_url: text (NULL)
+  --> title: text (NULL)
+  --> authors: jsonb (NULL)
+  --> publication_date: text (NULL)
+  --> publisher: text (NULL)
+  --> chunk_index: integer (NULL)
+  --> chunk_text: text (NULL)
+  --> vector_embedding: USER-DEFINED (NULL)
+  --> gcp_bucket_path: text (NULL)
+  --> created_at: timestamp with time zone (NULL)
+
+--- BASE TABLE: cargo.failed_metadata [Rows: 254] ---
   --> failure_id: integer (NOT NULL)
   --> source_url: text (NOT NULL)
   --> derived_domain: text (NULL)
@@ -61,7 +77,7 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
   --> error_message: text (NULL)
   --> failed_at: timestamp without time zone (NULL)
 
---- BASE TABLE: cargo.fleet_enrichments [Rows: 1297] ---
+--- BASE TABLE: cargo.fleet_enrichments [Rows: 2519] ---
   --> id: integer (NOT NULL)
   --> metadata_id: integer (NULL)
   --> agent_name: text (NOT NULL)
@@ -69,7 +85,7 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
   --> payload: jsonb (NOT NULL)
   --> created_at: timestamp without time zone (NULL)
 
---- BASE TABLE: cargo.ingestion_queue [Rows: 25] ---
+--- BASE TABLE: cargo.ingestion_queue [Rows: 546] ---
   --> queue_id: integer (NOT NULL)
   --> target_url: text (NOT NULL)
   --> status: character varying (NULL)
@@ -78,7 +94,28 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
   --> last_attempted_at: timestamp without time zone (NULL)
   --> attempt_count: integer (NULL)
 
---- BASE TABLE: cargo.system_glossary [Rows: 176] ---
+--- BASE TABLE: cargo.ontology_edges [Rows: 374] ---
+  --> edge_id: integer (NOT NULL)
+  --> source_node_id: text (NOT NULL)
+  --> predicate: text (NOT NULL)
+  --> target_node_id: text (NOT NULL)
+  --> weight: numeric (NULL)
+  --> context: text (NULL)
+  --> properties: jsonb (NULL)
+  --> created_at: timestamp without time zone (NULL)
+
+--- BASE TABLE: cargo.ontology_nodes [Rows: 390] ---
+  --> node_id: text (NOT NULL)
+  --> node_type: text (NOT NULL)
+  --> label: text (NOT NULL)
+  --> description: text (NULL)
+  --> metadata_id: integer (NULL)
+  --> glossary_term: character varying (NULL)
+  --> chapter_anchor: integer (NULL)
+  --> properties: jsonb (NULL)
+  --> created_at: timestamp without time zone (NULL)
+
+--- BASE TABLE: cargo.system_glossary [Rows: 183] ---
   --> term: character varying (NOT NULL)
   --> definition: text (NOT NULL)
   --> provenance_context: text (NULL)
@@ -116,7 +153,7 @@ SCHEMA: CARGO (Connection: CONTENT_DATABASE_URL)
 SCHEMA: SHIP (Connection: CONTENT_DATABASE_URL)
 ============================================================
 
---- BASE TABLE: ship.letters_of_marque [Rows: 658] ---
+--- BASE TABLE: ship.letters_of_marque [Rows: 868] ---
   --> chunk_id: character varying (NOT NULL)
   --> chapter_number: integer (NOT NULL)
   --> section_number: character varying (NOT NULL)

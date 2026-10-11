@@ -21,30 +21,39 @@ def _get_cargo_db_connection():
         user=url.username, password=url.password, host=url.hostname, port=url.port, database=url.path[1:]
     )
 
-def _read_chapter_silver_text(chapter_number: int) -> str:
+def _read_chapter_bronze_plus_text(chapter_number: int) -> str:
     """Helper: Reads section or chapter text prioritizing local Bronze+ tier."""
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     ch_slug = f"ch{chapter_number:02d}"
     
     # 1. Try Bronze+ chapter directory
+    def _section_sort_key(filename: str):
+        import re
+        m = re.search(r"sec(\d+)(?:\.(\d+))?", filename)
+        if m:
+            return (int(m.group(1)), int(m.group(2)) if m.group(2) is not None else 0)
+        return (999, 999)
+
     bronze_plus_dir = os.path.join(base_dir, "ship", "bronze_plus", "chapters", ch_slug)
     if os.path.exists(bronze_plus_dir):
+        files = [f for f in os.listdir(bronze_plus_dir) if f.endswith("_bronze_plus.md")]
+        files.sort(key=_section_sort_key)
         sections = []
-        for fname in sorted(os.listdir(bronze_plus_dir)):
-            if fname.endswith("_bronze_plus.md"):
-                with open(os.path.join(bronze_plus_dir, fname), "r", encoding="utf-8") as f:
-                    sections.append(f.read())
+        for fname in files:
+            with open(os.path.join(bronze_plus_dir, fname), "r", encoding="utf-8") as f:
+                sections.append(f.read())
         if sections:
             return "\n\n---\n\n".join(sections)
 
     # 2. Try Bronze chapter directory
     bronze_dir = os.path.join(base_dir, "ship", "bronze", "chapters", ch_slug)
     if os.path.exists(bronze_dir):
+        files = [f for f in os.listdir(bronze_dir) if f.endswith("_bronze.md")]
+        files.sort(key=_section_sort_key)
         sections = []
-        for fname in sorted(os.listdir(bronze_dir)):
-            if fname.endswith("_bronze.md"):
-                with open(os.path.join(bronze_dir, fname), "r", encoding="utf-8") as f:
-                    sections.append(f.read())
+        for fname in files:
+            with open(os.path.join(bronze_dir, fname), "r", encoding="utf-8") as f:
+                sections.append(f.read())
         if sections:
             return "\n\n---\n\n".join(sections)
 
@@ -55,6 +64,93 @@ def _read_chapter_silver_text(chapter_number: int) -> str:
             return f.read()
 
     raise FileNotFoundError(f"Could not find text for Chapter {chapter_number}")
+
+def read_manuscript_chapter(chapter_number: int) -> str:
+    """
+    Agent Tool: Reads the complete text of a specific manuscript chapter (0-12)
+    from the verified Bronze+ tier (ship/bronze_plus/chapters/chXX/).
+    Invoked By: BILGELADLE, SCALLYWAG, PEGLEG.
+    """
+    try:
+        return _read_chapter_bronze_plus_text(chapter_number)
+    except Exception as e:
+        return f"[ERROR] Failed to read Chapter {chapter_number}: {str(e)}"
+
+def vector_search_manuscript(query: str, chapter_number: int = None, top_k: int = 5) -> str:
+    """
+    Agent Tool: Performs semantic vector search across the embedded manuscript in pgVector (ship.letters_of_marque).
+    Optionally scopes the search to a specific chapter (0-12). If chapter_number is None, searches the entire book.
+    Returns the top-k matching paragraph chunks with similarity scores, section headers, and verbatim text.
+    Invoked By: BILGELADLE, SCALLYWAG, PEGLEG.
+    """
+    if not query or not query.strip():
+        return "[ERROR] Query string cannot be empty."
+
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        return "[ERROR] GEMINI_API_KEY is not set in environment."
+
+    conn = None
+    cursor = None
+    try:
+        client = genai.Client(api_key=api_key)
+        embed_resp = client.models.embed_content(
+            model="gemini-embedding-001",
+            contents=query.strip(),
+            config=types.EmbedContentConfig(output_dimensionality=1536)
+        )
+        query_vector = list(embed_resp.embeddings[0].values)
+        vec_str = str(query_vector)
+
+        conn = _get_cargo_db_connection()
+        cursor = conn.cursor()
+
+        if chapter_number is not None:
+            sql = """
+                SELECT chunk_id, chapter_number, section_number, header_title, chunk_text,
+                       1 - (vector_embedding <=> %s::vector) AS similarity
+                FROM ship.letters_of_marque
+                WHERE chapter_number = %s
+                ORDER BY vector_embedding <=> %s::vector ASC
+                LIMIT %s;
+            """
+            cursor.execute(sql, (vec_str, int(chapter_number), vec_str, int(top_k)))
+        else:
+            sql = """
+                SELECT chunk_id, chapter_number, section_number, header_title, chunk_text,
+                       1 - (vector_embedding <=> %s::vector) AS similarity
+                FROM ship.letters_of_marque
+                ORDER BY vector_embedding <=> %s::vector ASC
+                LIMIT %s;
+            """
+            cursor.execute(sql, (vec_str, vec_str, int(top_k)))
+
+        rows = cursor.fetchall()
+        if not rows:
+            scope_desc = f"Chapter {chapter_number}" if chapter_number is not None else "the entire manuscript"
+            return f"[INFO] No matching paragraph chunks found in {scope_desc} for query: '{query}'."
+
+        results = []
+        scope_header = f"Chapter {chapter_number}" if chapter_number is not None else "Entire Manuscript"
+        results.append(f"### Manuscript Vector Search Results ({scope_header} | Top {len(rows)})")
+        for r in rows:
+            chunk_id, ch_num, sec_num, header, text, sim = r
+            results.append(
+                f"**[{chunk_id}] Chapter {ch_num}, Section {sec_num} ({header})** — *Similarity: {float(sim):.4f}*\n"
+                f"> {text.strip()}\n"
+            )
+
+        return "\n".join(results)
+
+    except Exception as e:
+        return f"[ERROR] Vector search manuscript failed: {str(e)}"
+    finally:
+        if cursor:
+            try: cursor.close()
+            except Exception: pass
+        if conn:
+            try: conn.close()
+            except Exception: pass
 
 def _get_learnings_file_path() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "agents", "bilgeladle", "chapter_learnings.json"))
@@ -89,7 +185,7 @@ def perform_chapter_structural_analysis(chapter_number: int) -> str:
     Inherits cumulative thesis insights from prior chapters (1..N-1, or 1..12 recursion).
     """
     try:
-        ch_text = _read_chapter_silver_text(chapter_number)
+        ch_text = _read_chapter_bronze_plus_text(chapter_number)
 
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -214,7 +310,7 @@ def generate_chapter_expansion_document(chapter_number: int, section_filter: str
         if os.path.exists(exp_path) and not overwrite:
             return f"[SKIP] Expansion file already exists at: {exp_path}"
 
-        ch_text = _read_chapter_silver_text(chapter_number)
+        ch_text = _read_chapter_bronze_plus_text(chapter_number)
         if section_filter:
             ch_text = _filter_section_text(ch_text, section_filter)
         learnings_dict = _load_chapter_learnings()
@@ -355,7 +451,7 @@ def generate_chapter_synthesis_essay(chapter_number: int) -> str:
             return analysis_raw
 
         analysis = json.loads(analysis_raw)
-        ch_text = _read_chapter_silver_text(chapter_number)
+        ch_text = _read_chapter_bronze_plus_text(chapter_number)
 
         # Extract title from ch_text
         title_match = re.search(r'#+\s*(?:Chapter\s+\d+:?\s*)?(.*)', ch_text)

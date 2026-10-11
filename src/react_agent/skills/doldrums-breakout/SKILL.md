@@ -1,7 +1,6 @@
 ---
 name: doldrums-breakout
 description: Interactive Doldrums Breakout & Rule-Learning Skill. Halts execution when Cutlass assigns DOLDRUMS, prompts the Author with asset evidence, asks classification questions, and formulates new learned rules for future Sail Locker classification.
-agents: [cutlass, pegleg]
 ---
 
 # SKILL: Doldrums Breakout & Interactive Rule Learning

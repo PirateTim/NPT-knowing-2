@@ -1,7 +1,6 @@
 ---
 name: expand-chapter-references
 description: Transforms inline parenthetical shorthand into vector-dense citation nodes using standardized Zotero and CrossRef field schemas.
-agents: [plank, scallywag]
 ---
 
 # SKILL: Expand Chapter References

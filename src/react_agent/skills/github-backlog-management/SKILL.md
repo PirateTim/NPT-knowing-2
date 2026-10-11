@@ -1,7 +1,6 @@
 ---
 name: github-backlog-management
 description: High-level operating protocol for surveying, tracking, updating, and closing GitHub Issues for the human architect, Hook, and Antigravity.
-agents: [hook, pegleg]
 ---
 
 # SKILL: GitHub Backlog Management Protocol

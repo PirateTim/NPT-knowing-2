@@ -1,7 +1,6 @@
 ---
 name: ontological-extraction
 description: Runs a full text chunk through LangExtract to extract structured knowledge graph primitives (entities, claims, vignettes, relationships) and saves the JSON to cargo_ontology/[slug].json.
-agents: [grog]
 ---
 
 # SKILL: Ontological Extraction

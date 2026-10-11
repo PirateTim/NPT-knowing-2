@@ -1,7 +1,6 @@
 ---
 name: manuscript-chapter-section-slicing
 description: Slices monolithic manuscript chapters into clean, isolated Bronze section files and extracts raw reference lists with zero summarization.
-agents: [bilgeladle]
 ---
 
 # SKILL: Manuscript Chapter Section Slicing (Stage 1)

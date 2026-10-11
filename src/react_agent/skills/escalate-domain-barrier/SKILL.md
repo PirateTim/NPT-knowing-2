@@ -1,7 +1,6 @@
 ---
 name: escalate-domain-barrier
 description: Enables Spyglass to safely escalate unresolvable domain blockages to GitHub Issues with built-in deduplication checks.
-agents: [spyglass]
 ---
 
 # SKILL: Escalation & Issue Deduplication
