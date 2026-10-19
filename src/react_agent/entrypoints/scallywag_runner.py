@@ -17,6 +17,8 @@ def run_scallywag_agent():
     parser = argparse.ArgumentParser(description="NPT Fleet: Scallywag Narrative Synthesis")
     parser.add_argument("--thread-id", "--thread", type=str, default=None, help="Thread ID or session key")
     parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for single-turn execution")
+    parser.add_argument("--prompt-file", type=str, default=None, help="Path to markdown or text file containing the prompt")
+    parser.add_argument("--out-file", "--output", type=str, default=None, help="Optional output path to write agent response")
     parser.add_argument("--model", type=str, default=None, help="Optional model override")
     args, unknown = parser.parse_known_args()
 
@@ -49,10 +51,28 @@ def run_scallywag_agent():
     writings_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "writings"))
     os.makedirs(writings_dir, exist_ok=True)
     
-    if args.prompt:
-        print(f"\n[AUTHOR -> SCALLYWAG] ({thread_id}) -> {args.prompt}")
-        final_response = engine.execute_turn(chat_session, args.prompt)
+    if args.prompt or args.prompt_file:
+        target_info = args.prompt_file if args.prompt_file else args.prompt[:60]
+        print(f"\n[AUTHOR -> SCALLYWAG] ({thread_id}) -> Executing single turn ({target_info})...")
+        final_response = engine.execute_turn(chat_session, prompt=args.prompt, prompt_file=args.prompt_file)
         print(f"\n[SCALLYWAG] -> {final_response}")
+        
+        # Save response to disk
+        if args.out_file:
+            out_path = os.path.abspath(args.out_file)
+        elif args.prompt_file:
+            # Auto-save next to prompt file if no explicit --out-file provided
+            p_dir = os.path.dirname(os.path.abspath(args.prompt_file))
+            out_path = os.path.join(p_dir, "scallywag_draft.md")
+        else:
+            now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_path = os.path.join(writings_dir, f"Scallywag_{now_str}_single_turn.md")
+            
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(final_response)
+        print(f"\n[SYSTEM] Scallywag response successfully written to: {out_path}")
+        
         engine.save_checkpoint(thread_id, chat_session.get_history())
         return
 

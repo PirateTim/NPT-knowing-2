@@ -1,8 +1,0 @@
-TARGET_URL: https://www.technologyreview.com/2025/12/15/1128352/rise-of-ai-coding-developers-2026/?utm_source=facebook&utm_medium=cpc&utm_campaign=low-trending2026&utm_id=6298550406771&utm_content=6897907283771&utm_term=6861191831171&fbclid=PAZXh0bgNhZW0BMABhZGlkAAAGRgtcFLtzcnRjBmFwcF9pZBAzNDE5NjI4MzA1MDI1OTE3AAGnZvx4QudRTEcip9Bqh3pAK4xa6cF9YDxmoGYE2dwEKVgOc--IsQL3Us9jDAw_aem_rXL3gGQ0u8plgtOvUMP-7A
-TITLE: AI coding is now everywhere. But not everyone is convinced.
-AUTHORS: Edd Gent
-PUBLICATION_DATE: 2025-12-15
-PUBLICATION_TITLE: MIT Technology Review
-ITEM_TYPE: journalArticle
-CANONICAL_PATH: acquisitions/ai-coding-is-now-everywhere-but-not-everyone-is-convinced.txt
-STATUS: COMPLETED

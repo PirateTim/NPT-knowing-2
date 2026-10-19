@@ -1,9 +1,26 @@
 """
-helper_scripts/db_provisioning/create_cargo_lens_view.py
-Provisions the analytical view cargo.v_cargo_lens_clusters for Approach 1 Two-Tier Classification.
-Adheres to SOP-06 (The Enterprise DDL Protocol): Root connection + mandatory permissions grant.
-Joins cargo.content_metadata with cargo.fleet_enrichments (enrichment_type = 'primary_two_tier_lens').
+NPT Fleet DDL: Create cargo.v_cargo_lens_clusters Analytical View
+
+How to run:
+    uv run python helper_scripts/db_provisioning/create_cargo_lens_view.py
+
+What it does:
+    Provisions the analytical view cargo.v_cargo_lens_clusters for multidimensional lens analysis.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import urllib.parse
 import pg8000.dbapi

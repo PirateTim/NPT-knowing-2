@@ -1,3 +1,26 @@
+"""
+NPT Fleet: Cloud Scheduler Weekend Power Deployment
+
+How to run:
+    uv run python helper_scripts/deploy_scheduler.py
+
+What it does:
+    Provisions Google Cloud Scheduler jobs to automatically stop Cloud SQL on Friday evening and restart Monday morning.
+
+Last run: Unknown
+"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import subprocess, json
 
 stop_body = json.dumps({'settings': {'activationPolicy': 'NEVER'}})

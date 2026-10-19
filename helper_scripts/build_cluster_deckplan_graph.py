@@ -1,9 +1,26 @@
 """
 NPT Fleet: Cluster-to-DeckPlans Many-to-Many Graph Generator
-Architecture: Semantic Vector Alignment over 1536-dim pgVector (ship.letters_of_marque)
-Description: Evaluates Grog's 100 empirical cargo clusters against the 140 Section Ribs of The End of Knowing,
-generating a dense many-to-many relationship mesh between real-world cargo topics and manuscript arguments.
+
+How to run:
+    uv run python helper_scripts/build_cluster_deckplan_graph.py
+
+What it does:
+    Generates cross-corpus graph edges connecting thematic cargo clusters with manuscript Ship Deck Plans nodes.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import json

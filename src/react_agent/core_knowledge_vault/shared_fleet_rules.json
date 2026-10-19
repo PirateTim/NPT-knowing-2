@@ -223,5 +223,14 @@
     "underlying_mechanism": "Scrapers frequently populate the SQL `abstract` field with low-fidelity HTML meta tags or truncated previews. Using these snippets instead of GCS full-text files starves embeddings and LLM reasoning of actual factual content, causing classification failures and flinging rich thematic articles into peripheral orphan space.",
     "incident_context": "Author Directive (/learn): 'why did the first pass only use the abstract text? I didn't ask for abstracts. I have no idea what you have been putting into an abstract field. As far as I'm concerned not of the cargo has abstracts. this project is alway about full text unless I say it isn't /learn that'",
     "timestamp_utc": "2026-10-08 20:45:00 UTC"
+  },
+  {
+    "heuristic_id": "SHARED-HEURISTIC-026",
+    "scope": "FLEET_UNIVERSAL",
+    "category": "Epistemic Demarcation & Anti-Financialization Clustering Law",
+    "generalized_heuristic": "Never synthesize, bridge, or cluster cargo across disparate operational, physical, or institutional domains using financial motives, commercial incentives, or corporate balance-sheet pressures (e.g. 'high CapEx', 'depreciating GPU silicon', 'unviable unit economics', 'desperation for bailouts/subsidies', 'loss of venture capital tranches'). Financialization is strictly prohibited as a causal bridge or unifying thematic solvent. The project's epistemic thesis is anchored strictly in the destruction of provenance, the abandonment of verification, institutional agnotology, and liability evasion. Disparate domains (such as municipal power grid infrastructure vs. Pentagon defense procurement and antitrust defense) must NEVER be forced into a single cluster under a financial narrative. Clusters must emerge exclusively from high empirical vector density in pgvector or shared, domain-intrinsic epistemic mechanisms (e.g. lossy mirroring, administrative liability animism, guild stenography). If two groups of cargo require a financial bridge to appear related, they are NOT a cluster and must be cleaved into separate, atomic topics.",
+    "underlying_mechanism": "Defaulting to commercial or financial explanations ('they need money/bailouts/revenues to cover CapEx') is the ultimate form of vulgar reductionism and lazy pastiche. It dissolves Popperian demarcation, obscures the true institutional mechanics of knowing and forgetting, and forces mathematically distant vector regions (e.g. 0.463 cosine similarity) into artificial, confabulated clusters.",
+    "incident_context": "Author Directive (/learn): 'which part of the anti-financialization was unclear? even using search we should never have built that bridge. please /learn something so it never happens again' (Cluster 002 false bridge between energy utilities and defense procurement).",
+    "timestamp_utc": "2026-10-15 13:05:00 UTC"
   }
 ]

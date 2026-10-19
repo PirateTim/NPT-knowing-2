@@ -1,8 +1,25 @@
 """
 NPT Fleet: Epistemic Graph Visualizer & Review Console
-Web Server & Interactive Network Graph Viewer for exploring nodes and edges
-across ship.letters_of_marque, cargo.ontology_nodes, cargo.ontology_edges, and cargo.content_metadata.
+
+How to run:
+    uv run streamlit run helper_scripts/graph_visualizer_console.py
+
+What it does:
+    Interactive Streamlit console for inspecting, traversing, and searching the manuscript epistemic knowledge graph.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys
@@ -76,10 +93,16 @@ def fetch_graph_data(chapter_filter=None, node_type_filter=None):
         style = color_map.get(ntype, {"background": "#374151", "border": "#6b7280", "highlight": "#9ca3af"})
         shape = shape_map.get(ntype, "ellipse")
         
+        # Multi-line plain text rollover without HTML tags
+        title_lines = [str(label or nid), f"Type: {ntype}", f"ID: {nid}"]
+        if chap:
+            title_lines.append(f"Chapter: {chap}")
+        title_text = "\n".join(title_lines)
+
         node_obj = {
             "id": nid,
             "label": label or nid,
-            "title": f"<b>{label}</b><br>Type: {ntype}<br>ID: {nid}",
+            "title": title_text,
             "group": ntype,
             "shape": shape,
             "color": style,
@@ -147,7 +170,7 @@ def fetch_graph_data(chapter_filter=None, node_type_filter=None):
     conn.close()
     return {"nodes": nodes, "edges": edges}
 
-HTML_TEMPLATE = """<!DOCTYPE html>
+HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -158,7 +181,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #e2e8f0; display: flex; height: 100vh; overflow: hidden; }
     #sidebar { width: 440px; background: #111827; border-left: 1px solid #1f2937; display: flex; flex-direction: column; overflow: hidden; z-index: 10; box-shadow: -4px 0 20px rgba(0,0,0,0.5); }
     #main-panel { flex: 1; display: flex; flex-direction: column; position: relative; }
-    #toolbar { height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 5; }
+    #toolbar { min-height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 8px 18px; z-index: 5; flex-wrap: wrap; gap: 10px; }
     #network-container { flex: 1; height: 100%; width: 100%; background: #090d16; }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
     .badge-concept { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
@@ -173,30 +196,78 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .hook-prop { margin-bottom: 10px; }
     .hook-label { font-size: 11px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 2px; }
     .hook-val { font-size: 12.5px; color: #e2e8f0; line-height: 1.4; }
-    .filter-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
-    .filter-btn:hover { background: #334155; color: #fff; }
-    .filter-btn.active { background: #2563eb; color: #fff; border-color: #3b82f6; }
-    .legend { display: flex; gap: 14px; align-items: center; font-size: 12px; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    
+    .control-group { display: flex; align-items: center; gap: 6px; }
+    .group-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-right: 2px; }
+    .pill-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 5px; user-select: none; }
+    .pill-btn:hover { background: #334155; color: #f8fafc; }
+    .pill-btn.active { background: #2563eb; color: #ffffff; border-color: #60a5fa; box-shadow: 0 0 8px rgba(37, 99, 235, 0.4); }
+    .pill-btn.active.type-chunk { background: #581c87; border-color: #a855f7; box-shadow: 0 0 8px rgba(168, 85, 247, 0.4); }
+    .pill-btn.active.type-concept { background: #1e3a8a; border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+    .pill-btn.active.type-cargo { background: #064e3b; border-color: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+    .pill-btn.active.type-other { background: #78350f; border-color: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+    .divider { width: 1px; height: 22px; background: #334155; margin: 0 4px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    div.vis-tooltip {
+      max-width: 320px !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-size: 12px !important;
+      line-height: 1.45 !important;
+      background: #0f172a !important;
+      color: #e2e8f0 !important;
+      border: 1px solid #334155 !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+      z-index: 9999 !important;
+    }
   </style>
 </head>
 <body>
 
   <div id="main-panel">
     <div id="toolbar">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <h2 style="font-size: 16px; font-weight: 700; color: #f8fafc; letter-spacing: -0.02em;">NPT Epistemic Graph Explorer</h2>
-        <div class="legend">
-          <div class="legend-item"><span class="legend-dot" style="background: #a855f7;"></span> Manuscript (Marque)</div>
-          <div class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span> Concept Invariants</div>
-          <div class="legend-item"><span class="legend-dot" style="background: #10b981;"></span> Empirical Cargo</div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <h2 style="font-size: 15px; font-weight: 700; color: #f8fafc; letter-spacing: -0.02em; white-space: nowrap;">NPT Graph Explorer</h2>
+        
+        <div class="divider"></div>
+
+        <!-- Section Multi-Select -->
+        <div class="control-group">
+          <span class="group-label">Sections:</span>
+          <button class="pill-btn active" id="sec-81" onclick="toggleSection('8.1')">8.1</button>
+          <button class="pill-btn active" id="sec-82" onclick="toggleSection('8.2')">8.2</button>
+          <button class="pill-btn active" id="sec-83" onclick="toggleSection('8.3')">8.3</button>
+          <button class="pill-btn active" id="sec-84" onclick="toggleSection('8.4')">8.4</button>
+          <button class="pill-btn" id="sec-other" onclick="toggleSection('other')">Other</button>
+          <button class="pill-btn" id="sec-all" onclick="toggleAllSections()">All</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Node Type Multi-Select -->
+        <div class="control-group">
+          <span class="group-label">Types:</span>
+          <button class="pill-btn active type-chunk" id="type-chunk" onclick="toggleType('MANUSCRIPT_CHUNK')">
+            <span class="legend-dot" style="background: #a855f7;"></span> Manuscript
+          </button>
+          <button class="pill-btn active type-concept" id="type-concept" onclick="toggleType('CONCEPT')">
+            <span class="legend-dot" style="background: #3b82f6;"></span> Concept
+          </button>
+          <button class="pill-btn active type-cargo" id="type-cargo" onclick="toggleType('CARGO')">
+            <span class="legend-dot" style="background: #10b981;"></span> Cargo
+          </button>
+          <button class="pill-btn type-other" id="type-other" onclick="toggleType('OTHER')">
+            <span class="legend-dot" style="background: #f59e0b;"></span> Ch/Vignette
+          </button>
         </div>
       </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="filter-btn active" onclick="loadGraph('all')">Show All</button>
-        <button class="filter-btn" onclick="loadGraph('section8.3')">Section 8.3 Core</button>
-        <button class="filter-btn" onclick="resetPhysics()">Stabilize</button>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span id="stats-badge" style="font-size: 11px; color: #94a3b8; font-weight: 600; padding: 4px 8px; background: #1e293b; border-radius: 6px;">Loading...</span>
+        <button class="pill-btn" onclick="resetPhysics()">Stabilize</button>
       </div>
     </div>
     <div id="network-container"></div>
@@ -220,86 +291,187 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <script>
     let network = null;
     let graphData = null;
+    let nodeToSectionsMap = null;
+    let currentFilteredNodes = [];
+    let currentFilteredEdges = [];
 
-    async function loadGraph(filter = 'all') {
+    // Multi-select state:
+    // Sections: '8.1', '8.2', '8.3', '8.4', 'other'
+    let selectedSections = new Set(['8.1', '8.2', '8.3', '8.4', 'other']);
+    // Types: 'MANUSCRIPT_CHUNK', 'CONCEPT', 'CARGO', 'OTHER'
+    let selectedTypes = new Set(['MANUSCRIPT_CHUNK', 'CONCEPT', 'CARGO', 'OTHER']);
+
+    function computeNodeSections(allNodes, allEdges) {
+      const map = new Map();
+      // 1. Tag chunks directly by section number
+      allNodes.forEach(n => {
+        if (n.group === 'MANUSCRIPT_CHUNK' || (n.raw_data && n.raw_data.node_type === 'MANUSCRIPT_CHUNK')) {
+          const match = n.id.match(/sec(\d+\.\d+)/);
+          const sec = match ? match[1] : (n.raw_data && n.raw_data.properties && n.raw_data.properties.section_number ? String(n.raw_data.properties.section_number) : 'other');
+          map.set(n.id, new Set([sec]));
+        }
+      });
+
+      // 2. Propagate to adjacent nodes (2 hops)
+      for (let hop = 0; hop < 2; hop++) {
+        allEdges.forEach(e => {
+          const fromSecs = map.get(e.from);
+          const toSecs = map.get(e.to);
+          if (fromSecs) {
+            if (!map.has(e.to)) map.set(e.to, new Set());
+            fromSecs.forEach(s => map.get(e.to).add(s));
+          }
+          if (toSecs) {
+            if (!map.has(e.from)) map.set(e.from, new Set());
+            toSecs.forEach(s => map.get(e.from).add(s));
+          }
+        });
+      }
+
+      // 3. Untagged nodes belong to 'other'
+      allNodes.forEach(n => {
+        if (!map.has(n.id) || map.get(n.id).size === 0) {
+          map.set(n.id, new Set(['other']));
+        }
+      });
+      return map;
+    }
+
+    function toggleSection(sec) {
+      if (selectedSections.has(sec)) {
+        selectedSections.delete(sec);
+      } else {
+        selectedSections.add(sec);
+      }
+      renderGraph();
+    }
+
+    function toggleAllSections() {
+      const allList = ['8.1', '8.2', '8.3', '8.4', 'other'];
+      if (allList.every(s => selectedSections.has(s))) {
+        selectedSections.clear();
+        selectedSections.add('8.1');
+        selectedSections.add('8.2');
+        selectedSections.add('8.3');
+        selectedSections.add('8.4');
+      } else {
+        selectedSections = new Set(allList);
+      }
+      renderGraph();
+    }
+
+    function toggleType(typeKey) {
+      if (selectedTypes.has(typeKey)) {
+        selectedTypes.delete(typeKey);
+      } else {
+        selectedTypes.add(typeKey);
+      }
+      renderGraph();
+    }
+
+    function updateButtonUI() {
+      document.getElementById('sec-81')?.classList.toggle('active', selectedSections.has('8.1'));
+      document.getElementById('sec-82')?.classList.toggle('active', selectedSections.has('8.2'));
+      document.getElementById('sec-83')?.classList.toggle('active', selectedSections.has('8.3'));
+      document.getElementById('sec-84')?.classList.toggle('active', selectedSections.has('8.4'));
+      document.getElementById('sec-other')?.classList.toggle('active', selectedSections.has('other'));
+      const isAll = ['8.1', '8.2', '8.3', '8.4', 'other'].every(s => selectedSections.has(s));
+      document.getElementById('sec-all')?.classList.toggle('active', isAll);
+
+      document.getElementById('type-chunk')?.classList.toggle('active', selectedTypes.has('MANUSCRIPT_CHUNK'));
+      document.getElementById('type-concept')?.classList.toggle('active', selectedTypes.has('CONCEPT'));
+      document.getElementById('type-cargo')?.classList.toggle('active', selectedTypes.has('CARGO'));
+      document.getElementById('type-other')?.classList.toggle('active', selectedTypes.has('OTHER'));
+    }
+
+    async function loadDataAndInit() {
       try {
         const res = await fetch('/api/graph');
         graphData = await res.json();
-        
-        let filteredNodes = graphData.nodes;
-        let filteredEdges = graphData.edges;
+        nodeToSectionsMap = computeNodeSections(graphData.nodes, graphData.edges);
+        renderGraph();
+      } catch (err) {
+        console.error("Failed to load graph data:", err);
+      }
+    }
 
-        if (filter === 'section8.3') {
-          const coreIds = new Set([
-            'chunk:ch08_sec8.3_p001',
-            'chunk:ch08_sec8.3_p002',
-            'chunk:ch08_sec8.3_p003',
-            'chunk:ch08_sec8.3_p004',
-            'chunk:ch08_sec8.3_p005',
-            'CONCEPT:civilizational_capital_asymmetry',
-            'CONCEPT:ontological_demotion_of_undigitized_truth',
-            'CONCEPT:weaponized_regulatory_compliance',
-            'CONCEPT:commercial_enclosure_of_verification_infrastructure',
-            'CONCEPT:epistemic_liquidation_via_platform_dependency',
-            'cargo:1194',
-            'cargo:1288',
-            'cargo:13',
-            'cargo:403',
-            'cargo:402'
-          ]);
-          filteredNodes = graphData.nodes.filter(n => coreIds.has(n.id));
-          filteredEdges = graphData.edges.filter(e => coreIds.has(e.from) && coreIds.has(e.to));
+    function renderGraph() {
+      updateButtonUI();
+      if (!graphData) return;
+
+      // Filter nodes
+      currentFilteredNodes = graphData.nodes.filter(n => {
+        // Type filter
+        const group = n.group;
+        let typeMatches = false;
+        if (group === 'MANUSCRIPT_CHUNK' && selectedTypes.has('MANUSCRIPT_CHUNK')) typeMatches = true;
+        else if (group === 'CONCEPT' && selectedTypes.has('CONCEPT')) typeMatches = true;
+        else if (group === 'CARGO' && selectedTypes.has('CARGO')) typeMatches = true;
+        else if ((group === 'CHAPTER' || group === 'VIGNETTE' || !['MANUSCRIPT_CHUNK','CONCEPT','CARGO'].includes(group)) && selectedTypes.has('OTHER')) typeMatches = true;
+        if (!typeMatches) return false;
+
+        // Section filter
+        const nodeSecs = nodeToSectionsMap.get(n.id) || new Set(['other']);
+        return [...nodeSecs].some(s => selectedSections.has(s));
+      });
+
+      const visibleNodeIds = new Set(currentFilteredNodes.map(n => n.id));
+      currentFilteredEdges = graphData.edges.filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to));
+
+      // Update badge
+      const badge = document.getElementById('stats-badge');
+      if (badge) {
+        badge.innerText = `${currentFilteredNodes.length} nodes | ${currentFilteredEdges.length} edges`;
+      }
+
+      const container = document.getElementById('network-container');
+      const data = {
+        nodes: new vis.DataSet(currentFilteredNodes),
+        edges: new vis.DataSet(currentFilteredEdges)
+      };
+
+      const options = {
+        physics: {
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: {
+            gravitationalConstant: -110,
+            centralGravity: 0.015,
+            springLength: 150,
+            springConstant: 0.08
+          },
+          maxVelocity: 45,
+          minVelocity: 0.1,
+          stabilization: { iterations: 120 }
+        },
+        interaction: {
+          hover: true,
+          tooltipDelay: 100,
+          zoomView: true
+        },
+        nodes: {
+          borderWidth: 2,
+          shadow: true
+        },
+        edges: {
+          smooth: { type: 'continuous' }
         }
+      };
 
-        const container = document.getElementById('network-container');
-        const data = {
-          nodes: new vis.DataSet(filteredNodes),
-          edges: new vis.DataSet(filteredEdges)
-        };
-
-        const options = {
-          physics: {
-            solver: 'forceAtlas2Based',
-            forceAtlas2Based: {
-              gravitationalConstant: -120,
-              centralGravity: 0.015,
-              springLength: 160,
-              springConstant: 0.08
-            },
-            maxVelocity: 50,
-            minVelocity: 0.1,
-            stabilization: { iterations: 150 }
-          },
-          interaction: {
-            hover: true,
-            tooltipDelay: 100,
-            zoomView: true
-          },
-          nodes: {
-            borderWidth: 2,
-            shadow: true
-          },
-          edges: {
-            smooth: { type: 'continuous' }
-          }
-        };
-
+      if (!network) {
         network = new vis.Network(container, data, options);
-
         network.on("click", function (params) {
           if (params.nodes.length > 0) {
             const nodeId = params.nodes[0];
-            const node = filteredNodes.find(n => n.id === nodeId);
+            const node = currentFilteredNodes.find(n => n.id === nodeId);
             inspectNode(node);
           } else if (params.edges.length > 0) {
             const edgeId = params.edges[0];
-            const edge = filteredEdges.find(e => e.id === edgeId);
+            const edge = currentFilteredEdges.find(e => e.id === edgeId);
             inspectEdge(edge);
           }
         });
-
-      } catch (err) {
-        console.error("Failed to load graph:", err);
+      } else {
+        network.setData(data);
       }
     }
 
@@ -395,15 +567,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
       // If CARGO, render Metadata details
       if (d.node_type === 'CARGO') {
+        const rawBucket = d.cargo_bucket || (d.properties && d.properties.url && d.properties.url.includes('acquisitions/') ? d.properties.url : '');
+        let cleanPath = rawBucket.replace(/^gs:\/\//, '').replace(/^npt-fleet-cargo-hold\//, '');
+        const gcsUrl = cleanPath ? `https://storage.cloud.google.com/npt-fleet-cargo-hold/${cleanPath}` : '';
+
         html += `
           <div class="card" style="border-color: #10b981;">
             <div class="card-title" style="color: #34d399;">Cargo Provenance & Receipt</div>
             <div class="card-body">
               <div style="font-weight: 600; margin-bottom: 6px;">${d.cargo_title || 'N/A'}</div>
-              <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Date: ${d.cargo_date || 'N/A'}</div>
-              <div style="font-size: 12px; margin-bottom: 8px;"><a href="${d.cargo_url}" target="_blank" style="color: #38bdf8; text-decoration: underline;">View Original Source ↗</a></div>
+              <div style="font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Date: ${d.cargo_date || 'N/A'}</div>
+              
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                ${d.cargo_url ? `<div><a href="${d.cargo_url}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline; font-size: 12.5px;">View Original Web Source ↗</a></div>` : ''}
+                ${gcsUrl ? `<div><a href="${gcsUrl}" target="_blank" rel="noopener noreferrer" style="color: #34d399; font-weight: 600; text-decoration: underline; font-size: 12.5px;">Open In Cloud Storage (GCS) ↗</a></div>` : ''}
+              </div>
+
               <div class="quote-box" style="border-color: #10b981;">${d.cargo_abstract || 'No abstract'}</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Bucket: <code>${d.cargo_bucket || 'N/A'}</code></div>
+              
+              <div style="font-size: 11px; color: #64748b; margin-top: 8px;">
+                Bucket File: ${gcsUrl ? `<a href="${gcsUrl}" target="_blank" rel="noopener noreferrer" style="color: #10b981; text-decoration: underline;"><code>${d.cargo_bucket || cleanPath}</code> ↗</a>` : `<code>${d.cargo_bucket || 'N/A'}</code>`}
+              </div>
             </div>
           </div>
         `;
@@ -457,7 +641,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     // Auto-load on page ready
-    window.addEventListener('load', () => loadGraph('section8.3'));
+    window.addEventListener('load', () => loadDataAndInit());
   </script>
 </body>
 </html>

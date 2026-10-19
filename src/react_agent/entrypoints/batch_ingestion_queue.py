@@ -219,7 +219,7 @@ def run_worker_loop(max_items: int = 5):
     engine = AgentEngine("spyglass", xml_path)
 
     items_processed = 0
-
+    last_failed_429_id = None
     billing_exhausted = False
 
     try:
@@ -266,10 +266,9 @@ def run_worker_loop(max_items: int = 5):
                 conn = mark_queue_status(conn, queue_id, 'COMPLETED')
                 continue
 
-            # 1. THREADS BYPASS: Threads blocks automated tools. Fast append and skip.
-            lower_url = target_url.lower()
-            if "threads.net" in lower_url or "threads.com" in lower_url:
-                print(f"  -> [THREADS BYPASS] Threads URL encountered. Appending to acquisitions/threads_links.txt and skipping...")
+            # 1. THREADS BYPASS: Genuine Threads posts block automated scrapers. Fast append and skip.
+            if domain in ("threads.net", "threads.com"):
+                print(f"  -> [THREADS BYPASS] Genuine Threads post encountered ({domain}). Appending to acquisitions/threads_links.txt and skipping...")
                 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
                 acq_dir = os.path.join(base_dir, "acquisitions")
                 os.makedirs(acq_dir, exist_ok=True)
@@ -313,22 +312,38 @@ def run_worker_loop(max_items: int = 5):
             try:
                 chat_session = engine.start_chat_session(thread_id)
                 domain_directive = ""
-                if any(d in domain for d in ["wsj.com", "nytimes.com", "theinformation.com", "bloomberg.com", "economist.com", "ft.com", "barrons.com"]):
-                    domain_directive = f"\nDOMAIN DIRECTIVE: '{domain}' operates behind a commercial paywall. Call 'acquire_archive_snapshot' directly to retrieve the full article snapshot from the Wayback Machine.\n"
-                elif any(d in domain for d in ["sciencedirect.com", "nature.com", "wiley.com", "springer.com", "jstor.org", "ssrn.com", "doi.org"]):
-                    domain_directive = f"\nDOMAIN DIRECTIVE: '{domain}' is an academic publisher. Call 'resolve_open_access_pdf' or 'acquire_archive_snapshot' directly.\n"
+                is_hard_paywall = any(d in domain for d in ["wsj.com", "nytimes.com", "theinformation.com", "bloomberg.com", "economist.com", "ft.com", "barrons.com", "theatlantic.com", "washingtonpost.com", "reuters.com", "fastcompany.com"])
+                is_youtube = any(d in domain for d in ["youtube.com", "youtu.be"])
+                is_academic = any(d in domain for d in ["sciencedirect.com", "nature.com", "wiley.com", "springer.com", "jstor.org", "ssrn.com", "doi.org"])
+
+                if is_hard_paywall:
+                    domain_directive = (
+                        f"\nHARD PAYWALL DIRECTIVE: '{domain}' is a subscription paywall. NEVER call download_url (it is 100% blocked). "
+                        f"You MUST call 'acquire_archive_snapshot' immediately as your first and only acquisition tool. "
+                        f"If acquire_archive_snapshot fails or returns NO_ARCHIVE_SNAPSHOT, immediately call 'log_ingestion_failure' and STOP. Do NOT retry or call other scrapers.\n"
+                    )
+                elif is_youtube:
+                    domain_directive = (
+                        f"\nYOUTUBE DIRECTIVE: This is a video URL. NEVER call download_url. "
+                        f"You MUST call 'extract_youtube_transcript' immediately. If successful, upsert and log content metadata. "
+                        f"If transcripts fail, call 'log_ingestion_failure' and STOP.\n"
+                    )
+                elif is_academic:
+                    domain_directive = (
+                        f"\nACADEMIC DIRECTIVE: '{domain}' is an academic publisher. "
+                        f"Call 'resolve_open_access_pdf' or 'acquire_archive_snapshot' directly. If unpaywall fails, call 'log_ingestion_failure' and STOP.\n"
+                    )
 
                 prompt = (
                     f"COMMAND: Acquire the following target URL immediately: {target_url}\n{domain_directive}\n"
                     f"EXECUTION PROTOCOL:\n"
-                    f"1. Run the appropriate acquisition tool for the URL domain (download_url, download_remote_pdf, acquire_arxiv_document, extract_youtube_transcript, acquire_archive_snapshot, resolve_open_access_pdf, call_zotero_translator, acquire_google_doc).\n"
-                    f"2. FAILURE & ESCALATION PROTOCOL: If download_url fails on a paywalled news article, attempt 'acquire_archive_snapshot' to fetch the Wayback snapshot. If it fails on an academic paper, attempt 'resolve_open_access_pdf' or 'call_zotero_translator' before logging failure. If all tools fail due to access barriers (HTTP 403/401, soft paywall, bot challenge, blocked DOM) or aggregate playlist URLs ([UNSUPPORTED AGGREGATE DOMAIN]), you MUST:\n"
-                    f"   a. Call 'log_ingestion_failure' with target_url='{target_url}' and the detailed error payload.\n"
-                    f"   b. Stop execution after logging the failure.\n"
-                    f"3. SUCCESS PROTOCOL: If successful, call 'upsert_knowledge_artifact' using 'local_cache_path' and 'log_content_metadata' passing source_url, title, gcp_bucket_path, item_type, authors, abstract, publication_date, and publication_title from the receipt. Always pass publication_date and publication_title if present in the receipt. (Do NOT call create_zotero_item; Zotero sync is handled downstream).\n"
+                    f"1. Run the appropriate acquisition tool for the URL domain (acquire_archive_snapshot for paywalls, extract_youtube_transcript for video, download_url for standard web, resolve_open_access_pdf for academic papers).\n"
+                    f"2. FAILURE & ESCALATION PROTOCOL: If direct acquisition fails or returns NO_ARCHIVE_SNAPSHOT / access barriers (HTTP 403/401, bot challenge, soft paywall), you MUST immediately call 'log_ingestion_failure' with target_url='{target_url}' and the detailed error payload, and STOP.\n"
+                    f"3. ANTI-LOOP CONSTRAINT: NEVER call the same tool more than once. Never call more than 2 tools total. If an acquisition tool fails, immediately call log_ingestion_failure and stop.\n"
+                    f"4. SUCCESS PROTOCOL: If successful, call 'upsert_knowledge_artifact' using 'local_cache_path' and 'log_content_metadata' passing source_url, title, gcp_bucket_path, item_type, authors, abstract, publication_date, and publication_title from the receipt. Always pass publication_date and publication_title if present in the receipt. (Do NOT call create_zotero_item; Zotero sync is handled downstream).\n"
                 )
                 
-                # Let Spyglass autonomously execute her tool chain
+                # Let Spyglass autonomously execute her tool chain (capped at 4 turns by AgentEngine)
                 response = engine.execute_turn(chat_session, prompt)
                 
                 # If failure occurred, activate domain circuit breaker for subsequent URLs in this run (unless recoverable)
@@ -341,9 +356,23 @@ def run_worker_loop(max_items: int = 5):
                     conn = mark_queue_status(conn, queue_id, 'COMPLETED')
 
                 print(f"  -> [TASK COMPLETE] Thread {thread_id} closed.")
+                last_failed_429_id = None
                 
-            except Exception as e:
+            except (Exception, KeyboardInterrupt, SystemExit) as e:
                 err_str = str(e)
+                if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                    print(f"\n[WORKER INTERRUPTED] Received termination signal while processing ID {queue_id}.")
+                    print(f"  -> Reverting ID {queue_id} back to PENDING before exiting...")
+                    try:
+                        conn = ensure_connection(conn)
+                        cursor = conn.cursor()
+                        cursor.execute("UPDATE cargo.ingestion_queue SET status = 'PENDING' WHERE queue_id = %s;", (queue_id,))
+                        conn.commit()
+                        cursor.close()
+                    except Exception as db_err:
+                        print(f"  -> [DB REVERT WARN] {db_err}")
+                    raise e
+
                 if "402" in err_str or "prepayment credits" in err_str.lower() or "billing" in err_str.lower():
                     print(f"\n[BILLING ALERT] Google AI Studio prepayment credits depleted: {e}")
                     print(f"  -> Reverting queue ID {queue_id} to PENDING and halting worker immediately.")
@@ -358,11 +387,32 @@ def run_worker_loop(max_items: int = 5):
                     billing_exhausted = True
                     break
 
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
+                    print(f"\n  -> [RATE LIMIT THROTTLE] Hit Google API 429 quota on ID {queue_id}. Pausing 30s to allow quota reset...")
+                    time.sleep(30)
+                    if queue_id == last_failed_429_id:
+                        print(f"  -> [RATE LIMIT CEILING] Repeated 429 on ID {queue_id}. Marking as FAILED ([API_QUOTA_THROTTLE]) to preserve queue velocity.")
+                        conn = mark_queue_status(conn, queue_id, 'FAILED')
+                        last_failed_429_id = None
+                    else:
+                        last_failed_429_id = queue_id
+                        try:
+                            conn = ensure_connection(conn)
+                            cursor = conn.cursor()
+                            cursor.execute("UPDATE cargo.ingestion_queue SET status = 'PENDING' WHERE queue_id = %s;", (queue_id,))
+                            conn.commit()
+                            cursor.close()
+                        except Exception:
+                            pass
+                    continue
+                else:
+                    last_failed_429_id = None
+
                 print(f"  -> [SYSTEM PANIC] Hard engine crash on URL {target_url}: {e}")
                 blocked_domains.add(domain)
                 conn = mark_queue_status(conn, queue_id, 'FAILED')
                 
-            time.sleep(2)
+            time.sleep(3)
 
     finally:
         if conn:

@@ -1,11 +1,25 @@
 """
-NPT Fleet: Gemini Context Cache Purge Utility (ADR-018)
-Identifies and deletes active Gemini explicit context caches to prevent persistent storage billing.
+NPT Fleet: Explicit Context Cache Purge Utility (ADR-018)
 
-Usage:
+How to run:
     uv run python helper_scripts/purge_gemini_caches.py
-    uv run python helper_scripts/purge_gemini_caches.py --dry-run
+
+What it does:
+    Lists and deletes active Gemini explicit context caches to prevent memory leakage and recurring API token costs.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import sys
 import argparse

@@ -14,6 +14,8 @@ def run_bilgeladle():
     parser = argparse.ArgumentParser(description="NPT Fleet: Bilgeladle Thesis Alignment")
     parser.add_argument("--thread-id", "--thread", type=str, default=None, help="Thread ID or session key")
     parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for single-turn execution")
+    parser.add_argument("--prompt-file", type=str, default=None, help="Path to markdown or text file containing the prompt")
+    parser.add_argument("--out-file", "--output", type=str, default=None, help="Optional output path to write agent response")
     parser.add_argument("--model", type=str, default=None, help="Optional model override")
     args, unknown = parser.parse_known_args()
 
@@ -42,10 +44,31 @@ def run_bilgeladle():
     
     chat_session = engine.start_chat_session(thread_id)
     
-    if args.prompt:
-        print(f"\n[AUTHOR -> BILGELADLE] ({thread_id}) -> {args.prompt}")
-        final_response = engine.execute_turn(chat_session, args.prompt)
+    # Ensure writings directory exists
+    writings_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "writings"))
+    os.makedirs(writings_dir, exist_ok=True)
+    
+    if args.prompt or args.prompt_file:
+        target_info = args.prompt_file if args.prompt_file else args.prompt[:60]
+        print(f"\n[AUTHOR -> BILGELADLE] ({thread_id}) -> Executing single turn ({target_info})...")
+        final_response = engine.execute_turn(chat_session, prompt=args.prompt, prompt_file=args.prompt_file)
         print(f"\n[BILGELADLE] -> {final_response}")
+        
+        # Save response to disk
+        if args.out_file:
+            out_path = os.path.abspath(args.out_file)
+        elif args.prompt_file:
+            p_dir = os.path.dirname(os.path.abspath(args.prompt_file))
+            out_path = os.path.join(p_dir, "bilgeladle_alignment.md")
+        else:
+            now_str = uuid.uuid4().hex[:6]
+            out_path = os.path.join(writings_dir, f"Bilgeladle_{now_str}_single_turn.md")
+            
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(final_response)
+        print(f"\n[SYSTEM] Bilgeladle response successfully written to: {out_path}")
+        
         engine.save_checkpoint(thread_id, chat_session.get_history())
         return
 

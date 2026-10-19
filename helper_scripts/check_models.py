@@ -1,11 +1,25 @@
 """
-NPT Fleet Utility: Live Vertex AI Model Registry Probe
-Description: Queries the Google Cloud Vertex AI endpoint to retrieve a realtime list 
-of active, supported Gemini models. 
-Purpose: Serves as an epistemic countermeasure against LLM training-data latency, 
-preventing the deployment of deprecated models (e.g., gemini-1.5-flash) by verifying 
-ground-truth availability in the enterprise GCP environment.
+NPT Fleet Utility: Live Vertex AI & Gemini Model Registry Probe
+
+How to run:
+    uv run python helper_scripts/check_models.py
+
+What it does:
+    Probes Vertex AI and Google GenAI APIs to verify live model availability, quotas, and response latency.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

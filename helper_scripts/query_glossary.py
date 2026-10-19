@@ -1,3 +1,26 @@
+"""
+NPT Fleet: System Glossary Search & Query Tool
+
+How to run:
+    uv run python helper_scripts/query_glossary.py <term>
+
+What it does:
+    Searches cargo.system_glossary for fleet terminology, conceptual definitions, and epistemic etymology.
+
+Last run: 2026-10-19 12:53:35
+"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 from urllib.parse import urlparse

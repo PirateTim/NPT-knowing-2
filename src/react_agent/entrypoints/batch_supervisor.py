@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import signal
+import shutil
 import subprocess
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
@@ -54,9 +55,10 @@ def stop_cloud_sql_instance(instance_name: str = "npt-instance-postgressql"):
     """Powers down Cloud SQL instance to eliminate idle compute charges."""
     print(f"\n[CLOUD POWER CONTROL] Patching Cloud SQL instance '{instance_name}' activation policy to NEVER...")
     try:
+        gcloud_bin = shutil.which("gcloud") or shutil.which("gcloud.cmd") or "gcloud"
         res = subprocess.run(
-            ["gcloud", "sql", "instances", "patch", instance_name, "--activation-policy=NEVER", "--quiet"],
-            capture_output=True, text=True, check=False
+            [gcloud_bin, "sql", "instances", "patch", instance_name, "--activation-policy=NEVER", "--quiet"],
+            capture_output=True, text=True, check=False, shell=True
         )
         if res.returncode == 0:
             print("[CLOUD POWER CONTROL] Successfully set activation-policy=NEVER. Instance will power down shortly.")
@@ -65,12 +67,30 @@ def stop_cloud_sql_instance(instance_name: str = "npt-instance-postgressql"):
     except Exception as e:
         print(f"[CLOUD POWER CONTROL ERROR] Could not invoke gcloud: {e}")
 
-def run_supervisor(batch_size: int = 25, max_total: int = 0, delay_seconds: int = 5, auto_stop_db: bool = False):
+def run_supervisor(batch_size: int = 15, max_total: int = 0, delay_seconds: int = 8, auto_stop_db: bool = False):
     global SUPERVISOR_STOPPED
     print("================================================================================")
     print("           NPT FLEET: RESILIENT BATCH INGESTION SUPERVISOR                      ")
     print(f"  Batch Size: {batch_size} | Max Items: {'UNLIMITED' if max_total <= 0 else max_total} | Inter-Batch Delay: {delay_seconds}s")
     print("================================================================================\n")
+
+    # Auto-recover any stranded PROCESSING rows from past runs
+    conn_string = os.getenv("CONTENT_DATABASE_URL")
+    if conn_string:
+        try:
+            url = urlparse(conn_string)
+            conn = pg8000.dbapi.connect(
+                user=url.username, password=url.password, host=url.hostname, port=url.port, database=url.path[1:]
+            )
+            cur = conn.cursor()
+            cur.execute("UPDATE cargo.ingestion_queue SET status = 'PENDING' WHERE status = 'PROCESSING';")
+            if cur.rowcount > 0:
+                print(f"[SUPERVISOR RECOVERY] Automatically recovered {cur.rowcount} orphaned 'PROCESSING' item(s) back to PENDING.\n")
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[SUPERVISOR RECOVERY WARN] Could not reset PROCESSING items: {e}")
 
     initial_telemetry = get_queue_telemetry()
     initial_pending = initial_telemetry["pending"]
@@ -115,14 +135,17 @@ def run_supervisor(batch_size: int = 25, max_total: int = 0, delay_seconds: int 
         batch_start_time = time.time()
         
         try:
-            # Run worker as a fully isolated process
-            res = subprocess.run(cmd, cwd=root_dir, check=False)
+            # Run worker as a fully isolated process with ceiling timeout
+            batch_timeout = (current_batch_limit * 120) + 60
+            res = subprocess.run(cmd, cwd=root_dir, timeout=batch_timeout, check=False)
             batch_duration = time.time() - batch_start_time
             print(f"\n >>> BATCH #{batch_index} COMPLETED in {batch_duration:.1f}s (Exit code: {res.returncode})")
             if res.returncode == 42:
                 print("\n[BILLING EXHAUSTED] Worker signaled Google AI Studio prepayment credits are depleted.")
                 print("Halting supervisor loop immediately to protect queue integrity.")
                 break
+        except subprocess.TimeoutExpired:
+            print(f"\n[SUPERVISOR WATCHDOG] Micro-batch #{batch_index} exceeded maximum duration ({batch_timeout}s). Recycling worker process...")
         except Exception as batch_err:
             print(f"\n[BATCH WARN] Micro-batch #{batch_index} encountered execution error: {batch_err}")
 
@@ -177,8 +200,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch-size", 
         type=int, 
-        default=25, 
-        help="Number of items to process per isolated micro-batch (default: 25)"
+        default=15, 
+        help="Number of items to process per isolated micro-batch (default: 15)"
     )
     parser.add_argument(
         "--max-total", 
@@ -189,8 +212,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--delay", 
         type=int, 
-        default=5, 
-        help="Delay in seconds between micro-batches (default: 5)"
+        default=8, 
+        help="Delay in seconds between micro-batches (default: 8)"
     )
     parser.add_argument(
         "--auto-stop-db", 

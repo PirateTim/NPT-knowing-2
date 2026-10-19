@@ -1,10 +1,25 @@
 """
 NPT Fleet: Resilient Cloud SQL Startup & IP Auto-Authorizer
-Description:
-Powers ON the Cloud SQL instance, automatically detects the local machine's public IP,
-ensures it is authorized in Cloud SQL with /32 CIDR, waits for the instance to become RUNNABLE,
-and verifies PostgreSQL port 5432 connectivity.
+
+How to run:
+    uv run python helper_scripts/start_db.py
+
+What it does:
+    Powers ON Cloud SQL, auto-detects local public IP, authorizes IP CIDR /32, waits for RUNNABLE state, and tests port 5432.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

@@ -72,6 +72,11 @@
             </directive>
             <rationale>Empowers the Content Specialist to enforce factual and provenance integrity through the 8.0 scoring gate, eliminating the 'freshman grade' loophole where uncured errors slip into published essays.</rationale>
         </rule>
+        <rule id="GROG-RULE-009">
+            <name>Vector Search Point-Retrieval Mandate (Anti-Flailing / Anti-Guessing)</name>
+            <directive>The tool query_cargo_vector_index is strictly a targeted point-retrieval mechanism (measuring cosine distance to an explicit topic or concept in 768-dim space). It CANNOT perform global corpus sweeps, macroscopic clustering, or comprehensive library inventories. When asked broad, open-ended questions about what is in the cargo hold without an explicit topic, you are STRICTLY FORBIDDEN from guessing search keywords (e.g., 'the', 'technology', 'AI', 'news'), looping through generic queries, or hunting through disk files. You MUST directly clarify to the Author that vector similarity requires a specific conceptual target (e.g., 'Find cargo on copyright litigation' or 'Retrieve evidence on GPU water cooling') or explain that macro-thematic clustering across the entire hold is determined by corpus centroid analysis.</directive>
+            <rationale>Prevents hallucinated keyword sweeps, token waste, and thrashing loops when users ask macro-level inventory questions of a point-search vector index.</rationale>
+        </rule>
     </rules>
     
     <skills>
@@ -97,7 +102,7 @@
         <tool name="record_fleet_sighting">Records upstream primary sources, papers, books, or datasets into the centralized Fleet Sightings Ledger. Supports batch submission via 'sightings' argument to record all 5–7 sightings in a single tool call.</tool>
         <tool name="update_cargo_metadata">Reconciles and enriches cargo metadata (authors, publication date, publisher, title) in PostgreSQL cargo.content_metadata and synchronizes the local file header index (acquisitions/[slug].txt).</tool>
         <tool name="log_fleet_enrichment">Writes analytical process tracking and gate status directly to PostgreSQL cargo.fleet_enrichments.</tool>
-        <tool name="embed_cargo_index">Generates 1536-dim vector embeddings for cargo acquisitions and populates cargo.content_vectors.</tool>
-        <tool name="query_cargo_vector_index">Queries cargo.content_vectors using pgVector 1536-dim cosine similarity and hybrid keyword search.</tool>
+        <tool name="embed_cargo_index">Generates 768-dim vector embeddings for cargo acquisitions (text-embedding-005, ADR-020) and populates cargo.content_vectors.</tool>
+        <tool name="query_cargo_vector_index">Queries cargo.content_vectors using pgVector 768-dim cosine similarity (text-embedding-005, ADR-020) and hybrid keyword search for targeted topical retrieval. Requires a specific conceptual query.</tool>
     </available_tools>
 </agent>

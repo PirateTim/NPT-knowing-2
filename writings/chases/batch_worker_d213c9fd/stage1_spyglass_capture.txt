@@ -1,8 +1,0 @@
-CANONICAL_PATH: acquisitions/what-is-college-for-in-the-age-of-ai.txt
-SOURCE_URL: https://nymag.com/intelligencer/article/what-is-college-for-in-the-age-of-ai.html?utm_medium=s1&utm_campaign=nym&utm_source=bluesky
-TITLE: What Is College for in the Age of AI?
-AUTHORS: Jeffrey Selingo
-PUBLISHED_DATE: 2026-01-20
-PUBLISHER: Intelligencer
-ITEM_TYPE: blogPost
-STATUS: COMPLETED

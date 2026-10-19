@@ -111,3 +111,75 @@ Dead-Letter Routing: If Spyglass fails across all fallback tiers, Pegleg updates
 * **The Metaphor Translation Bridge (Step 1.3):** Non-negotiable translation of the author's literary metaphors to real-world investigative, audit, and regulatory vocabulary using explicit `→` arrow notation.
 * **Downstream Delivery:** Produces dense vector clusters (Step 1.4) and executable Boolean queries (Step 1.5) for Discovery Engine matching without token waste.
 
+## SOP-09: Cargo Batch Vector Modernization & Incremental Ingestion Protocol
+**Purpose:** Standard operating procedure for converting raw acquired cargo into the two-tier vector representation (`cargo.content_vectors` paragraph chunks + `cargo.content_metadata.document_centroid`) using Google's production `text-embedding-005` model (768-dim) via the Vertex AI Batch Prediction API.
+
+1. **Pre-Flight Infrastructure Check (Cloud SQL Power):**
+   * Before executing database queries or batch scripts, verify Cloud SQL is active:
+     ```powershell
+     gcloud sql instances describe npt-instance-postgressql --format="value(state)"
+     ```
+   * If `STOPPED` (or if encountering `WinError 10060 TimeoutError` due to nighttime/weekend cost-control auto-shutdown), power on the instance:
+     ```powershell
+     gcloud sql instances patch npt-instance-postgressql --activation-policy=ALWAYS
+     ```
+   * Wait until state reaches `RUNNABLE` (typically 2–4 minutes on `db-f1-micro`).
+
+2. **Step 1: Batch JSONL Generation (`generate_cargo_batch_jsonl.py`):**
+   * **Source of Truth:** Streams raw `.txt` files directly from Google Cloud Storage (`gs://npt-fleet-cargo-hold/acquisitions/*.txt`) into RAM. Never relies on local transient disk caches.
+   * **Filtering Default:** By default, filters for un-embedded cargo (`WHERE document_centroid IS NULL`). To force a complete re-embedding of the entire library, pass `--all`.
+   * **Strict Zero-Truncation (SHARED-HEURISTIC-025):** Slices text into Chunk 000 (Structured Metadata Anchor: Title, Authors, Date, Source URL, Abstract) and verbatim body paragraphs. Paragraphs exceeding 1,200 tokens (~4,800 characters) are split with a 10% overlap.
+   * **Text Sanitization:** Automatically strips null bytes (`\x00`) to prevent PostgreSQL UTF-8 encoding failures.
+   * **Output Artifacts:** Produces `batch_transient/cargo_batch_input.jsonl` (uploaded to GCS) and local `cargo_chunks_manifest.jsonl`.
+
+3. **Step 2: Vertex AI Batch Job Submission (`submit_cargo_batch_job.py`):**
+   * Submits an asynchronous batch prediction job to Vertex AI (`location="us-central1"`, `project="npt-reckoning-1"`).
+   * **Cost Control:** Leverages the 50% Batch API discount ($0.075 / 1M tokens), costing ~$0.85 across 3,600+ articles.
+   * **Monitoring:** Check job progress with `uv run python helper_scripts/load_cargo_batch_results.py --status`.
+
+4. **Step 3: Resilient Bulk Ingestion & Centroid Persistence (`load_cargo_batch_results.py`):**
+   * **Micro Chunks:** Streams output JSONL from GCS and executes multi-row bulk SQL inserts into `cargo.content_vectors` (`vector(768)`). Handles unicode line separators and unescaped characters gracefully.
+   * **Macro Centroid Pooling:** For each document, averages all its constituent paragraph chunk vectors, normalizes to unit length ($\vec{V}_{\text{doc}} = \frac{\sum \vec{v}_i}{\|\sum \vec{v}_i\|_2}$), and updates `cargo.content_metadata.document_centroid` ($0.00 extra cost).
+   * **Cross-Corpus Alignment:** With `ship.letters_of_marque` and `cargo.content_metadata.document_centroid` both existing on the same 768-dim space, agents can immediately execute cosine distance comparisons (`<=>`) between external cargo and manuscript thesis chapters.
+
+## SOP-10: Scratch Script & Tool Promotion Protocol
+**Purpose:** Standard operating procedure for creating exploratory code, managing scratch workspaces, and promoting validated tools into official helper scripts without contaminating production tooling.
+
+1. **Rule of Origin (The Sandbox):**
+   * Any exploratory, one-off, diagnostic, or prototyping script must be created in `scratch/` (e.g. `scratch/investigate_cluster_4.py`).
+   * Scripts in `scratch/` are explicitly git-ignored and subject to periodic swabbing by `swab_the_decks.py`.
+   * Agents and developers are strictly forbidden from writing one-off investigation scripts to the project root (`./`) or directly into `helper_scripts/`.
+
+2. **Promotion Criteria into `helper_scripts/`:**
+   A script in `scratch/` may only be promoted to `helper_scripts/` when all 4 conditions are met:
+   * **Operational Utility:** The tool solves a recurring administrative, database, clustering, or batch operational need.
+   * **Standard Header:** Includes the mandatory docstring with `How to run`, `What it does`, and `Last run: Unknown`.
+   * **Run Tracker Hook:** Embeds the self-updating `run_tracker.record_run(__file__)` call.
+   * **Manual Cataloging:** Documented in `helper_scripts/README.md` under its appropriate operational domain.
+
+3. **Audit Verification:**
+   * Run `uv run python helper_scripts/run_tracker.py --audit` to confirm the promoted script passes 100% compliance.
+
+## SOP-11: Skill Authoring & Single Source of Truth (SSOT) Lifecycle
+**Purpose:** Standard operating procedure for authoring, binding, and maintaining modular skills under `src/react_agent/skills/` to guarantee single-source-of-truth integrity and 100% unit test pass rates.
+
+1. **Frontmatter Standard (No `agents:` Field):**
+   * The `SKILL.md` frontmatter must strictly contain **only** `name:` and `description:`.
+   * **Forbidden Field:** Never include an `agents:` field in `SKILL.md`. In the NPT Fleet architecture, skills do not declare which agents use them.
+
+2. **The Authoritative Binding (Agent XML Firmware):**
+   * Skill assignments are declared exclusively within each agent's canonical XML profile (`src/react_agent/agents/{agent}/{agent}.xml`) via `<skill_ref>` tags:
+     ```xml
+     <skill_ref name="skill-name" path="src/react_agent/skills/skill_name/SKILL.md"/>
+     ```
+   * An orphan skill directory in `src/react_agent/skills/` that is not referenced by at least one agent XML profile is strictly prohibited.
+
+3. **Pre-Commit Verification Gate:**
+   * Before committing or finalizing any skill additions or edits, run the unit test suite:
+     ```powershell
+     uv run python -m unittest tests/test_skills_ssot.py
+     ```
+   * The test enforces that all physical skills are referenced, all referenced skills exist on disk, and no forbidden frontmatter tags are present.
+
+
+

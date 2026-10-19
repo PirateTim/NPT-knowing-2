@@ -1,8 +1,26 @@
 """
 NPT Fleet: Periodic Paywall & Archive Harvester
-Architecture: Zero-LLM background harvester that scans PAYWALL_HOLD queue items
-to recover articles as they become available in Web Archives or Open Access repositories over time.
+
+How to run:
+    uv run python helper_scripts/harvest_paywall_retries.py
+
+What it does:
+    Scans cargo.failed_metadata for paywalled domains and retries acquisition using Wayback Machine and Google Web Cache.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import re

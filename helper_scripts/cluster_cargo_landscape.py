@@ -1,20 +1,26 @@
 """
-helper_scripts/cluster_cargo_landscape.py
-Approach B: Zero-Cost Mathematical Topic Clustering & 2D Space Projection.
-Uses scikit-learn (TF-IDF + TruncatedSVD + Hybrid Guided KMeans + PCA).
-Zero LLM calls. Zero token spend ($0.00). 100% empirical from cargo text.
+NPT Fleet: Comprehensive Cargo Landscape Clusterer
 
-Configuration:
-- 100 Clusters: 50 Atomic Thematic Seeds + 50 Emergent kmeans++ slots
-- Strictly Enforces SHARED-HEURISTIC-022: Zero-Compound Atomic Taxonomy (zero '&', 'and', 'vs')
-- Comprehensive Domain Stopwords (Publishers, bylines, chapter headers, generic central-sink words)
-- Fast batched PostgreSQL insertion (sub-second commits)
+How to run:
+    uv run python helper_scripts/cluster_cargo_landscape.py
 
-Outputs:
-  - cargo_ontology/cargo_clusters.json
-  - cargo.fleet_enrichments (enrichment_type = 'cluster')
-Part of GitHub Issue #120 (Approach B).
+What it does:
+    Analyzes the entire cargo warehouse landscape, calculating cluster densities, outliers, and inter-cluster cosine similarities.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import json

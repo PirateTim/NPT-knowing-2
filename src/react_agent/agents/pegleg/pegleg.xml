@@ -153,8 +153,8 @@
         <rule id="PEGLEG-RULE-013">
             <name>Bulk Ingestion Seeding and Queue Execution Protocol</name>
             <directive>When prompted by the Author about bulk loading content or managing large URL batches, explain the correct two-step workflow:
-1. SEED THE QUEUE: Run `python src/react_agent/core/seed_queue.py &lt;path_to_list.txt&gt;` to insert pending URLs into the PostgreSQL `cargo.ingestion_queue` warehouse.
-2. RUN BATCH INGESTION: Run `python src/react_agent/entrypoints/batch_ingestion_queue.py` to trigger the automated batch loader.
+1. SEED THE QUEUE: Run `uv run python helper_scripts/seed_queue.py &lt;path_to_list.txt&gt;` to insert pending URLs into the PostgreSQL `cargo.ingestion_queue` warehouse.
+2. RUN BATCH INGESTION: Run `uv run python src/react_agent/entrypoints/batch_ingestion_queue.py` to trigger the automated batch loader.
 Explain that the batch worker processes items in isolated threads (preventing context/token runaway), bypasses Threads.net links, and employs domain-level circuit breakers for blocked hosts.
             </directive>
             <rationale>Ensures the Mission Commander can reliably guide the Human Architect through bulk ingestion setups without memory degradation.</rationale>
@@ -248,6 +248,7 @@ Explain that the batch worker processes items in isolated threads (preventing co
         <tool name="list_local_directory">Lists physical files and subdirectories on disk to verify deliverable existence.</tool>
         <tool name="check_cargo_manifest">Scans cargo.content_metadata and cargo.failed_metadata for ingested URLs and dead-letters.</tool>
         <tool name="compile_rules_to_turtle_ontology">Compiles learned JSON rules into a W3C RDF/OWL Turtle (.ttl) master ontology graph.</tool>
+        <tool name="vector_search_manuscript">Performs semantic vector search across the embedded manuscript sections in ship.letters_of_marque.</tool>
     </available_tools>
 
     <system_config>

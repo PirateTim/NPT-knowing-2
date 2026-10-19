@@ -15,6 +15,7 @@ def run_grog_agent():
     parser = argparse.ArgumentParser(description="NPT Fleet: Grog Structural Extraction")
     parser.add_argument("--thread-id", "--thread", type=str, default=None, help="Thread ID or session key")
     parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for single-turn execution")
+    parser.add_argument("--prompt-file", type=str, default=None, help="Path to markdown or text file containing the prompt")
     parser.add_argument("--model", type=str, default=None, help="Optional model override")
     args, unknown = parser.parse_known_args()
 
@@ -43,9 +44,14 @@ def run_grog_agent():
     
     chat_session = engine.start_chat_session(thread_id)
     
-    if args.prompt:
-        print(f"\n[AUTHOR -> GROG] ({thread_id}) -> {args.prompt}")
-        final_response = engine.execute_turn(chat_session, args.prompt)
+    prompt_text = args.prompt
+    if args.prompt_file and os.path.exists(args.prompt_file):
+        with open(args.prompt_file, "r", encoding="utf-8") as f:
+            prompt_text = f.read()
+
+    if prompt_text:
+        print(f"\n[AUTHOR -> GROG] ({thread_id}) -> Executing single turn prompt ({len(prompt_text)} chars)...")
+        final_response = engine.execute_turn(chat_session, prompt_text)
         print(f"\n[GROG] -> {final_response}")
         engine.save_checkpoint(thread_id, chat_session.get_history())
         return

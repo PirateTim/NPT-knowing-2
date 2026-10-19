@@ -1,9 +1,0 @@
-SOURCE_URL: https://themarkup.org/artificial-intelligence/2026/01/30/mamdani-to-kill-the-nyc-ai-chatbot-we-caught-telling-businesses-to-break-the-law?link_source=ta_thread_link&taid=697db6823117210001a040ee&utm_campaign=trueanthem&utm_medium=social&utm_source=threads
-TITLE: Mamdani to kill the NYC AI chatbot we caught telling businesses to break the law – The Markup
-AUTHORS: Colin Lecher, Katie Honan, THE CITY
-PUBLICATION_DATE: 2026-01-30
-PUBLISHER: The Markup
-ITEM_TYPE: journalArticle
-GCS_PATH: acquisitions/mamdani-to-kill-the-nyc-ai-chatbot-we-caught-telling-businesses-to-break-the-law.txt
-LOCAL_CANONICAL_PATH: acquisitions/mamdani-to-kill-the-nyc-ai-chatbot-we-caught-telling-businesses-to-break-the-law.txt
-STATUS: COMPLETED

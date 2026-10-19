@@ -543,11 +543,23 @@ class AgentEngine:
             tool_config=tool_config
         )
 
-    def execute_turn(self, chat_session, prompt: str) -> str:
+    def execute_turn(self, chat_session, prompt: str = None, prompt_file: str = None) -> str:
         """
         The ReAct (Reasoning and Acting) execution loop.
         Handles the conversational ping-pong of Tool Calling and Observation.
+        Supports passing raw prompt string or reading from a prompt_file.
         """
+        if prompt_file and os.path.exists(prompt_file):
+            with open(prompt_file, "r", encoding="utf-8") as pf:
+                prompt = pf.read()
+        elif prompt and os.path.exists(prompt) and (prompt.endswith(".md") or prompt.endswith(".txt")):
+            # Auto-detect if prompt argument itself is a valid file path
+            with open(prompt, "r", encoding="utf-8") as pf:
+                prompt = pf.read()
+
+        if not prompt:
+            raise ValueError("execute_turn requires a non-empty prompt or a valid prompt_file.")
+
         # Check for user-declared spending cap in prompt if not already set (ADR-018)
         if self.cost_tracker.spending_cap_usd is None:
             detected_cap = CostTracker.parse_spending_cap(prompt)
@@ -590,7 +602,7 @@ class AgentEngine:
                         f"2. Type 'OVERRIDE' to force context expansion.")
 
         # Helper for resilient send_message with exponential backoff
-        def _send_with_retry(msg, cfg, max_retries=3):
+        def _send_with_retry(msg, cfg, max_retries=2):
             import time
             for attempt in range(1, max_retries + 1):
                 try:
@@ -598,7 +610,7 @@ class AgentEngine:
                 except Exception as e:
                     err_str = str(e)
                     if attempt < max_retries and any(c in err_str for c in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "high demand"]):
-                        sleep_s = attempt * 4
+                        sleep_s = 25 * attempt
                         print(f"  -> [API RETRY] Transient Google API error ({err_str[:60]}...). Retrying in {sleep_s}s (Attempt {attempt}/{max_retries})...")
                         time.sleep(sleep_s)
                     else:
@@ -620,8 +632,8 @@ class AgentEngine:
             return alert_msg
         
         tool_loop_count = 0
-        # DAG orchestrators (e.g. Pegleg) coordinate multi-stage pipelines across 6+ agents
-        MAX_TOOL_LOOPS = 60 if self.agent_name == "pegleg" else 20
+        # DAG orchestrators (e.g. Pegleg) coordinate multi-stage pipelines; ingestion agents (Spyglass) need at most 4 turns
+        MAX_TOOL_LOOPS = 60 if self.agent_name == "pegleg" else 4 if self.agent_name == "spyglass" else 20
 
         while response.function_calls:
             tool_loop_count += 1

@@ -1,8 +1,25 @@
 """
-NPT Fleet: Seed Full Section 8.3 Epistemic Graph Topology
-Populates all 5 manuscript chunks, their extracted Concept Nodes, and the Discovery Engine
-surfaced Cargo documents into cargo.ontology_nodes and cargo.ontology_edges.
+NPT Fleet: Full Section 8.3 Graph Topology Seeder
+
+How to run:
+    uv run python helper_scripts/seed_section_8_3_full_graph.py
+
+What it does:
+    Populates all 5 manuscript chunks, concept nodes, and epistemic relationship edges for Section 8.3 as reference exemplar.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

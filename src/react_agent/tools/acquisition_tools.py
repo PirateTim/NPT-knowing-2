@@ -1101,60 +1101,54 @@ def acquire_archive_snapshot(target_url: str) -> str:
                         }
                         return json.dumps(receipt, indent=2)
 
-        # 2. FALLBACK ARCHIVE: Query archive.today / archive.ph mirrors
-        # First query using canonical URL; fallback to clean_url if different
-        urls_to_try = [canonical_url]
-        if clean_url != canonical_url:
-            urls_to_try.append(clean_url)
+        # 2. FALLBACK ARCHIVE: Query archive.ph mirror (Single fast probe)
+        for gateway in ["https://archive.ph"]:
+            try:
+                today_url = f"{gateway}/newest/{canonical_url}"
+                today_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                snap_today = requests.get(today_url, headers=today_headers, timeout=4, allow_redirects=True)
+                if snap_today.status_code == 200 and len(snap_today.text) > 1000:
+                    html_content = snap_today.text
+                    clean_text = trafilatura.extract(html_content)
+                    if clean_text and len(clean_text.strip()) >= 500 and not any(w in clean_text.lower() for w in ["no results", "search archive", "archive.today", "cloudflare"]):
+                        print(f"  -> [ARCHIVE SNAPSHOT FOUND] Rescued article from {gateway}: {snap_today.url}")
+                        rich_meta = _extract_rich_metadata(html_content, clean_url)
+                        if not rich_meta.get("title") or rich_meta["title"] == clean_url:
+                            soup = BeautifulSoup(html_content, 'html.parser')
+                            title_tag = soup.find('title')
+                            if title_tag and title_tag.text:
+                                rich_meta["title"] = title_tag.text.strip().split(" - ")[0].split(" | ")[0]
 
-        for gw_url in urls_to_try:
-            for gateway in ["https://archive.ph", "https://archive.today", "https://archive.is"]:
-                try:
-                    today_url = f"{gateway}/newest/{gw_url}"
-                    today_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                    snap_today = requests.get(today_url, headers=today_headers, timeout=8, allow_redirects=True)
-                    if snap_today.status_code == 200 and len(snap_today.text) > 1000:
-                        html_content = snap_today.text
-                        clean_text = trafilatura.extract(html_content)
-                        if clean_text and len(clean_text.strip()) >= 500 and not any(w in clean_text.lower() for w in ["no results", "search archive", "archive.today"]):
-                            print(f"  -> [ARCHIVE SNAPSHOT FOUND] Rescued article from {gateway}: {snap_today.url}")
-                            rich_meta = _extract_rich_metadata(html_content, clean_url)
-                            if not rich_meta.get("title") or rich_meta["title"] == clean_url:
-                                soup = BeautifulSoup(html_content, 'html.parser')
-                                title_tag = soup.find('title')
-                                if title_tag and title_tag.text:
-                                    rich_meta["title"] = title_tag.text.strip().split(" - ")[0].split(" | ")[0]
+                        cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
+                        os.makedirs(cache_dir, exist_ok=True)
+                        temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
+                        temp_filepath = os.path.join(cache_dir, temp_filename)
 
-                            cache_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "cargo_cache"))
-                            os.makedirs(cache_dir, exist_ok=True)
-                            temp_filename = f"temp_acquire_{uuid.uuid4().hex[:8]}.txt"
-                            temp_filepath = os.path.join(cache_dir, temp_filename)
+                        formatted_payload = (
+                            f"=== ACQUISITION INDEX ===\n"
+                            f"SOURCE: {clean_url}\n"
+                            f"ARCHIVE_SOURCE: {snap_today.url}\n"
+                            f"TITLE: {rich_meta.get('title', 'Archived Article')}\n"
+                            f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta.get('authors') else 'UNKNOWN'}\n"
+                            f"PUBLISHED: {rich_meta.get('published_date', 'UNKNOWN')}\n"
+                            f"PUBLISHER: {rich_meta.get('publisher', 'UNKNOWN')}\n"
+                            f"ITEM_TYPE: {rich_meta.get('item_type', 'webpage')}\n"
+                            f"===========================================================\n\n"
+                            f"{clean_text}"
+                        )
 
-                            formatted_payload = (
-                                f"=== ACQUISITION INDEX ===\n"
-                                f"SOURCE: {clean_url}\n"
-                                f"ARCHIVE_SOURCE: {snap_today.url}\n"
-                                f"TITLE: {rich_meta.get('title', 'Archived Article')}\n"
-                                f"AUTHORS: {', '.join(rich_meta['authors']) if rich_meta.get('authors') else 'UNKNOWN'}\n"
-                                f"PUBLISHED: {rich_meta.get('published_date', 'UNKNOWN')}\n"
-                                f"PUBLISHER: {rich_meta.get('publisher', 'UNKNOWN')}\n"
-                                f"ITEM_TYPE: {rich_meta.get('item_type', 'webpage')}\n"
-                                f"===========================================================\n\n"
-                                f"{clean_text}"
-                            )
+                        with open(temp_filepath, "w", encoding="utf-8") as f:
+                            f.write(formatted_payload)
 
-                            with open(temp_filepath, "w", encoding="utf-8") as f:
-                                f.write(formatted_payload)
-
-                            receipt = {
-                                "status": "SUCCESS",
-                                "metadata": rich_meta,
-                                "local_cache_path": temp_filepath,
-                                "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
-                            }
-                            return json.dumps(receipt, indent=2)
-                except Exception:
-                    continue
+                        receipt = {
+                            "status": "SUCCESS",
+                            "metadata": rich_meta,
+                            "local_cache_path": temp_filepath,
+                            "action_required": "Pass 'local_cache_path' to upsert_knowledge_artifact."
+                        }
+                        return json.dumps(receipt, indent=2)
+            except Exception:
+                continue
 
         return json.dumps({
             "status": "FAILED",

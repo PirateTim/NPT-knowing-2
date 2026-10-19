@@ -1,9 +1,26 @@
 """
 NPT Fleet: Generalized Chapter Census Engine
-Architecture: Pure GCS/Cloud SQL SSOT | Parameterized Chapter Runner
-Loads criteria strictly from ship/bronze_plus/chapters/chXX/chXX_criteria.json
-Executes 100% hold census via Bilgeladle and saves results to ship/bronze_plus/chapters/chXX/chXX_census_results.json
+
+How to run:
+    uv run python helper_scripts/run_chapter_census.py --chapter <ch>
+
+What it does:
+    Executes a comprehensive census of all external cargo assets mapped to a specific manuscript chapter.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import json

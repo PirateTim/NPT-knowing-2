@@ -1,8 +1,25 @@
 """
-NPT Fleet: Database Migration Script
-Creates cargo.chases, cargo.chase_assets, and chapter views (cargo.v_chapter_assets, cargo.v_chapter_chases).
-Adheres strictly to SOP-06 Enterprise DDL Protocol (root execution + mandatory grant handoff).
+NPT Fleet DDL: Chases & Views Database Migration
+
+How to run:
+    uv run python helper_scripts/db_provisioning/create_chases_and_views_migration.py
+
+What it does:
+    Provisions cargo.chases, cargo.chase_assets, and chapter-specific database views.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 from urllib.parse import urlparse

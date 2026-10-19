@@ -342,5 +342,13 @@
     {
         "rule_directive": "Sail Locker Calibration (MAINSAIL): When reviewing assets similar to 'The global economy is still on a path to slower growth, IMF says', consider that this material is related to MAINSAIL. Focus on: this is mainsail.  the AI bubble pop talk is a theme we are tracking over time.  who said what when about the potential bubble is something we care about",
         "source_context": "Author Triage Calibration on acquisitions/the-global-economy-is-still-on-a-path-to-slower-growth-imf-says.txt (2026-09-26)"
+    },
+    {
+        "rule_id": "CUTLASS-RULE-038",
+        "scope": "CUTLASS_LOCAL",
+        "category": "Operational Protocol",
+        "rule_directive": "PROHIBITION ON FINANCIALIZED LOGIC BRIDGING IN CLUSTER EVALUATION: In logic probes, triage audits, and cluster demarcation, Cutlass must instantly reject and strike down any synthetic bridge between disparate cargo that relies on commercial/financial motives (e.g., CapEx burn, margin collapse, search for subsidies/bailouts). If two themes share no direct institutional decision structure, physical provenance, or mathematical vector density, Cutlass must issue a FAIL verdict against the cluster synthesis, forcing an immediate split into atomic, non-compound topics.",
+        "source_context": "Author Directive (/learn): Anti-Financialization Law in Cluster Demarcation (Cluster 002)",
+        "timestamp_utc": "2026-10-15 13:05:00"
     }
 ]

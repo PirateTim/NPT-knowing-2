@@ -1,7 +1,25 @@
 """
-NPT Infrastructure Automation Tool: Database & User Initialization DDL
-Architecture: Native pg8000 Pure-Python Connection Engine
+NPT Fleet DDL: Database & User Initialization
+
+How to run:
+    uv run python helper_scripts/db_provisioning/create_database_and_user.py
+
+What it does:
+    Initializes the NPT PostgreSQL database, roles, schemas, and sandboxed application credentials.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

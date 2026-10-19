@@ -1,11 +1,26 @@
 """
 NPT Fleet: Manual Rule Injection (The Syringe)
-Description: Bypasses the conversational agent interface to directly inject 
-a critical behavioral rule into Hook's permanent Postgres memory.
-Purpose: Specifically ensures Hook remembers the Enterprise DDL Protocol 
-(always GRANT permissions after CREATE TABLE), but serves as a general template 
-for manual backend alignment.
+
+How to run:
+    uv run python helper_scripts/seed_hook_rule.py
+
+What it does:
+    Bypasses agent conversational turns to inject meta-architectural rules directly into agent_state.ontology_rules.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 from urllib.parse import urlparse
 import pg8000.dbapi

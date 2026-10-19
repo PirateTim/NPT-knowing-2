@@ -31,7 +31,7 @@ This document serves as the master dossier for all autonomous AI agents operatin
   - `orchestrate-chase`: Directs deep-dive investigations across Spyglass, Cutlass, Grog, and Scallywag.
   - `orchestrate-silver-section-assembly`: Manages Bilgeladle's assembly and completeness gate.
   - `orchestrate-silver-epistemic-audit`: Directs Cutlass to audit assertions against seized evidence.
-- **Key Tools**: `dispatch_subagent_turn`, `call_landlubber`, `conduct_learned_rules_audit`, `reseed_failed_cargo_queue`.
+- **Key Tools**: `dispatch_subagent_turn`, `vector_search_manuscript`, `display_fleet_manual`, `update_fleet_manual`, `call_landlubber`, `conduct_learned_rules_audit`, `reseed_failed_cargo_queue`.
 - **Database/Storage Interface**:
   - `agent_state.checkpoints`: Persistent thread state management.
   - `cargo.ingestion_queue`: Monitors pending acquisition batches.
@@ -98,14 +98,15 @@ This document serves as the master dossier for all autonomous AI agents operatin
   - `fact-plumbing`: Plumbs the depth to extract explicit factual assertions and unstated assumptions, formatted as triple-ready structured points.
   - `summarize`: Strict, concise, neutral summary of what the content says (anti-critique, anti-analysis).
   - `making-a-sighting`: Exhaustive inventory of referenced content, papers, books, reports, and URLs for Spyglass acquisition targeting.
-- **Key Tools**: `read_knowledge_artifact`, `read_local_file`, `write_local_file`, `log_fleet_enrichment`.
+- **Key Tools**: `read_knowledge_artifact`, `read_local_file`, `write_local_file`, `log_fleet_enrichment`, `query_cargo_vector_index` (768-dim targeted retrieval), `embed_cargo_index`.
 - **Database/Storage Interface**:
   - Output files: `writings/cargo/cargo_{id}/grog_extraction.md`, `writings/chases/{chase_id}/stage4_grog_extraction.md`, and `writings/chases/{chase_id}/stage6_grog_review.md`.
-  - PostgreSQL: `cargo.fleet_enrichments` and `cargo.fleet_sightings`.
+  - PostgreSQL: `cargo.fleet_enrichments`, `cargo.fleet_sightings`, and `cargo.content_vectors`.
 - **Key Guardrails**:
   - Single-Asset Mandate (never processes two files in one prompt; never compares/contrasts).
   - Strict Non-Judgmental Mandate (zero critique or bias scoring during extraction; outputs all 4 standard skill sections).
   - `GROG-RULE-008`: **Chase Stage 6 Meaning Preservation & Blocker Gating Rubric**. In Stage 6 of a Chase, audits Scallywag's essay against the seized cargo. Acts as sole authority on whether provenance slips or procedural errors are BLOCKERS. Mandates a score < 8.0 and `REJECTED_FOR_REVISION` verdict on any blocker to automatically trip the Stage 5B revision loop. Strictly prohibited from checking references (Plank's domain). Scores on the universal 0.0 to 10.0 scale.
+  - `GROG-RULE-009`: **Vector Search Point-Retrieval Mandate (Anti-Flailing)**. Prohibits guessing generic keywords ('the', 'technology', 'AI') or looping when asked open-ended questions about whole-cargo contents. Requires clarifying that `query_cargo_vector_index` is strictly for targeted conceptual retrieval in 768-dim space.
 
 ---
 

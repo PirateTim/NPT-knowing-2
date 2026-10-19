@@ -1,9 +1,26 @@
 """
-NPT Fleet: Chapter 5 Cloud Cargo Scanner (Pass 1 & Pass 2 Comparative Analysis)
-SSOT: Google Cloud Storage (gs://npt-fleet-cargo-hold/) & Cloud SQL (PostgreSQL)
-Pass 1: Google Cloud Discovery Engine (Vertex AI Search: npt-cargo-search-app)
-Pass 2: Full Hold Cloud SQL Sweep (cargo.content_metadata)
+NPT Fleet: Chapter 5 Cloud Cargo Discovery Scanner
+
+How to run:
+    uv run python helper_scripts/scan_chapter_5_cloud.py
+
+What it does:
+    Runs Pass 1 and Pass 2 comparative analysis across Cloud Storage assets against Chapter 5 thesis boundaries.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import json

@@ -1,18 +1,24 @@
 <#
 .SYNOPSIS
-    Compiles source code into a single "Context Priming Manifest" for LLM ingestion.
-.DESCRIPTION
-    This script recursively scans the 'src' directory for code files (.py, .xml, .json).
-    It reads their contents and appends them into a single text file, creating a 
-    portable snapshot of the project's logic.
-    
-    CRITICAL SECURITY & SIZE BOUNDARIES:
-    - This script is hardcoded to EXCLUDE environment files (.env), secret tokens, 
-      and massive text repositories (logs, local_wiki, manuscript, output) to prevent 
-      both context-window blowout and credential leakage.
-.USAGE
-    .\build_context.ps1
+    NPT Fleet Context Builder
+
+How to run:
+    powershell -ExecutionPolicy Bypass -File helper_scripts/build_context.ps1
+
+What it does:
+    Compiles workspace source code into a single consolidated Context Priming Manifest for LLM evaluation.
+
+Last run: Unknown
 #>
+
+# Record execution timestamp
+try {
+    $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $file = $MyInvocation.MyCommand.Path
+    if ($file -and (Test-Path $file)) {
+        (Get-Content $file) -replace 'Last run:.*', "Last run: $now" | Set-Content $file
+    }
+} catch {}
 
 # 1. Generate a dynamic filename based on the current date
 $dateStr = Get-Date -Format "yyyy-MM-dd"

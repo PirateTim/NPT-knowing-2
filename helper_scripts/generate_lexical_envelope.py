@@ -1,18 +1,25 @@
 """
-NPT Fleet Protocol Implementation: Dense Lexical Envelope Generator (SOP-08)
-Specification: docs/DENSE_LEXICAL_ENVELOPE_PROTOCOL.md
+NPT Fleet: Dense Lexical Search Envelope Generator (SOP-08)
 
-Purpose:
-Bridges the semantic gap between authorial philosophical prose (Ship / The End of Knowing)
-and external empirical records (Cargo in the wild) for Phase 1 of the Graph Genesis pipeline.
-Produces ONLY the stripped-down, lean JSON output required by downstream consumers:
-  - Phase 2 (Discovery Engine / GCP Vertex AI Search): Executable Boolean query & high-cosine probes.
-  - Phase 3 (Concept Node & Edge Extraction): Orthogonal poles, causal invariants, and metaphor-to-audit mappings.
+How to run:
+    uv run python helper_scripts/generate_lexical_envelope.py
 
-Database-Native Mode:
-Selects paragraphs directly from `ship.letters_of_marque`, generates the envelope,
-and upserts the resulting JSONB payload directly into `ship.letters_of_marque.lexical_envelope`.
+What it does:
+    Extracts high-signal keyword nets and dense lexical search envelopes from manuscript sections for Gateway A Discovery.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

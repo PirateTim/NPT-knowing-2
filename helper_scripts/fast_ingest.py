@@ -1,7 +1,26 @@
 """
-NPT Fleet: Fast-Path Mechanical Ingestion Engine (Zero-LLM Pipeline)
-Architecture: High-throughput, $0.00-cost batch ingestor with automated Paywall Hold routing.
+NPT Fleet: Fast-Path Mechanical Ingestion Engine
+
+How to run:
+    uv run python helper_scripts/fast_ingest.py <url_or_file>
+
+What it does:
+    Bypasses agent reasoning loops to mechanically download, clean, and stevedore text payloads into GCS and PostgreSQL.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import re

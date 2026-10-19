@@ -1,6 +1,26 @@
 """
-NPT Fleet: Add lexical_envelope column to ship.letters_of_marque (SOP-06 compliant)
+NPT Fleet DDL: Add lexical_envelope Column to Letters of Marque
+
+How to run:
+    uv run python helper_scripts/db_provisioning/add_lexical_envelope_column.py
+
+What it does:
+    Adds JSONB lexical_envelope column to ship.letters_of_marque adhering to SOP-06.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 from urllib.parse import urlparse
 import pg8000.dbapi

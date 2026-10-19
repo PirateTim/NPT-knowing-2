@@ -1,5 +1,28 @@
 #!/usr/bin/env python3
 """
+NPT Fleet: Bronze Plus Section pgVector Loader (768-dim)
+
+How to run:
+    uv run python helper_scripts/load_bronze_plus_to_pgvector.py
+
+What it does:
+    Parses Bronze+ section files, calculates 768-dim embeddings with text-embedding-005, and loads them into ship.letters_of_marque.
+
+Last run: Unknown
+"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
+"""
 NPT Fleet: Load Bronze+ Manuscript Sections into pgVector (ship.letters_of_marque)
 Helper Script: helper_scripts/load_bronze_plus_to_pgvector.py
 
@@ -39,9 +62,9 @@ def embed_text_with_retry(client, text: str, max_retries: int = 4) -> list:
     for attempt in range(1, max_retries + 1):
         try:
             resp = client.models.embed_content(
-                model="gemini-embedding-001",
+                model="text-embedding-005",
                 contents=text,
-                config=types.EmbedContentConfig(output_dimensionality=1536)
+                config=types.EmbedContentConfig(output_dimensionality=768)
             )
             return list(resp.embeddings[0].values)
         except Exception as e:
@@ -162,12 +185,11 @@ def main():
     parser.add_argument("--all", action="store_true", help="Process all chapters 00-12")
     args = parser.parse_args()
 
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        print("[FATAL] GEMINI_API_KEY not found in .env")
-        sys.exit(1)
-
-    client = genai.Client(api_key=api_key)
+    try:
+        client = genai.Client()
+    except Exception:
+        api_key = os.getenv("GEMINI_API_KEY")
+        client = genai.Client(api_key=api_key)
     conn = get_db_connection()
 
     # Determine chapters to run

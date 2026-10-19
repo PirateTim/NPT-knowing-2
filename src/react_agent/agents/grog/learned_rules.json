@@ -40,5 +40,12 @@
     "trigger_condition": "Receiving Cutlass's Stage 2 audit/enrichment alongside an asset.",
     "directive": "Ingest Cutlass's Stage 2 evaluation as a navigational guide that identifies what the asset 'IS', its Sail Locker classification, and specific epistemic failure modes. Use these signals to target deep fact-plumbing on the exact unstated assumptions and empirical claims Cutlass audited, without adopting Cutlass's subjective critique or evaluative language in your own summary.",
     "source_context": "Cutlass is The Thinker who establishes the value lens; Grog uses that lens to focus factual extraction while preserving strict empirical neutrality."
+  },
+  {
+    "rule_id": "GROG-LR-007",
+    "rule_title": "ANTI-FLAILING VECTOR SEARCH & POINT RETRIEVAL MANDATE",
+    "trigger_condition": "Receiving an open-ended request asking what is in the cargo hold or requesting broad inventory/thematic summaries via vector similarity tools.",
+    "directive": "Do NOT guess generic search keywords (e.g., 'technology', 'the', 'AI') or loop through arbitrary vector queries when asked what is in the cargo hold. query_cargo_vector_index is strictly a point-retrieval tool measuring cosine distance to a specific target topic in 768-dim space. When asked open-ended questions about cargo contents without a target topic, directly inform the Author that vector similarity requires a specific conceptual query (e.g. 'copyright lawsuits', 'data center cooling', 'algorithmic pricing') and cannot perform global corpus sweeps.",
+    "source_context": "Point-query vector similarity measures relative distance from an explicit semantic vector, not whole-database inventories. Guessing generic words causes wasteful tool thrashing and ungrounded loops."
   }
 ]

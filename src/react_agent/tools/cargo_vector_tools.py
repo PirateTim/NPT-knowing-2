@@ -32,7 +32,7 @@ def _get_genai_client() -> Client:
     """Instantiates Google GenAI client for embeddings, prioritizing Vertex AI on npt-reckoning-1 with API key fallback."""
     try:
         project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "npt-reckoning-1"
-        return Client(vertexai=True, project=project, location="us-central1")
+        return Client(vertexai=True, project=project, location="global")
     except Exception:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -198,12 +198,12 @@ def embed_cargo_index(index_scope: str = "mainsail", batch_limit: Optional[int] 
                     skipped_chunks += 1
                     continue
 
-                # Generate 1536-dim embedding
+                # Generate 768-dim embedding via text-embedding-005 (ADR-020)
                 try:
                     response = genai_client.models.embed_content(
-                        model="gemini-embedding-001",
+                        model="text-embedding-005",
                         contents=p_text,
-                        config=types.EmbedContentConfig(output_dimensionality=1536)
+                        config=types.EmbedContentConfig(output_dimensionality=768)
                     )
                     embedding = response.embeddings[0].values
                 except Exception as embed_err:
@@ -229,6 +229,24 @@ def embed_cargo_index(index_scope: str = "mainsail", batch_limit: Optional[int] 
                     )
                 )
                 upserted_chunks += 1
+
+            # Compute and persist Document Centroid Vector to cargo.content_metadata (ADR-020)
+            cursor.execute("SELECT vector_embedding FROM cargo.content_vectors WHERE metadata_id = %s;", (meta_id,))
+            v_rows = cursor.fetchall()
+            if v_rows:
+                import numpy as np
+                v_list = []
+                for (vr,) in v_rows:
+                    if isinstance(vr, (list, np.ndarray)):
+                        v_list.append(np.array(vr, dtype=np.float32))
+                    else:
+                        s = vr.strip("[]")
+                        v_list.append(np.fromstring(s, sep=",", dtype=np.float32))
+                c_vec = np.mean(np.vstack(v_list), axis=0)
+                c_norm = np.linalg.norm(c_vec)
+                if c_norm > 0:
+                    c_vec = c_vec / c_norm
+                cursor.execute("UPDATE cargo.content_metadata SET document_centroid = %s WHERE id = %s;", (str(list(c_vec)), meta_id))
 
             conn.commit()
 
@@ -263,11 +281,11 @@ def query_cargo_vector_index(query: str, index_scope: str = "mainsail", top_k: i
     cursor = conn.cursor()
 
     try:
-        # 1. Embed search query
+        # 1. Embed search query via text-embedding-005 (768-dim)
         query_resp = genai_client.models.embed_content(
-            model="gemini-embedding-001",
+            model="text-embedding-005",
             contents=query,
-            config=types.EmbedContentConfig(output_dimensionality=1536)
+            config=types.EmbedContentConfig(output_dimensionality=768)
         )
         query_vector = list(query_resp.embeddings[0].values)
 

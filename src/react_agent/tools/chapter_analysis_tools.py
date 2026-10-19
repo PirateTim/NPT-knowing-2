@@ -9,8 +9,11 @@ import time
 import datetime
 from urllib.parse import urlparse
 import pg8000.dbapi
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+load_dotenv(os.path.abspath(".env"))
 
 def _get_cargo_db_connection():
     conn_string = os.getenv("CONTENT_DATABASE_URL")
@@ -86,18 +89,18 @@ def vector_search_manuscript(query: str, chapter_number: int = None, top_k: int 
     if not query or not query.strip():
         return "[ERROR] Query string cannot be empty."
 
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        return "[ERROR] GEMINI_API_KEY is not set in environment."
-
     conn = None
     cursor = None
     try:
-        client = genai.Client(api_key=api_key)
+        try:
+            client = genai.Client()
+        except Exception:
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            client = genai.Client(api_key=api_key)
         embed_resp = client.models.embed_content(
-            model="gemini-embedding-001",
+            model="text-embedding-005",
             contents=query.strip(),
-            config=types.EmbedContentConfig(output_dimensionality=1536)
+            config=types.EmbedContentConfig(output_dimensionality=768)
         )
         query_vector = list(embed_resp.embeddings[0].values)
         vec_str = str(query_vector)

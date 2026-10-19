@@ -1,9 +1,0 @@
-SOURCE_URL: https://muse.jhu.edu/article/225694
-TITLE: The Perils of Presidentialism
-AUTHORS: Juan J. Linz
-PUBLICATION_DATE: 2025-01-01
-PUBLISHER: Journal of Democracy
-ITEM_TYPE: journalArticle
-CANONICAL_PATH: acquisitions/the-perils-of-presidentialism.txt
-GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/the-perils-of-presidentialism.txt
-STATUS: SUCCESS

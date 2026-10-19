@@ -1,16 +1,26 @@
 """
-NPT Fleet: Build Folksonomy-to-DeckPlans Edges
-Architecture: Normalized Graph Bridge (Master Entities vs. Association Edges)
-Description: Evaluates Grog's emergent cargo folksonomy tags against Bilgeladle's 140 Section Ribs
-and generates normalized association edges with relevance scores and warrants.
+NPT Fleet: Folksonomy-to-DeckPlans Edge Compiler
 
-Usage:
-  # Quick test mode on 2 tags, writing to a test file:
-  uv run python helper_scripts/build_folksonomy_deckplan_edges.py --limit 2 --output cargo_ontology/test_edges.json
+How to run:
+    uv run python helper_scripts/build_folksonomy_deckplan_edges.py
 
-  # Full generation mode (when ready to populate):
-  uv run python helper_scripts/build_folksonomy_deckplan_edges.py
+What it does:
+    Maps emergent folksonomy tags to calibrated Chapter Backbones and Section Ribs in the manuscript ontology.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 import json

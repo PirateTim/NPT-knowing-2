@@ -1,11 +1,26 @@
 """
-NPT Fleet Utility: Automated Schema Inspector & Exporter
-Description: Dynamically discovers all tables within the target Postgres schemas 
-(agent_state and cargo), extracts their column layouts, and exports the full 
-structural map to a text file for agent consumption.
-Purpose: Provides Hook (and human architects) with a real-time, deterministic 
-snapshot of the physical database layout without relying on hardcoded table lists.
+NPT Fleet: Automated Schema Inspector & Exporter
+
+How to run:
+    uv run python helper_scripts/inspect_schemas.py
+
+What it does:
+    Introspects table definitions, column types, constraints, and indexes across all database schemas and exports documentation.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 # python .\helper_scripts\inspect_schemas.py
 
 

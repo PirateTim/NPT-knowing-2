@@ -1,8 +1,26 @@
 """
-helper_scripts/inspect_cargo_landscape.py
-Surface Mining: Zero-cost, zero-LLM frequency matrix extraction across all cargo.content_metadata.
-Part of GitHub Issue #120 (Phase 1).
+NPT Fleet: Cargo Landscape Inspector & Cluster Metrics
+
+How to run:
+    uv run python helper_scripts/inspect_cargo_landscape.py
+
+What it does:
+    Generates statistical distributions, sector breakdowns, and cluster assignment metrics across all active cargo.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import re
 import json

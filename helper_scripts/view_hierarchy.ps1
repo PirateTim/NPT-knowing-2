@@ -1,14 +1,24 @@
 <#
 .SYNOPSIS
-    Generates a clean, text-based directory tree of the NPT-Fleet project.
-.DESCRIPTION
-    This script recursively walks the directory structure starting from the 
-    location it is executed. It explicitly ignores noisy environment folders 
-    (like .venv and __pycache__) to generate a lightweight map of the repository.
-    The output is saved to 'project_hierarchy.txt'.
-.USAGE
-    .\view_hierarchy.ps1
+    NPT Fleet Directory Hierarchy Viewer
+
+How to run:
+    powershell -ExecutionPolicy Bypass -File helper_scripts/view_hierarchy.ps1
+
+What it does:
+    Renders an indented visual ASCII directory tree of the workspace structure.
+
+Last run: Unknown
 #>
+
+# Record execution timestamp
+try {
+    $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $file = $MyInvocation.MyCommand.Path
+    if ($file -and (Test-Path $file)) {
+        (Get-Content $file) -replace 'Last run:.*', "Last run: $now" | Set-Content $file
+    }
+} catch {}
 
 # 1. Initialization: Clear the old map to ensure we don't append to stale data
 $outputFile = "project_hierarchy.txt"

@@ -39,8 +39,8 @@ from tools.acquisition_tools import download_url, download_remote_pdf, extract_l
 from tools.zotero_tools import fetch_zotero_unresolved_items, create_zotero_item, update_zotero_ledger
 # from tools.provision_database import provision_agent_state_db
 # from tools.create_database_and_user import create_database_and_user
-from tools.memory_tools import record_learned_rule, record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens, conduct_learned_rules_audit, compile_rules_to_turtle_ontology
-from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, update_cargo_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, log_full_audit_dossier, reseed_failed_cargo_queue, record_fleet_sighting, promote_sighting_to_queue
+from tools.memory_tools import record_fleet_learning, record_learned_rule, record_learned_ontology_rule, record_few_shot_exemplar, reload_agent_memory_vault, query_system_glossary, update_system_glossary, delete_system_glossary_term, update_cognitive_lens, conduct_learned_rules_audit, compile_rules_to_turtle_ontology
+from tools.cargo_db_tools import check_cargo_manifest, log_content_metadata, update_cargo_metadata, log_ingestion_failure, purge_corrupted_cargo, log_fleet_enrichment, log_full_audit_dossier, reseed_failed_cargo_queue, record_fleet_sighting, promote_sighting_to_queue, add_to_ingestion_queue
 from tools.extraction_tools import run_langextract_mapping
 from tools.agent_logger import log_agent_action
 from tools.youtube_tools import extract_youtube_transcript
@@ -165,6 +165,7 @@ class ToolDispatcher:
             elif call.name == "reseed_failed_cargo_queue": return reseed_failed_cargo_queue()
             elif call.name == "record_fleet_sighting": return record_fleet_sighting(**args)
             elif call.name == "promote_sighting_to_queue": return promote_sighting_to_queue(**args)
+            elif call.name == "add_to_ingestion_queue": return add_to_ingestion_queue(**args)
             elif call.name == "embed_cargo_index": return embed_cargo_index(**args)
             elif call.name == "query_cargo_vector_index": return query_cargo_vector_index(**args)
 
@@ -179,7 +180,7 @@ class ToolDispatcher:
             elif call.name == "acquire_archive_snapshot": return acquire_archive_snapshot(**args)
             elif call.name == "resolve_open_access_pdf": return resolve_open_access_pdf(**args)
             elif call.name == "stevedore_local_epub": return stevedore_local_epub(**args)
-            elif call.name == "call_landlubber": return call_landlubber(**args)
+            elif call.name in ("call_landlubber", "search_web"): return call_landlubber(**args)
             elif call.name == "run_langextract_mapping": return run_langextract_mapping(**args)
             elif call.name == "extract_youtube_transcript": return extract_youtube_transcript(**args)
 
@@ -212,7 +213,7 @@ class ToolDispatcher:
             # --- Memory & Glossary ---
             elif call.name == "conduct_learned_rules_audit": return conduct_learned_rules_audit()
             elif call.name == "compile_rules_to_turtle_ontology": return compile_rules_to_turtle_ontology(**args)
-            elif call.name == "record_learned_rule": return record_learned_rule(**args)
+            elif call.name in ("record_learned_rule", "record_fleet_learning"): return record_fleet_learning(**args)
             elif call.name == "record_learned_ontology_rule": return record_learned_ontology_rule(**args)
             elif call.name == "record_few_shot_exemplar": return record_few_shot_exemplar(**args)
             elif call.name == "reload_agent_memory_vault": return reload_agent_memory_vault(**args)
@@ -744,6 +745,41 @@ class ToolDispatcher:
                         }
                     },
                     "required": ["query_type", "identifier"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="add_to_ingestion_queue",
+                description="Pushes an unresolved URL target into the cargo.ingestion_queue Postgres table for Spyglass to process asynchronously.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "target_url": {"type": "STRING", "description": "The URL to queue for ingestion."},
+                        "chapter_context": {"type": "STRING", "description": "Optional chapter context or reference note."}
+                    },
+                    "required": ["target_url"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="record_fleet_learning",
+                description="Records a durable, generalized cognitive heuristic extracted from an operational incident or correction into the local learned_rules.json file.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "agent_name": {"type": "STRING", "description": "The name of the agent recording the learning (e.g., 'pegleg', 'spyglass')."},
+                        "learning": {"type": "STRING", "description": "The durable behavioral rule or heuristic to record."}
+                    },
+                    "required": ["agent_name", "learning"]
+                }
+            ),
+            types.FunctionDeclaration(
+                name="search_web",
+                description="Conducts live web search grounding via Landlubber and returns relevant web results and verified URLs.",
+                parameters={
+                    "type": "OBJECT",
+                    "properties": {
+                        "query": {"type": "STRING", "description": "The search query string."}
+                    },
+                    "required": ["query"]
                 }
             )
         ]

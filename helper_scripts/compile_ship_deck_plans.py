@@ -1,8 +1,26 @@
 """
-NPT Fleet: Ship Deck Plans Compiler
-Reads ship/SHIP_DECK_PLANS.md and compiles the complete master ontology into ship/ship_deck_plans.json.
-Preserves the 5-part Macro Chapter Backbones while generating structured 7-part metadata for all 140 Section Ribs.
+NPT Fleet: Ship Deck Plans JSON Compiler
+
+How to run:
+    uv run python helper_scripts/compile_ship_deck_plans.py
+
+What it does:
+    Compiles ship/SHIP_DECK_PLANS.md into structured machine-readable JSON (ship/ship_deck_plans.json).
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import re
 import json

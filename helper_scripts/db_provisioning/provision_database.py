@@ -1,8 +1,25 @@
+"""
+NPT Fleet DDL: Full Cloud SQL Database Provisioner
 
+How to run:
+    uv run python helper_scripts/db_provisioning/provision_database.py
+
+What it does:
+    Automates creation of Cloud SQL PostgreSQL instance, schemas, pgvector extension, and base tables.
+
+Last run: Unknown
 """
-NPT Infrastructure Automation Tool: Cloud SQL Provisioning & Initialization
-Architecture: Google API Client + Native pg8000 Connection Engine
-"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import time

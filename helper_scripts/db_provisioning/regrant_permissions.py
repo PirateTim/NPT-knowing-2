@@ -1,6 +1,26 @@
 """
-NPT Fleet: Force Regrant of Schema Permissions
+NPT Fleet SOP-06: Force Regrant of Schema Permissions
+
+How to run:
+    uv run python helper_scripts/db_provisioning/regrant_permissions.py
+
+What it does:
+    Connects as root postgres user and regrants all table/sequence permissions across cargo, ship, and agent_state to the application user.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 from urllib.parse import urlparse
 import pg8000.dbapi

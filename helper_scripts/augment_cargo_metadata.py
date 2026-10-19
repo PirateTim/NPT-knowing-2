@@ -1,11 +1,25 @@
 """
 NPT Fleet: Metadata Augmentation Sweeper
-Audits and backfills missing publication dates, publisher titles, and authors 
-across cargo.content_metadata using multi-tiered extraction:
-  Tier 1: URL path patterns & domain mapping (zero network cost)
-  Tier 2: Fast concurrent HTML metadata parsing (OpenGraph, Schema.org, time tags)
-Strictly complies with ADR-003 and PEP-249 (pg8000.dbapi).
+
+How to run:
+    uv run python helper_scripts/augment_cargo_metadata.py
+
+What it does:
+    Scans acquired cargo records and extracts missing publication dates, authors, and canonical titles using lightweight LLM extraction.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

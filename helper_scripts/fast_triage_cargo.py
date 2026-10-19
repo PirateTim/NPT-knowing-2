@@ -1,11 +1,25 @@
 """
 NPT Fleet: Fast Cargo Triage & Multi-Sector Classifier
-Path: helper_scripts/fast_triage_cargo.py
-Usage:
-  uv run python helper_scripts/fast_triage_cargo.py --status
-  uv run python helper_scripts/fast_triage_cargo.py --triage-new
-  uv run python helper_scripts/fast_triage_cargo.py --limit 40
+
+How to run:
+    uv run python helper_scripts/fast_triage_cargo.py
+
+What it does:
+    Rapidly classifies untriaged cargo assets into sail lockers (Mainsail, Jib, Doldrums, Bilge) using calibrated rule heuristics.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

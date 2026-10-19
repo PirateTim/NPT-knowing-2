@@ -1,3 +1,26 @@
+"""
+NPT Fleet: Scallywag Learned Rule Internalizer
+
+How to run:
+    uv run python helper_scripts/scallywag_internalize_recommendation.py
+
+What it does:
+    Parses peer review recommendations and persists validated behavioral adjustments into Scallywag's learned rules vault.
+
+Last run: Unknown
+"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import sys
 

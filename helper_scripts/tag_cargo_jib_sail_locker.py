@@ -1,5 +1,28 @@
 #!/usr/bin/env python3
 """
+NPT Fleet: Batch Cargo JIB Sail Locker Tagger
+
+How to run:
+    uv run python helper_scripts/tag_cargo_jib_sail_locker.py
+
+What it does:
+    Assigns sail_locker='JIB' to specified cargo metadata records in PostgreSQL adhering to ADR-003 and SOP-06.
+
+Last run: Unknown
+"""
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
+"""
 NPT Fleet Helper: Tag Cargo Records with Sail Locker 'JIB' (Option B - DB Only)
 Adheres strictly to Fleet Governance:
 - User Rule: None of the documents have abstracts. ALWAYS read whole content from GCS (gs://npt-fleet-cargo-hold).

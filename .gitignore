@@ -14,11 +14,11 @@ __pycache__/
 # 3. Environment & Local Infrastructure Secrets
 .env
 .env.local
-backlog_store.json
 *service-key*.json
 credentials/
 *cookies.txt
 youtube_cookies.txt
+mcp_config.json
 
 # 4. OS/Editor Local State Garbage
 .DS_Store
@@ -29,27 +29,17 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 
-v-1-src/
-mcp_config.json
-logs/
-error_logs/
-debug_payloads/
-src/react_agent/local_wiki
+# 5. Core Manuscript & Logs
 manuscript/
-*.obsidian/
-docs-2026-07-14-ended/
-agent_audits/
+logs/
+*.log
 
-# 5. Runtime Caches & Local Scrap Output
+# 6. Runtime Caches, Staging & Scratch
 scratch/
 cargo_cache/
-cargo_ontology/
-data_lake/
-output/
-scratch_graph_response.txt
-*.log
+batch_transient/
 acquisitions/
+cargo_ontology/
 archive/
-writings/cargo copy/
 writings/cargo/
 ship/waste_of_time/

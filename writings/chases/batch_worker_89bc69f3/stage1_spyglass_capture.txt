@@ -1,8 +1,0 @@
-TARGET_URL: https://www.cnbc.com/2026/01/15/openai-to-investors-expect-deliberately-outlandish-claims-from-musk.html
-CANONICAL_GCS_PATH: acquisitions/openai-tells-investors-to-brace-for-deliberately-outlandish-claims-from-musk-ahead-of-trial.txt
-TITLE: OpenAI tells investors to brace for 'deliberately outlandish' claims from Musk ahead of trial
-AUTHORS: Ashley Capoot, Kate Rooney
-PUBLICATION_DATE: 2026-01-15
-PUBLISHER: CNBC
-ITEM_TYPE: journalArticle
-STATUS: COMPLETED

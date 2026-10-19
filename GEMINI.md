@@ -50,13 +50,14 @@ The **NPT Fleet** is an autonomous multi-agent intelligence and research system 
 
 ### A. Database Partitioning & Table Mandates (ADR-003)
 - **`CONTENT_DATABASE_URL`** connects to the **`cargo`** and **`ship`** schemas:
-  - **`cargo.content_metadata`**: Updatable master catalog of external cargo as found in the wild. Tracks physical provenance (source URL, GCS bucket path), intellectual provenance (Zotero record pointers), and tool provenance (which scraper/method succeeded).
+  - **`cargo.content_metadata`**: Updatable master catalog of external cargo as found in the wild. Tracks physical provenance (source URL, GCS bucket path), intellectual provenance (Zotero record pointers), and tool provenance (which scraper/method succeeded). Houses the **`document_centroid`** (`vector(768)`) representing the full article for instant macro-clustering.
   - **`cargo.failed_metadata`**: Dead-letter log of wanted content that failed acquisition, recording which tools were attempted and timestamps.
   - *Ingestion Optimization*: Telemetry across `content_metadata` and `failed_metadata` informs Spyglass to avoid wasting cycles on tools known to be ineffective for specific domains.
   - **`cargo.fleet_enrichments`**: **Task & Process Tracking Map**. Records completed agent tasks, gate messaging (pass/fail verdicts, scores), and file pointers to where task output files live on local disk or GCS. It is a process tracker, not a raw content dumping ground.
   - **`cargo.ingestion_queue`**: Work-in-progress queue of URLs to be stevedored into cargo by Spyglass. Items are removed/dequeued upon successful acquisition.
   - **`cargo.system_glossary`**: Fleet vocabulary, conceptual definitions, and provenance. *(Architectural Note: Located in `cargo` due to a historical deployment error; conceptually belongs to `ship`)*.
-  - **`ship.letters_of_marque`**: The manuscript Vector Database (VDB) housing section paragraph chunks and 768-dim embeddings. *(Note: Future cargo article embeddings will reside in `cargo`, not `ship`)*.
+  - **`ship.letters_of_marque`**: The manuscript Vector Database (VDB) housing section paragraph chunks and 768-dim embeddings (`text-embedding-005`).
+  - **`cargo.content_vectors`**: The external cargo Vector Database housing article paragraph chunks and 768-dim embeddings (`text-embedding-005`, ADR-020).
 - **`DATABASE_URL`** connects to the **`agent_state`** schema:
   - **`agent_state.checkpoints`**: Short-term ReAct turn execution state and thread conversation history.
   - **`agent_state.ontology_rules`**: Long-term persistent learned behavioral rules and architect directives.
@@ -112,9 +113,9 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
   3. *On-Demand Section Expansions:* Deep section expansions (`ship/expansions/ch01_sec1.4_expansion.md`) are kept as specialized reference deep-dives, loaded on-demand via tool calls (`read_local_file`) when a specific section requires forensic audit.
 ### I. Shared Fleet Heuristics (Single Source of Truth)
 > [!NOTE]
-> **Canonical Location:** All operational heuristics and analytical rules (`SHARED-HEURISTIC-001` through `020`) are maintained authoritatively in [`src/react_agent/core_knowledge_vault/shared_fleet_rules.json`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/core_knowledge_vault/shared_fleet_rules.json). 
+> **Canonical Location:** All operational heuristics and analytical rules (`SHARED-HEURISTIC-001` through `026`) are maintained authoritatively in [`src/react_agent/core_knowledge_vault/shared_fleet_rules.json`](file:///c:/Users/timot/NPT-knowing-2/src/react_agent/core_knowledge_vault/shared_fleet_rules.json). 
 > 
-> To prevent documentation drift, do not duplicate JSON heuristic text in `GEMINI.md`. When Antigravity or Hook requires deep diagnostic rules (e.g. *The Judith Miller Problem & Ghost Data*, *The Bilge-Mainsail Dialectic*, *Anti-Techno-Fetishism Attention Anchor*, *The Guild Stenography Paradox*), inspect `shared_fleet_rules.json` directly.
+> To prevent documentation drift, do not duplicate JSON heuristic text in `GEMINI.md`. When Antigravity or Hook requires deep diagnostic rules (e.g. *The Judith Miller Problem & Ghost Data*, *The Bilge-Mainsail Dialectic*, *Anti-Techno-Fetishism Attention Anchor*, *The Guild Stenography Paradox*, *Epistemic Demarcation & Anti-Financialization Clustering Law*), inspect `shared_fleet_rules.json` directly.
 
 ### J. Developer Runtime & Database Driver Mandates (SHARED-HEURISTIC-019 & ADR-016)
 - *Python Runtime:* Strictly `Python >=3.12` (`3.12.x`) managed via `uv`. Subagents and code generators must never target deprecated Python 3.11 syntax or unverified 3.14+ pre-releases.
@@ -134,6 +135,34 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
 >    - Universal Heuristics: `src/react_agent/core_knowledge_vault/shared_fleet_rules.json`
 >    - Agent-Specific Rules: `src/react_agent/agents/{agent}/learned_rules.json`
 > 3. **Inspection on Demand:** When Antigravity needs deep details about an agent or rule, Antigravity MUST invoke `view_file` on the canonical file rather than relying on stale summary text.
+
+### L. Immutable Vector & Embedding Standard (ADR-020)
+- **Universal Model Mandate:** All vector embeddings across the fleet strictly use Google's active production model: **`text-embedding-005`** with native **768 dimensions** (`output_dimensionality=768`).
+- **Forbidden Models:** Never invoke deprecated `text-embedding-004`, legacy `gemini-embedding-001`, or OpenAI models.
+- **Unified Two-Tier Vector Standard (768-dim):**
+  - **Manuscript Thesis VDB (`ship.letters_of_marque`):** Strictly `vector(768)` housing the 671 section paragraph chunks of *The End of Knowing*.
+  - **Macro Cargo Centroid VDB (`cargo.content_metadata.document_centroid`):** Strictly `vector(768)` housing the unit-normalized mean vector of 100% of the article's paragraphs. Used for instant whole-document clustering and article-to-article similarity without pulling chunks into RAM.
+  - **Micro Cargo Paragraph VDB (`cargo.content_vectors`):** Strictly `vector(768)` housing granular paragraph chunks (Chunk 000 metadata + body paragraphs) for grounded quote harvesting.
+- **Strict Full-Text Zero-Truncation Law (SHARED-HEURISTIC-025):** Slicing arbitrary character or word samples (e.g. `[:400]`) is strictly prohibited. Embeddings must represent 100% of the acquired full text. Any past diagnostic embeddings derived from truncated samples (such as the 400-word Cluster 002 test) are invalid and forbidden from being persisted to PostgreSQL.
+- **Chunking Standard & 1,200-Token Ceiling:** Text is chunked strictly by natural paragraph delimiters (`\n\n`). Chunk 000 is reserved for metadata provenance (Title, Author, Date, URL). Body paragraphs exceeding **1,200 tokens** must be split with a 10% overlap (well under `text-embedding-005`'s 2,048-token window).
+- **Document-Level Centroid Pooling:** For macro clustering and article-to-article similarity, a document's vector coordinate is calculated as the mathematical centroid (mean) across all of its persisted paragraph chunk vectors, normalized to unit length, and stored in `cargo.content_metadata.document_centroid`.
+- **Unified Cross-Corpus Retrieval:** All three vector stores share the exact same 768-dim coordinate space, allowing direct cosine distance comparisons between external cargo paragraphs/documents and manuscript thesis sections.
+- **The Zero-Discard Persist Rule:** Transient embeddings in RAM are prohibited. Any script or agent calculating semantic embeddings must persist them directly to PostgreSQL with proper chunk metadata (`chunk_id`, `metadata_id`, `chunk_index`, `chunk_text`) so tokens are never paid for twice.
+
+### M. The Two-Executable-Directories Law & Workspace Sanitation (ADR-021, ADR-022 & SOP-10)
+> [!CRITICAL]
+> **Strict Execution Boundaries Across the Repository:**
+> 1. **The Only Two Runnable Directories:** Python scripts intended for execution (`if __name__ == '__main__':`) must reside strictly in:
+>    - **`src/react_agent/entrypoints/`**: The 9 canonical agent runners, batch supervisors, and interactive Streamlit/HTTP visual consoles.
+>    - **`helper_scripts/`**: Operational fleet utilities, database provisioning, clustering pipelines, batch jobs, and maintenance.
+> 2. **Pure Library Firewalls (`core/`, `tools/`, `workflows/`):**
+>    - `src/react_agent/core/`, `src/react_agent/tools/`, and `src/react_agent/workflows/` are strictly pure class and function libraries. Zero runnable CLI scripts, interactive loops, or utility entrypoints may exist in these directories.
+> 3. **Workspace Root Read-Only Law:**
+>    - Antigravity, subagents, and developers are strictly forbidden from dumping scratch scripts, debug payloads, prompt texts, or temporary outputs into the repository root (`c:\Users\timot\NPT-knowing-2\`). All temporary investigation scripts must reside in `scratch/`.
+> 4. **Helper Script Lifecycle & Run Tracking (ADR-022):**
+>    - Every script in `helper_scripts/` must carry the standard metadata header (`How to run`, `What it does`, `Last run`) and invoke `run_tracker.record_run(__file__)` upon execution.
+> 5. **Transient Output Containment:**
+>    - Temporary batch buffers, prediction manifests, or scraper holding files must write strictly into pre-approved, git-ignored directories (`batch_transient/`, `cargo_cache/`, `logs/`). Creating new unignored scratch directories is prohibited.
 
 ---
 
@@ -165,7 +194,6 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
     - `acquisition_tools.py`: Multi-tier web, PDF, and arXiv scrapers (`download_url`, `download_remote_pdf`, `precision_html_extract`, `acquire_arxiv_document`).
     - `reference_resolution_tools.py`: CrossRef REST API query tools and citation expansion engine (`fetch_crossref_metadata`, `resolve_chapter_references_to_silver`).
     - `extraction_tools.py`: Google LangExtract integration for graph entity and relationship extraction (`run_langextract_mapping`).
-    - `manuscript_etl.py`: Section slicer, normalizer, and pgVector embedding loader for `ship.letters_of_marque`.
     - `memory_tools.py`: Local JSON memory vault managers and system glossary query tools.
     - `github_tools.py`: Issue tracker integration and status logging.
   - `src/react_agent/entrypoints/`: Interactive execution runners, including the Streamlit-based review console (`review_console.py`) and command-line orchestration runners (`pegleg_runner.py`).
@@ -199,12 +227,14 @@ The **`ship/`** directory is where **Bilgeladle goes to school** to learn to be 
   - `helper_scripts/build_context.ps1` & `view_hierarchy.ps1`: Context compaction and directory visualization scripts.
 
 ### F. Local Caches, Scraper Buffers & Logs (Git-Ignored / Ephemeral)
-- **`data/`**: Local persistent lookup caches (e.g. `data/crossref_cache.json` containing cached CrossRef API responses used by reference resolution tools).
-- **`output/`**: Local scraper output directory used by Botasaurus headless browser scraping to store temporary browser artifacts and extraction buffers.
-- **`cargo_cache/`**: Ephemeral download holding cache used by `download_url` and `download_remote_pdf` before `upsert_knowledge_artifact` streams the file to Cloud Storage and deletes the local file.
-- **`logs/`**: Local runtime telemetry, turn checkpoints, and interaction debug logs.
+- **`acquisitions/`**: Local fast-read cache of acquired cargo text files (~45MB, mirrored 100% in GCS `gs://npt-fleet-cargo-hold/acquisitions/`). Safe to clear; tools fall back to GCS streaming on cache miss.
+- **`batch_transient/`**: Temporary staging buffers and manifest files for Vertex AI Batch Prediction jobs (`cargo_batch_input.jsonl`, `cargo_chunks_manifest.jsonl`).
+- **`cargo_cache/`**: Ephemeral download holding cache used by `download_url` and `download_remote_pdf` before `upsert_knowledge_artifact` streams the file to Cloud Storage and deletes the local file. Also houses `cargo_cache/inbox/` for EPUB ingestion.
+- **`scratch/`**: Safe sandbox for developer one-off investigation scripts, throwaway test files, and experimental code.
+- **`logs/`**: Local runtime telemetry, turn checkpoints, and interaction debug logs (rotated by `swab_the_decks.py` when >5MB).
 
 ### G. Forbidden & Deprecated Paths (DO NOT CREATE)
 - **`local_wiki/`**: **Permanently Deprecated & Purged.** Storing intermediate outputs in wiki directories is prohibited; all analytical events must be logged to `cargo.fleet_enrichments` with files stored in authorized locations.
 - **`ship/gold/`**: **Prohibited.** Gold-tier synthesis deliverables exist solely in `writings/`.
-- **Project Root (`./`)**: Dumping raw analysis reports, markdown outputs, or unrouted files directly into the repository root is strictly prohibited.
+- **Project Root (`./`)**: Dumping raw analysis reports, markdown outputs, prompt dumps, temporary scripts, or unrouted files directly into the repository root is strictly prohibited. All temporary work must be directed to `scratch/` or conversation artifacts.
+

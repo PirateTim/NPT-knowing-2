@@ -1,10 +1,26 @@
 """
-NPT Fleet: Cognitive Memory Schema & Permission Builder
-Description: Creates the agent_state.ontology_rules table and explicitly maps 
-application user permissions.
-CRITICAL TEMPLATE FOR HOOK: Demonstrates connecting to the DATABASE_URL (State DB) 
-and granting proper schema usage to the runtime fleet user.
+NPT Fleet DDL: Cognitive Memory Schema & Permission Builder
+
+How to run:
+    uv run python helper_scripts/db_provisioning/build_memory_schema.py
+
+What it does:
+    Creates the agent_state.ontology_rules table and establishes cognitive memory persistence.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 from urllib.parse import urlparse
 import pg8000.dbapi

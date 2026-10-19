@@ -1,8 +1,25 @@
 """
-NPT Fleet: Concept Node Editor Utility
-Tool to inspect, list, and fine-tune concept definitions and Hook 5-part causal anatomy
-inside cargo.ontology_nodes in PostgreSQL.
+NPT Fleet: Interactive Concept Node Editor
+
+How to run:
+    uv run python helper_scripts/edit_concept_node.py
+
+What it does:
+    Interactive CLI tool to inspect, modify, or merge concept nodes in the epistemic graph topology.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
 
 import os
 import sys

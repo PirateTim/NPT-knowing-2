@@ -1,9 +1,0 @@
-SOURCE_URL: https://www.platformer.news/openai-pentagon-surveillance-drones-backlash/
-TITLE: What is OpenAI going to do when the truth comes out?
-AUTHORS: Casey Newton
-PUBLICATION_DATE: 2026-03-03
-PUBLISHER: Platformer
-ITEM_TYPE: journalArticle
-CANONICAL_PATH: acquisitions/what-is-openai-going-to-do-when-the-truth-comes-out.txt
-GCS_URI: gs://npt-fleet-cargo-hold/acquisitions/what-is-openai-going-to-do-when-the-truth-comes-out.txt
-STATUS: COMPLETED

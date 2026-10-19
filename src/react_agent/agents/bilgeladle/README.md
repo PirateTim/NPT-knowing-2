@@ -72,3 +72,16 @@ sequenceDiagram
   - Generates a grounded, thesis-anchored draft payload explicitly linking the asset to the book's core vectors of destruction.
 * **Handoff to Scallywag**:
   - Passes the anchored draft payload to **Scallywag** to write the final narrative draft / satirical essay.
+
+---
+
+## 🏛️ Epistemic Architecture & Maintenance Protocol
+
+Bilgeladle's brain is architected via:
+
+1. **Verbose Agent Firmware (`bilgeladle.xml` & `learned_rules.json`)**:
+   - Contains Bilgeladle's complete philosophical identity, full guardrail directives, and detailed exemplars.
+   - Used when Bilgeladle runs as an autonomous agent in ReAct loops, performing deep chapter alignment, writing synthesis essays, or conducting adversarial Stage 6 reviews.
+   - The additional verbosity provides crucial grounding, voice, and analytical resistance against superficial pastiche.
+
+

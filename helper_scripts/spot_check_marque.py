@@ -1,8 +1,26 @@
 """
-Helper Script: Spot Check `ship.letters_of_marque` Vectors & Sections
-Usage:
-    python helper_scripts/spot_check_marque.py
+NPT Fleet Diagnostic: Spot-Check Letters of Marque Vectors
+
+How to run:
+    uv run python helper_scripts/spot_check_marque.py
+
+What it does:
+    Runs diagnostic spot-checks on stored section vectors and paragraph chunks in ship.letters_of_marque.
+
+Last run: Unknown
 """
+
+# Record execution timestamp
+try:
+    import os, sys
+    _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+    if _tracker_dir not in sys.path:
+        sys.path.insert(0, _tracker_dir)
+    import run_tracker
+    run_tracker.record_run(__file__)
+except Exception:
+    pass
+
 import os
 import pg8000.dbapi
 from dotenv import load_dotenv

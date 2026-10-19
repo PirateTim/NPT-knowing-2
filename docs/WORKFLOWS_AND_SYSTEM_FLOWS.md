@@ -178,13 +178,49 @@ flowchart TD
   4. **Stage 4 (Cutlass)**: Evidentiary audit comparing assertions against seized evidence $\rightarrow$ `chXX_citation_audit.md`.
   5. **Stage 5 (Pegleg)**: Enforces Completeness Gate (`BILGELADLE-RULE-022`) requiring 100% live URLs before approving the chapter.
 
-### Workflow 4.3: `workflow_vector_embedding` (Deep Soundings - VDB Indexing)
+### Workflow 4.3: `workflow_vector_embedding` (Deep Soundings - Two-Tier VDB Batch Pipeline)
 * **Tactical Setting**: **Deep Soundings**.
-* **Objective**: Slices text into paragraph chunks, generates Gemini embeddings, and commits vectors to PostgreSQL `pgvector`.
-* **Engines**: `src/react_agent/tools/manuscript_etl.py` and `cargo_vector_tools.py`.
+* **Objective**: Slices acquired cargo text into paragraph chunks with zero truncation, generates 768-dim embeddings via Google's `text-embedding-005` on Vertex AI (50% batch discount), and populates the two-tier vector database in PostgreSQL.
+* **Governing Rules**: **ADR-020**, **SOP-09**, and **SHARED-HEURISTIC-025** (Strict Full-Text Zero-Truncation Law).
+* **Engines**: `helper_scripts/generate_cargo_batch_jsonl.py`, `submit_cargo_batch_job.py`, and `load_cargo_batch_results.py`.
 * **Sinks**:
-  - Manuscript chunks: `ship.letters_of_marque` (768-dim embeddings).
-  - Cargo hold assets: `cargo.content_vectors` (1536-dim embeddings).
+  - **Manuscript Chunks**: `ship.letters_of_marque` (`vector(768)` embeddings, `text-embedding-005`).
+  - **Micro Cargo Chunks**: `cargo.content_vectors` (`vector(768)` paragraph chunks $\le 1,200$ tokens for quote harvesting).
+  - **Macro Document Centroid**: `cargo.content_metadata.document_centroid` (`vector(768)` unit-normalized mean vector for whole-document clustering and cross-corpus thesis distance).
+
+```mermaid
+flowchart TD
+    subgraph Ingestion["1. Acquisition (Spyglass)"]
+        SPY["Spyglass Web/PDF Ingestion"] -->|Save Raw Text| GCS["GCS: gs://npt-fleet-cargo-hold/acquisitions/*.txt"]
+        SPY -->|Log Provenance| META["cargo.content_metadata (document_centroid = NULL)"]
+    end
+
+    subgraph BatchPrep["2. Batch JSONL Generation (helper_scripts)"]
+        META -->|Query WHERE centroid IS NULL| GEN["generate_cargo_batch_jsonl.py"]
+        GCS -->|Stream Raw Text into RAM| GEN
+        GEN -->|Chunk 000 Metadata + Paragraphs <= 1200 Tok| JSONL["batch_transient/cargo_batch_input.jsonl"]
+        GEN -->|Save Local Metadata| MANIFEST["batch_transient/cargo_chunks_manifest.jsonl"]
+        JSONL -->|Upload| GCS_STAGING["GCS: batch_transient/cargo_batch_input.jsonl"]
+    end
+
+    subgraph VertexAI["3. Asynchronous Batch Prediction (Vertex AI)"]
+        GCS_STAGING -->|submit_cargo_batch_job.py| VERTEX["Vertex AI Batch Prediction Job (text-embedding-005, 768-dim)"]
+        VERTEX -->|50% Discount Run| GCS_OUT["GCS: batch_transient/cargo_batch_output/prediction-*.jsonl"]
+    end
+
+    subgraph DB_Ingest["4. Two-Tier Persistence (load_cargo_batch_results.py)"]
+        GCS_OUT -->|Stream Results| LOADER["load_cargo_batch_results.py"]
+        MANIFEST -->|Map Chunk IDs to Metadata| LOADER
+        LOADER -->|Bulk Multi-Row Insert| CV["Micro Chunks: cargo.content_vectors (vector 768)"]
+        LOADER -->|Unit-Normalized Centroid Math| DC["Macro Centroid: cargo.content_metadata.document_centroid (vector 768)"]
+    end
+
+    subgraph Downstream["5. Fleet Retrieval & Analysis"]
+        DC <-->|Cosine Distance <= >| MARQUE["Manuscript VDB: ship.letters_of_marque (vector 768)"]
+        DC -->|Macro Topology| CLUSTERS["6 Natural Thematic Continents (Clustering)"]
+        CV -->|Evidence Harvesting| AGENTS["Cutlass / Bilgeladle / Scallywag Quote Retrieval"]
+    end
+```
 
 ### Workflow 4.4: `workflow_autonomous_meta_learning` (Rules Audit & Promotion)
 * **Tactical Setting**: **Muster Roll**.
@@ -208,6 +244,6 @@ flowchart TD
 | **`workflow_full_chase`** | All Sail | `pegleg` $\rightarrow$ Crew | Cargo ID(s) + Inquiry Prompt | Publication in `writings/chases/{chase_id}/` |
 | **`workflow_cargo_intake`** | Plain Sail | `spyglass` | Target URL / PDF / arXiv | GCS `.txt` & `cargo.content_metadata` |
 | **`workflow_manuscript_bronze_plus`** | Yardarm Refitting | `bilgeladle`, `plank`, `cutlass`, `pegleg` | Monolith Chapter | Clean Section Files in `ship/bronze_plus/` |
-| **`workflow_vector_embedding`** | Deep Soundings | `manuscript_etl`, `cargo_vector_tools` | Bronze+ Sections / Cargo | Vectors in `letters_of_marque` |
+| **`workflow_vector_embedding`** | Deep Soundings | `load_bronze_plus_to_pgvector`, `cargo_vector_tools` | Bronze+ Sections / Cargo | Vectors in `letters_of_marque` |
 | **`workflow_autonomous_meta_learning`** | Muster Roll | `pegleg`, `hook` | Agent Memory Vaults | Promoted Rules in `shared_fleet_rules.json` |
 | **`workflow_dispatch_task`** | Light Working Sail | `pegleg` $\rightarrow$ Specialist | Ad-Hoc Inquiry | Consolidated Specialist Answer |

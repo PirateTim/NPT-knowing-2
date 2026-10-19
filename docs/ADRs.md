@@ -199,7 +199,73 @@ sequenceDiagram
      - *Micro Cargo Full-Text & Semantic Search:* Handled via Vertex AI Search (`npt-cargo-search-app` / `search_cargo_vertex`) directly indexing raw GCS text files.
      - *Manuscript Thesis Anchoring:* Handled via `ship.letters_of_marque` in PostgreSQL.
 
-* **Consequences:** Eliminates ongoing embedding API token expenditures and quota exhaustion for external cargo. Offloads chunking, indexing, and hybrid search maintenance to Vertex AI Search while keeping already-paid-for vectors safe in PostgreSQL. Clarifies architectural separation between macro categorical exploration, full-text cargo discovery, and sacred manuscript thesis alignment.
+* **Consequences:** Unifies the entire fleet on Google's current SOTA text embedding model. Halves vector database storage and query FLOPs. Eliminates redundant embedding API calls. Enables direct manuscript-to-cargo mathematical distance comparisons. Guarantees 100% full-text coverage with no truncation blindspots.
+
+**ADR-021: Fleet Maintenance Engine & Thread Immunity Architecture ("Swabbing the Decks")**
+
+* **Status:** Accepted & Operational
+* **Date:** 2026-10-19
+* **Context:**
+  1. *Unbounded Database Checkpoint Accumulation:* ReAct execution turns persist serialized agent session states into PostgreSQL (`agent_state.checkpoints`). Over time, ephemeral CLI test runs and scratch UUID threads accumulate hundreds of stale rows.
+  2. *The Context Cost of Premature Deletion:* Completely dropping or truncating all conversational history is dangerous. If a human author identifies weeks later that an agent miscategorized an asset or misassigned a sail locker, re-entering that existing thread allows immediate, low-token corrective steering without paying the full prompt ingestion fee again.
+  3. *Filesystem and Log Accumulation:* Scraper temporary buffers (`cargo_cache/temp_acquire_*.txt`), oversized logs (`logs/*.log` > 5MB), and unorganized scratch essays in `writings/` accumulated without an automated hygiene mechanism.
+* **Decision:**
+  1. *Canonical Maintenance Utility:* Codify `helper_scripts/maintenance/swab_the_decks.py` as the official fleet maintenance routine, executable in dry-run mode (`--dry-run`) or live execution (`--execute`).
+  2. *Thread Immunity Protocol:* All threads following the deterministic pattern `thread_cargo_{metadata_id}` (or `thread_cargo_*`) are granted **100% Permanent Thread Immunity**. They are never pruned or deleted by automated routines.
+  3. *Ephemeral Pruning Thresholds:* UUID-based scratch threads older than 14 days and completed chase sessions older than 30 days are pruned from `agent_state.checkpoints` and `agent_state.checkpoint_writes`.
+  4. *DDL Root Law in Maintenance:* Table drops or alterations (such as dropping legacy public checkpoint tables) must connect as the `postgres` superuser using `DB_ROOT_PASSWORD` per SOP-06.
+  5. *Log Rotation & Compression:* Active logs exceeding 5MB are automatically rotated, compressed (`.gz`), and moved to `logs/archive/`.
+  6. *Asset Dossier Immunity:* Files residing in `writings/cargo/cargo_{id}/` and `writings/cargo/FLEET_SIGHTINGS_LEDGER.md` are protected with absolute filesystem immunity. Loose essays in the root of `writings/` are safely archived to `writings/archive_essays/`.
+* **Consequences:** Automates lifecycle hygiene across database checkpoints and disk storage while guaranteeing that high-value cargo correction threads and permanent research dossiers are never lost.
+
+**ADR-022: Helper Script Lifecycle, Metadata Headers & Self-Updating Run Tracking (`run_tracker`)**
+
+* **Status:** Accepted & Operational
+* **Date:** 2026-10-19
+* **Context:**
+  1. *Helper Script Abandonment & Drift:* Over the lifecycle of the project, 70+ administrative scripts accumulated in `helper_scripts/`. Developers and agents lacked visibility into how to run each tool, what it does, and whether it was active, superseded, or abandoned.
+  2. *Scratch Leakage:* One-off exploratory scripts were frequently saved directly to `helper_scripts/` rather than `scratch/`, cluttering the operational tooling inventory.
+* **Decision:**
+  1. *Mandatory Standard Header:* Every script in `helper_scripts/` must contain an authoritative top-of-file docstring formatted with exactly three fields:
+     - `How to run`: Explicit terminal command (e.g. `uv run python helper_scripts/<name>.py`).
+     - `What it does`: 1-2 sentence concise summary of operational scope.
+     - `Last run`: `Unknown` or an automated ISO/timestamp string (`YYYY-MM-DD HH:MM:SS`).
+  2. *Automated Execution Tracking Hook:* Every helper script must embed the lightweight `run_tracker` hook:
+     ```python
+     try:
+         import os, sys
+         _tracker_dir = os.path.join(os.path.dirname(__file__), "..") if os.path.basename(os.path.dirname(__file__)) in ("db_provisioning", "maintenance") else os.path.dirname(__file__)
+         if _tracker_dir not in sys.path:
+             sys.path.insert(0, _tracker_dir)
+         import run_tracker
+         run_tracker.record_run(__file__)
+     except Exception:
+         pass
+     ```
+  3. *Audit & Compliance Verification:* `helper_scripts/run_tracker.py` maintains an audit interface (`uv run python helper_scripts/run_tracker.py --audit`). All helper scripts must maintain 100% compliance.
+  4. *Scratch Separation (SOP-10):* One-off investigation scripts must be saved to `scratch/`. They may only be promoted to `helper_scripts/` once they adhere to the standard header and run tracking protocol.
+* **Consequences:** Eliminates documentation drift, makes tooling self-documenting, and provides the human architect with instant visibility into which tools are actively exercised versus candidates for archival.
+
+
+**ADR-020: Unified Fleet Vector Modernization: Standardization on `text-embedding-005` (768-dim) Across Ship and Cargo**
+
+* **Status:** Formally supersedes ADR-019 (unfreezes cargo pgvector indexing under the modern, cost-controlled standard).
+* **Date:** 2026-10-15
+* **Context:**
+  1. *Model Deprecation & Dimensional Fragmentation:* The fleet previously provisioned both `ship.letters_of_marque` and `cargo.content_vectors` with legacy 1536-dimensional vectors (`gemini-embedding-001`). Meanwhile, modern diagnostics invoked `text-embedding-004` (768-dim), resulting in database schema rejection, discarded RAM calculations, and redundant token billing. Furthermore, Google scheduled `text-embedding-004` for discontinuation in favor of `text-embedding-005`.
+  2. *Re-evaluation of ADR-019 Cargo Freeze:* ADR-019 froze cargo vector indexing due to perceived API token costs and Cloud SQL memory overhead (partially caused by complex workflows attempting to pre-filter and triage cargo before embedding). With Google's production `text-embedding-005` pricing at $0.15 per 1M tokens, embedding the entire 3,600+ article catalog costs less than $3.00, and cutting dimensionality from 1536 to 768 reduces PostgreSQL index RAM overhead by 50%.
+* **Decision:**
+  1. *Universal Embedding Model:* All vector embeddings across the fleet (`ship` and `cargo`) must exclusively use `model="text-embedding-005"` with native **768 dimensions** (`output_dimensionality=768`). Legacy `gemini-embedding-001` and deprecated `text-embedding-004` are permanently retired.
+  2. *Schema Alteration:* Migrate both `ship.letters_of_marque.vector_embedding` and `cargo.content_vectors.vector_embedding` column types from `vector(1536)` to `vector(768)`.
+  3. *Strict Full-Text Zero-Truncation Law (SHARED-HEURISTIC-025 Compliance):* Arbitrary head-truncation (e.g., slicing the first 400 or 500 words of an article) is strictly prohibited. Embeddings must represent 100% of the acquired full text.
+  4. *Chunking Granularity & 1,200-Token Ceiling:*
+     - Documents are decomposed by natural paragraph boundaries (`\n\n`).
+     - **Chunk 000 (Metadata Anchor):** Title, Authors, Published Date, Source URL.
+     - **Chunks 001..N (Verbatim Body Paragraphs):** Preserved verbatim. If any individual paragraph exceeds **1,200 tokens**, it must be split into sub-chunks with a 10% overlap (well within `text-embedding-005`'s 2,048-token input context window).
+  5. *Document-Level Centroid Pooling for Macro Clustering:* To compare or cluster entire articles without truncation, an article's document vector coordinate is computed as the mathematical centroid (mean) across all of its persisted paragraph chunk vectors ($\vec{V}_{\text{doc}} = \frac{1}{N}\sum \vec{v}_{\text{chunk}_i}$) and normalized to unit length. This document-level vector is explicitly persisted into the `cargo.content_metadata.document_centroid` column (`vector(768)`) with an HNSW cosine distance index. This achieves a clean two-tier vector architecture: macro full-document clustering and article-to-article search operate on `cargo.content_metadata.document_centroid` (1 vector per article), while granular citation/quote retrieval operates on `cargo.content_vectors` (1 vector per paragraph).
+  6. *Unified Vector Coordinate Space:* With both the manuscript and cargo hold sharing the exact same 768-dim embedding space, Bilgeladle, Cutlass, and Scallywag can execute direct cross-corpus vector cosine distance queries (comparing any external cargo paragraph directly against book section paragraphs without translation).
+  7. *The Zero-Discard Persist Rule & Invalidation of Truncated Tests:* Any script or agent calculating semantic embeddings must persist those vectors into PostgreSQL on the first pass with proper chunk metadata (`chunk_id`, `metadata_id`, `chunk_index`, `chunk_text`). Any legacy or diagnostic embeddings generated from truncated snippets (such as the 400-word Cluster 002 test) are declared invalid and must be completely discarded; cargo must only be embedded and persisted via the full-text chunking pipeline.
+* **Consequences:** Unifies the entire fleet on Google's current SOTA text embedding model. Halves vector database storage and query FLOPs. Eliminates redundant embedding API calls. Enables direct manuscript-to-cargo mathematical distance comparisons. Guarantees 100% full-text coverage with no truncation blindspots.
 
 
 
